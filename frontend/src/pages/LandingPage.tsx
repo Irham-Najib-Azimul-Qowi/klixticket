@@ -1,192 +1,140 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiSearch } from 'react-icons/fi';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Calendar, ArrowRight, ShieldCheck, Ticket, Users } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#F9FAFB] font-sans text-slate-800 pb-20">
+    <div className="min-h-screen bg-background font-sans text-foreground pb-20">
       
       {/* Navbar Section */}
-      <div className="sticky top-0 z-50 shadow-md">
-        {/* Top Navbar */}
-        <div className="bg-[#111827] text-white py-1.5 px-6 flex justify-center space-x-6 text-sm font-medium">
-          <a href="#" className="hover:text-amber-500 transition">Our Journey</a>
-          <a href="#" className="hover:text-amber-500 transition">Biaya</a>
-          <a href="#" className="hover:text-amber-500 transition">Tiket Gelang</a>
-          <a href="#" className="hover:text-amber-500 transition">FAQ</a>
+      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Ticket className="w-6 h-6 text-primary" />
+            <span className="text-xl font-bold tracking-tight">mastutik.</span>
+          </div>
+
+          <div className="hidden md:flex space-x-6 text-sm font-medium">
+            <a href="#events" className="text-muted-foreground hover:text-foreground transition">Explore</a>
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition">Features</a>
+            <a href="#" className="text-muted-foreground hover:text-foreground transition">Contact</a>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <Link to="/admin">
+              <Button variant="default" size="sm">Admin Login</Button>
+            </Link>
+          </div>
         </div>
-        
-        {/* Main Navbar */}
-        <nav className="bg-[#213FC0] text-white px-6 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold tracking-tight">mastutik.</span>
-            </div>
+      </nav>
 
-            {/* Pill Menu */}
-            <div className="hidden md:flex bg-[#1E3A8A] rounded-full p-1 items-center">
-              <a href="#" className="px-6 py-2 bg-[#3B5BDB] rounded-full font-semibold text-sm shadow-sm transition">Beranda</a>
-              <a href="#" className="px-6 py-2 hover:bg-[#3B5BDB]/50 rounded-full font-semibold text-sm transition text-blue-100">Jelajah</a>
-              <a href="#" className="px-6 py-2 hover:bg-[#3B5BDB]/50 rounded-full font-semibold text-sm transition text-blue-100">Tentang</a>
-              <a href="#" className="px-6 py-2 hover:bg-[#3B5BDB]/50 rounded-full font-semibold text-sm transition text-blue-100">Hubungi Kami</a>
-            </div>
-
-            {/* Right Action Menu */}
-            <div className="flex items-center space-x-4">
-              <button className="flex items-center space-x-2 bg-[#1E3A8A] hover:bg-[#3B5BDB] rounded-full px-4 py-2 transition text-sm font-medium border border-[#3B5BDB]/20">
-                 <span>🇮🇩</span>
-                 <span>ID</span>
-              </button>
-              <button className="w-10 h-10 bg-[#1E3A8A] hover:bg-[#3B5BDB] rounded-full flex items-center justify-center transition border border-[#3B5BDB]/20">
-                <FiSearch size={18} />
-              </button>
-              <Link to="/admin" className="bg-[#3B5BDB] hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-full transition shadow-sm text-sm">
-                Masuk
-              </Link>
-            </div>
-          </div>
-        </nav>
-      </div>
-
-      {/* Hero Banner Section */}
-      <div className="max-w-7xl mx-auto px-4 mt-6">
-        <div className="bg-gradient-to-r from-blue-700 to-indigo-900 rounded-3xl w-full h-[400px] flex items-center justify-center overflow-hidden relative shadow-lg">
-           <img src="https://images.unsplash.com/photo-1540039155732-d68f7c9e05a2?q=80&w=2000&auto=format&fit=crop" alt="Hero Slider" className="absolute inset-0 w-full h-full object-cover opacity-80" />
-           <div className="absolute inset-0 bg-[#213FC0]/40 mix-blend-multiply"></div>
-           <div className="relative text-center z-10 px-4 mt-8">
-             <h1 className="text-white text-5xl md:text-7xl font-black italic tracking-tighter drop-shadow-2xl uppercase transform -skew-x-6">#SOLUSITIKET<br/>EVENTMU</h1>
-             <p className="mt-4 text-blue-100 font-semibold drop-shadow-md">Dengan jutaan tiket terjual ke seluruh penjuru</p>
-           </div>
-        </div>
-        
-        {/* Pagination Dots */}
-        <div className="flex justify-center items-center mt-5 space-x-2.5">
-           <div className="w-8 h-2 bg-[#3B5BDB] rounded-full"></div>
-           <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
-           <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
-           <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
-           <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
-        </div>
-      </div>
-
-      {/* Recommended Events Section */}
-      <section className="max-w-7xl mx-auto px-4 mt-12">
-        <h2 className="text-2xl font-black text-slate-900 mb-6">Rekomendasi Event</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          {/* Card 1 */}
-          <div className="bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-slate-100 flex flex-col cursor-pointer">
-            <div className="relative w-full aspect-[2.5/1] overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&auto=format&fit=crop" alt="Event Cover" className="w-full h-full object-cover hover:scale-105 transition duration-500 ease-out" />
-            </div>
-            <div className="p-6 flex-1 flex flex-col">
-               <h3 className="text-xl font-bold text-slate-900 leading-tight mb-3">NORTH LIVE FESTIVAL VOL.1</h3>
-               <div className="text-sm font-medium text-slate-500 mb-6 flex items-center space-x-2">
-                 <span className="flex items-center justify-center border border-slate-200 rounded-md px-1.5 py-0.5 text-[10px] uppercase font-bold text-slate-500 bg-slate-50">12 Okt 26</span>
-                 <span className="truncate">Mega Mas Manado</span>
-                 <span className="px-1">•</span>
-                 <span>Penyelenggara</span>
-               </div>
-               
-               <div className="mt-auto pt-5 border-t border-slate-100">
-                 <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-0.5">Mulai Dari</p>
-                 <div className="flex justify-between items-end">
-                    <p className="text-[#213FC0] font-black text-2xl">IDR 250.000</p>
-                 </div>
-               </div>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-slate-100 flex flex-col cursor-pointer">
-            <div className="relative w-full aspect-[2.5/1] overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop" alt="Event Cover" className="w-full h-full object-cover hover:scale-105 transition duration-500 ease-out" />
-            </div>
-            <div className="p-6 flex-1 flex flex-col">
-               <h3 className="text-xl font-bold text-slate-900 leading-tight mb-3">Live Arena 2026: The Start</h3>
-               <div className="text-sm font-medium text-slate-500 mb-6 flex items-center space-x-2">
-                 <span className="flex items-center justify-center border border-slate-200 rounded-md px-1.5 py-0.5 text-[10px] uppercase font-bold text-slate-500 bg-slate-50">20 Nov 26</span>
-                 <span className="truncate">ICE BSD Jakarta</span>
-                 <span className="px-1">•</span>
-                 <span>Artatix</span>
-               </div>
-               
-               <div className="mt-auto pt-5 border-t border-slate-100">
-                 <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-0.5">Mulai Dari</p>
-                 <div className="flex justify-between items-end">
-                    <p className="text-[#213FC0] font-black text-2xl">IDR 150.000</p>
-                 </div>
-               </div>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-slate-100 flex flex-col cursor-pointer">
-            <div className="relative w-full aspect-[2.5/1] overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1511516104443-42bcfe2e5647?w=800&auto=format&fit=crop" alt="Event Cover" className="w-full h-full object-cover hover:scale-105 transition duration-500 ease-out" />
-            </div>
-            <div className="p-6 flex-1 flex flex-col">
-               <h3 className="text-xl font-bold text-slate-900 leading-tight mb-3">Hip Hop Soringin Festival</h3>
-               <div className="text-sm font-medium text-slate-500 mb-6 flex items-center space-x-2">
-                 <span className="flex items-center justify-center border border-slate-200 rounded-md px-1.5 py-0.5 text-[10px] uppercase font-bold text-slate-500 bg-slate-50">05 Des 26</span>
-                 <span className="truncate">JNM Bloc YK</span>
-                 <span className="px-1">•</span>
-                 <span>Swag Org</span>
-               </div>
-               
-               <div className="mt-auto pt-5 border-t border-slate-100">
-                 <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-0.5">Mulai Dari</p>
-                 <div className="flex justify-between items-end">
-                    <p className="text-[#213FC0] font-black text-2xl mb-1">Gratis</p>
-                 </div>
-               </div>
-            </div>
-          </div>
-
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-6 py-24 md:py-32 flex flex-col items-center text-center space-y-8">
+        <Badge variant="secondary" className="px-3 py-1 rounded-full bg-muted">
+          🌟 Discover the Best Events in Town
+        </Badge>
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight max-w-4xl text-foreground">
+          Unforgettable Experiences Start <span className="text-primary italic">Here.</span>
+        </h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
+          A minimalist, highly secure platform for purchasing and discovering your favorite concerts, seminars, and expos effortlessly.
+        </p>
+        <div className="flex space-x-4 pt-4">
+          <Button size="lg" className="rounded-full px-8">Find Events <ArrowRight className="ml-2 w-4 h-4" /></Button>
+          <Button size="lg" variant="outline" className="rounded-full px-8">Promote Event</Button>
         </div>
       </section>
-      
-      {/* Regional Section Matches Artatix Filter Options */}
-      <section className="max-w-7xl mx-auto px-4 mt-16 pb-12 border-b border-slate-200">
-         <h2 className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em] mb-5">Pilih Wilayah</h2>
-         <div className="flex space-x-3 overflow-x-auto pb-4 scrollbar-hide">
-            {['Jabodetabek', 'Jawa Barat', 'Jawa Tengah', 'DIY Yogyakarta', 'Jawa Timur', 'Kalimantan', 'Sumatera', 'Bali'].map(region => (
-              <button key={region} className="whitespace-nowrap px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 font-bold text-sm shadow-sm transition transform hover:-translate-y-0.5">
-                 {region}
-              </button>
-            ))}
-         </div>
+
+      {/* Recommended Events */}
+      <section id="events" className="max-w-7xl mx-auto px-6 py-16 border-t border-border mt-12">
+        <div className="flex justify-between items-end mb-10">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Featured Events</h2>
+            <p className="text-muted-foreground mt-2">Curated experiences hand-picked for you.</p>
+          </div>
+          <Button variant="ghost">View All</Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[
+            { title: "Symphony of The Stars", date: "Oct 12, 2026", loc: "Jakarta Arena", price: "IDR 500,000", tag: "Concert" },
+            { title: "DevConnect Summit", date: "Nov 20, 2026", loc: "ICE BSD", price: "IDR 150,000", tag: "Tech" },
+            { title: "Culinary Night Fest", date: "Dec 05, 2026", loc: "GBK Plaza", price: "Free", tag: "Festival" }
+          ].map((item, i) => (
+            <Card key={i} className="group overflow-hidden rounded-2xl border-border bg-card shadow-none hover:shadow-sm transition-shadow">
+              <div className="aspect-[16/9] bg-muted relative overflow-hidden flex items-center justify-center">
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 <Badge className="absolute top-4 right-4" variant="secondary">{item.tag}</Badge>
+                 {/* Placeholder for images */}
+                 <span className="text-muted-foreground font-semibold uppercase tracking-widest text-xs">Image Placeholder</span>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold leading-tight mb-4 group-hover:text-primary transition-colors">{item.title}</h3>
+                
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Calendar className="w-4 h-4 mr-2" /> {item.date}
+                  </div>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4 mr-2" /> {item.loc}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Starting At</p>
+                    <p className="font-bold text-foreground text-lg">{item.price}</p>
+                  </div>
+                  <Button size="sm" variant="default" className="rounded-full">Get Ticket</Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="bg-muted/50 py-20 mt-20 border-y border-border">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+           <div className="flex flex-col items-center">
+             <div className="w-12 h-12 rounded-full border border-border bg-background flex items-center justify-center mb-6">
+               <ShieldCheck className="w-6 h-6 text-primary" />
+             </div>
+             <h3 className="text-lg font-bold mb-2">Secure Ticketing</h3>
+             <p className="text-muted-foreground text-sm leading-relaxed">Built on isolated architecture ensuring 100% encrypted, secure transactions.</p>
+           </div>
+           <div className="flex flex-col items-center">
+             <div className="w-12 h-12 rounded-full border border-border bg-background flex items-center justify-center mb-6">
+               <Ticket className="w-6 h-6 text-primary" />
+             </div>
+             <h3 className="text-lg font-bold mb-2">Instant Delivery</h3>
+             <p className="text-muted-foreground text-sm leading-relaxed">Your e-tickets are generated immediately and stored safely in your digital wallet.</p>
+           </div>
+           <div className="flex flex-col items-center">
+             <div className="w-12 h-12 rounded-full border border-border bg-background flex items-center justify-center mb-6">
+               <Users className="w-6 h-6 text-primary" />
+             </div>
+             <h3 className="text-lg font-bold mb-2">Organizer Tools</h3>
+             <p className="text-muted-foreground text-sm leading-relaxed">Powerful dashboard metrics for creators to manage their events and revenues.</p>
+           </div>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#213FC0] text-blue-200 py-16">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="md:col-span-2">
-             <span className="text-3xl font-black text-white tracking-tight mb-6 block">mastutik.</span>
-             <p className="text-blue-200/80 leading-relaxed max-w-sm text-sm">
-               Platform andalanmu untuk manajemen tiket dan pencarian event terkemuka di Indonesia. Semua jadi lebih mudah dan aman.
-             </p>
+      <footer className="max-w-7xl mx-auto px-6 py-12 mt-10">
+        <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
+          <div className="flex items-center space-x-2 mb-4 md:mb-0">
+             <Ticket className="w-5 h-5" />
+             <span className="font-bold text-foreground">mastutik.</span>
           </div>
-          <div>
-            <h4 className="text-white font-bold mb-5 uppercase tracking-wider text-xs">Perusahaan</h4>
-            <div className="flex flex-col space-y-3 text-sm">
-              <a href="#" className="hover:text-white transition">Tentang Kami</a>
-              <a href="#" className="hover:text-white transition">Karir</a>
-              <a href="#" className="hover:text-white transition">Hubungi Kami</a>
-            </div>
+          <div className="flex space-x-6">
+            <a href="#" className="hover:text-foreground transition">Terms</a>
+            <a href="#" className="hover:text-foreground transition">Privacy</a>
+            <a href="#" className="hover:text-foreground transition">Help</a>
           </div>
-          <div>
-            <h4 className="text-white font-bold mb-5 uppercase tracking-wider text-xs">Pusat Bantuan</h4>
-            <div className="flex flex-col space-y-3 text-sm">
-              <a href="#" className="hover:text-white transition">Syarat & Ketentuan</a>
-              <a href="#" className="hover:text-white transition">Kebijakan Privasi</a>
-              <a href="#" className="hover:text-white transition">FAQ</a>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t border-blue-800 text-sm text-blue-300 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
-          <p>&copy; {new Date().getFullYear()} mastutik. All rights reserved.</p>
         </div>
       </footer>
     </div>

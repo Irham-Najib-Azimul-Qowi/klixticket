@@ -1,84 +1,60 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 const CreateEvent: React.FC = () => {
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h2 className="text-2xl font-bold text-blue-900">Tambah Event Baru</h2>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Draft New Event</CardTitle>
+          <CardDescription>Enter the primary details for your new event to publish it to the catalog.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Event Title</label>
+            <Input placeholder="Enter a catchy title" />
+          </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
-        <form className="space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-blue-900 mb-2">Judul Event</label>
-            <input 
-              type="text" 
-              placeholder="Masukkan judul event"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition" 
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">Description</label>
+            <textarea 
+              className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Describe what people can expect..."
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-blue-900 mb-2">Deskripsi</label>
-            <textarea 
-              rows={4}
-              placeholder="Jelaskan detail event"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition resize-none" 
-            ></textarea>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">Lokasi</label>
-              <input 
-                type="text" 
-                placeholder="Ex: JCC Senayan"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition" 
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">Location Venue</label>
+              <Input placeholder="e.g. Jakarta Convention Center" />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">Tanggal & Waktu</label>
-              <input 
-                type="datetime-local" 
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition text-slate-600" 
-              />
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">Date & Time</label>
+              <Input type="datetime-local" className="text-muted-foreground" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">Harga (Rp)</label>
-              <input 
-                type="number" 
-                placeholder="0 untuk gratis"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition" 
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">Price (IDR)</label>
+              <Input type="number" placeholder="Leave empty if free" />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">Kuota Tiket</label>
-              <input 
-                type="number" 
-                placeholder="Jumlah tiket tersedia"
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition" 
-              />
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">Maximum Quota</label>
+              <Input type="number" placeholder="Capacity" />
             </div>
           </div>
-
-          <div className="pt-6 border-t border-slate-100 flex items-center justify-end space-x-4">
-            <Link 
-              to="/admin/events"
-              className="px-6 py-2.5 rounded-lg font-semibold text-slate-500 hover:bg-slate-100 transition"
-            >
-              Batal
-            </Link>
-            <button 
-              type="button"
-              className="px-6 py-2.5 rounded-lg font-semibold bg-amber-500 text-white hover:bg-amber-600 shadow-sm transition"
-            >
-              Simpan Event
-            </button>
-          </div>
-        </form>
-      </div>
+        </CardContent>
+        <CardFooter className="flex justify-end space-x-4 border-t px-6 py-4">
+          <Link to="/admin/events">
+            <Button variant="outline">Cancel</Button>
+          </Link>
+          <Button>Publish Event</Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 };
