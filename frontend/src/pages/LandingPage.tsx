@@ -5,8 +5,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, ArrowRight, ShieldCheck, Ticket, Users } from 'lucide-react';
 
+interface EventItem {
+  id: number;
+  title: string;
+  description: string;
+  location: string;
+  date: string;
+  price: string;
+  banner_url?: string;
+}
+
 const LandingPage: React.FC = () => {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,12 +89,16 @@ const LandingPage: React.FC = () => {
           ) : events.length === 0 ? (
             <p className="text-muted-foreground">Yah, belum ada acara yang tersedia.</p>
           ) : (
-            events.map((item: any) => (
+            events.map((item: EventItem) => (
               <Card key={item.id} className="group overflow-hidden rounded-2xl border-border bg-card shadow-none hover:shadow-sm transition-shadow">
                 <div className="aspect-[16/9] bg-muted relative overflow-hidden flex items-center justify-center">
+                    {item.banner_url ? (
+                      <img src={item.banner_url} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-muted-foreground font-semibold uppercase tracking-widest text-xs">Image Placeholder</span>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <Badge className="absolute top-4 right-4" variant="secondary">Event</Badge>
-                    <span className="text-muted-foreground font-semibold uppercase tracking-widest text-xs">Image Placeholder</span>
                 </div>
                 <CardContent className="p-6">
                   <h3 className="text-xl font-bold leading-tight mb-4 group-hover:text-primary transition-colors">{item.title}</h3>
