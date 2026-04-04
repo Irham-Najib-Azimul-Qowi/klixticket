@@ -1,0 +1,81 @@
+﻿On branch main
+Your branch and 'origin/main' have diverged,
+and have 2 and 5 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+	deleted:    .gitignore
+	modified:   frontend/.gitignore
+	new file:   frontend/backend/README.md
+	new file:   frontend/backend/config/database.go
+	new file:   frontend/backend/controllers/.gitkeep
+	new file:   frontend/backend/controllers/admin_event_controller.go
+	new file:   frontend/backend/go.mod
+	new file:   frontend/backend/go.sum
+	new file:   frontend/backend/main.go
+	new file:   frontend/backend/models/.gitkeep
+	new file:   frontend/backend/models/event.go
+	new file:   frontend/backend/routes/.gitkeep
+	new file:   frontend/backend/routes/routes.go
+	new file:   frontend/frontend/.gitignore
+	new file:   frontend/frontend/README.md
+	new file:   frontend/frontend/components.json
+	new file:   frontend/frontend/eslint.config.js
+	new file:   frontend/frontend/index.html
+	new file:   frontend/frontend/package-lock.json
+	new file:   frontend/frontend/package.json
+	new file:   frontend/frontend/public/favicon.svg
+	new file:   frontend/frontend/public/icons.svg
+	new file:   frontend/frontend/src/App.css
+	new file:   frontend/frontend/src/App.tsx
+	renamed:    frontend/src/assets/hero.png -> frontend/frontend/src/assets/hero.png
+	new file:   frontend/frontend/src/assets/react.svg
+	new file:   frontend/frontend/src/assets/vite.svg
+	new file:   frontend/frontend/src/components/index.ts
+	new file:   frontend/frontend/src/components/ui/avatar.tsx
+	new file:   frontend/frontend/src/components/ui/badge.tsx
+	new file:   frontend/frontend/src/components/ui/button.tsx
+	new file:   frontend/frontend/src/components/ui/card.tsx
+	new file:   frontend/frontend/src/components/ui/dropdown-menu.tsx
+	new file:   frontend/frontend/src/components/ui/input.tsx
+	new file:   frontend/frontend/src/components/ui/scroll-area.tsx
+	new file:   frontend/frontend/src/components/ui/table.tsx
+	new file:   frontend/frontend/src/index.css
+	new file:   frontend/frontend/src/layouts/AdminLayout.tsx
+	new file:   frontend/frontend/src/lib/utils.ts
+	new file:   frontend/frontend/src/main.tsx
+	new file:   frontend/frontend/src/pages/LandingPage.tsx
+	new file:   frontend/frontend/src/pages/admin/CreateEvent.tsx
+	new file:   frontend/frontend/src/pages/admin/Dashboard.tsx
+	new file:   frontend/frontend/src/pages/admin/EventsList.tsx
+	new file:   frontend/frontend/src/pages/admin/OrdersList.tsx
+	new file:   frontend/frontend/tsconfig.app.json
+	new file:   frontend/frontend/tsconfig.json
+	new file:   frontend/frontend/tsconfig.node.json
+	new file:   frontend/frontend/vite.config.ts
+	new file:   frontend/src/assets/Flyer.webp
+	new file:   frontend/src/assets/tshirt.webp
+	modified:   frontend/src/index.css
+	new file:   frontend/vercel.json
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+	both modified:   frontend/src/pages/LandingPage.tsx
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	INSTRUKSI_API_EVENTS.md
+	backend/.env
+	backend/mastutik-api.exe
+	backend/output.txt
+	backend/output2.txt
+	backend/test.exe
+	docker-compose.yaml
+	frontend/lint_output.txt
+	output.txt
+	schema.txt
+
