@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import flyerImg from '@/assets/Flyer.webp';
 import tshirtImg from '@/assets/tshirt.webp';
-import { Ticket, MapPin, Calendar, ArrowRight, Music, Flame, Menu, X } from 'lucide-react';
+import { Ticket, ArrowRight, Flame, Menu, X } from 'lucide-react';
 
 const MarqueeBanner = ({ text, bgClass, rotateClass, reverse = false }: { text: string, bgClass: string, rotateClass: string, reverse?: boolean }) => {
   const marqueeRef = useRef<HTMLDivElement>(null);
