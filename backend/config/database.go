@@ -8,6 +8,8 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"mastutik-api/internal/models"
 )
 
 var DB *gorm.DB
@@ -19,10 +21,16 @@ func ConnectDB() {
 	}
 
 	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "localhost" // default fallback
+	}
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
 	dbname := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "5432"
+	}
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
 		host, user, password, dbname, port)
@@ -33,5 +41,23 @@ func ConnectDB() {
 	}
 
 	fmt.Println("Database connection established successfully")
+
+	// Eksekusi Auto-Migration Schema Database
+	err = database.AutoMigrate(
+		&models.User{},
+		&models.OAuthAccount{},
+		&models.Event{},
+		&models.TicketType{},
+		&models.Merchandise{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.Payment{},
+		&models.PaymentWebhookLog{},
+	)
+	if err != nil {
+		log.Fatal("Failed to auto-migrate database schema:", err)
+	}
+	fmt.Println("Database migration completed successfully!")
+
 	DB = database
 }

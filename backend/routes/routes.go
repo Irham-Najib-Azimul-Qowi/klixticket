@@ -1,32 +1,7 @@
 package routes
 
-import (
-	"mastutik-api/controllers"
+import "github.com/gin-gonic/gin"
 
-	"github.com/gin-gonic/gin"
-)
-
-func SetupRoutes(r *gin.Engine) {
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "OK",
-			"message": "Connection Successfully! 🚀",
-		})
-	})
-
-	api := r.Group("/api")
-	{
-		// Public routes
-		api.GET("/events", controllers.GetPublicEvents)
-
-		// Admin routes
-		admin := api.Group("/admin")
-		{
-			events := admin.Group("/events")
-			{
-				events.POST("", controllers.CreateEvent)
-				events.GET("", controllers.GetEvents)
-			}
-		}
-	}
-}
+// Deprecated: route registration lives in main.go so middleware wiring and
+// dependency injection remain in one source of truth.
+func SetupRoutes(_ *gin.Engine) {}
