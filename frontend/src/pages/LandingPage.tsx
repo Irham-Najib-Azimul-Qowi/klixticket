@@ -2,7 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import flyerImg from '@/assets/Flyer.webp';
 import tshirtImg from '@/assets/tshirt.webp';
-import { Ticket, ArrowRight, Flame, Menu, X } from 'lucide-react';
+import { Ticket, ArrowRight, Flame, Menu, X, User } from 'lucide-react';
+import { eventsApi, merchandiseApi, authApi, type Event, type Merchandise } from '@/lib/api';
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+}
 
 const MarqueeBanner = ({ text, bgClass, rotateClass, reverse = false }: { text: string, bgClass: string, rotateClass: string, reverse?: boolean }) => {
   const marqueeRef = useRef<HTMLDivElement>(null);
@@ -64,39 +69,32 @@ const MarqueeBanner = ({ text, bgClass, rotateClass, reverse = false }: { text: 
   );
 };
 
-const events = [
-  {
-    artist: "RAN",
-    action: "MEMBAWAKAN\nJ-ROCKS",
-    stage: "BOSS STAGE",
-    festival: "CONNECTED",
-    date: "MADIUN, 05 SEPT 2026",
-    desc: "RAN Membawakan J-ROCKS di Connected 2026",
-    img: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&q=80&w=800"
-  },
-  {
-    artist: "TENXI,",
-    action: "JEMSII,\nNAYKILLA",
-    stage: "SAT-SET STAGE",
-    festival: "CONNECTED",
-    date: "MADIUN, 06 SEPT 2026",
-    desc: "TENXI, JEMSII, NAYKILLA di Connected 2026",
-    img: "https://images.unsplash.com/photo-1540039155732-684735035727?auto=format&fit=crop&q=80&w=800"
-  },
-  {
-    artist: "J-ROCKS",
-    action: "MEMBAWAKAN\nRAN",
-    stage: "HINGAR BINGAR STAGE",
-    festival: "CONNECTED",
-    date: "MADIUN, 5 SEPTEMBER 2026",
-    desc: "J-ROCKS Membawakan RAN di Connected 2026",
-    img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=800"
-  },
-];
+// Static events replaced by API — kept as fallback shape reference only
 
 const LandingPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const marqueeText = " CONNECTED LAGI • FESTIVAL MUSIK • KONSER LOKAL • ".repeat(15);
+
+  // ─── API State ───────────────────────────────────────────────────────────
+  const [apiEvents, setApiEvents] = useState<Event[]>([]);
+  const [apiMerch, setApiMerch] = useState<Merchandise[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [merchLoading, setMerchLoading] = useState(true);
+  const currentUser = authApi.getUser();
+
+  useEffect(() => {
+    eventsApi.getPublished({ limit: 6 })
+      .then(res => setApiEvents(res.data || []))
+      .catch(() => setApiEvents([]))
+      .finally(() => setEventsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    merchandiseApi.getPublic()
+      .then(res => setApiMerch(res.data || []))
+      .catch(() => setApiMerch([]))
+      .finally(() => setMerchLoading(false));
+  }, []);
 
   return (
     <>
@@ -126,12 +124,28 @@ const LandingPage: React.FC = () => {
 
             <div className="hidden lg:flex items-center space-x-8 text-xl font-black uppercase tracking-tighter">
               <a href="#" className="text-salmon hover:-translate-y-1 hover:rotate-2 transition-all">Home</a>
-              <a href="#events" className="text-stanton hover:text-salmon hover:-translate-y-1 hover:-rotate-2 transition-all">Ticket</a>
+              <a href="#tickets" className="text-stanton hover:text-salmon hover:-translate-y-1 hover:-rotate-2 transition-all">Ticket</a>
               <a href="#events" className="text-stanton hover:text-discos hover:-translate-y-1 hover:rotate-2 transition-all">Line Up</a>
               <a href="#" className="text-stanton hover:text-salmon hover:-translate-y-1 hover:-rotate-2 transition-all">Rundown</a>
-              <a href="#" className="text-stanton hover:text-discos hover:-translate-y-1 hover:rotate-2 transition-all">Festival</a>
-              <a href="#" className="text-stanton hover:text-salmon hover:-translate-y-1 hover:-rotate-2 transition-all">Shop</a>
-              <Link to="/admin" className="text-stanton hover:text-discos hover:-translate-y-1 hover:rotate-2 transition-all">Gallery</Link>
+              <a href="#shop" className="text-stanton hover:text-discos hover:-translate-y-1 hover:rotate-2 transition-all">Shop</a>
+              {currentUser ? (
+                <Link to="/profile" className="flex items-center gap-3 group/profile">
+                  <div className="w-10 h-10 rounded-full border-2 border-black overflow-hidden bg-cream shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform group-hover/profile:-translate-y-1">
+                    {currentUser.avatar_url ? (
+                      <img src={currentUser.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-stanton">
+                        <User className="w-5 h-5 text-cream" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-discos font-black uppercase text-base hover:text-salmon transition-colors">
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                </Link>
+              ) : (
+                <Link to="/login" className="bg-salmon text-cream border-4 border-black px-5 py-2 text-base font-black uppercase tracking-tighter shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">Masuk</Link>
+              )}
             </div>
 
             <button
@@ -154,6 +168,9 @@ const LandingPage: React.FC = () => {
             <a href="#" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-stanton hover:text-salmon hover:translate-x-2 transition-transform">Rundown</a>
             <a href="#" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-stanton hover:text-discos hover:translate-x-2 transition-transform">Festival</a>
             <a href="#" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-stanton hover:text-salmon hover:translate-x-2 transition-transform">Shop</a>
+            {currentUser && (
+              <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-discos hover:translate-x-2 transition-transform">Profil Saya</Link>
+            )}
             <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-stanton hover:text-discos hover:translate-x-2 transition-transform mt-auto pb-10">Gallery</Link>
           </div>
         </nav>
@@ -261,19 +278,42 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              
-              {/* Item 1 - T-Shirt */}
-              <div className="group cursor-pointer">
-                <div className="relative aspect-square bg-white border-4 border-black rounded-3xl overflow-hidden mb-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-none group-hover:translate-x-1 group-hover:translate-y-1 transition-all">
-                  <img 
-                    src={tshirtImg} 
-                    alt="Official Tee" 
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                  />
+
+              {/* Fallback static item if API not loaded */}
+              {!merchLoading && apiMerch.length === 0 && (
+                <div className="group cursor-pointer">
+                  <div className="relative aspect-square bg-white border-4 border-black rounded-3xl overflow-hidden mb-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-none group-hover:translate-x-1 group-hover:translate-y-1 transition-all">
+                    <img
+                      src={tshirtImg}
+                      alt="Official Tee"
+                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase tracking-tighter text-stanton group-hover:text-salmon transition-colors">Connected Oversize Tee</h3>
+                  <p className="text-xl font-black text-black mt-1">RP 180.000</p>
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-tighter text-stanton group-hover:text-salmon transition-colors">Connected Oversize Tee</h3>
-                <p className="text-xl font-black text-black mt-1">RP 180.000</p>
-              </div>
+              )}
+
+              {/* API Merch Items */}
+              {apiMerch.slice(0, 4).map(item => (
+                <Link to={`/merchandise/${item.id}`} key={item.id} className="group cursor-pointer">
+                  <div className="relative aspect-square bg-white border-4 border-black rounded-3xl overflow-hidden mb-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-none group-hover:translate-x-1 group-hover:translate-y-1 transition-all">
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <span className="text-6xl">🛍️</span>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-2xl font-black uppercase tracking-tighter text-stanton group-hover:text-salmon transition-colors">{item.name}</h3>
+                  <p className="text-xl font-black text-black mt-1">{formatPrice(item.price)}</p>
+                </Link>
+              ))}
 
             </div>
 
@@ -296,49 +336,53 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {events.map((item, i) => (
-                <div key={i} className="bg-cream rounded-3xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col cursor-pointer border border-gray-200 group">
+              {eventsLoading && (
+                <div className="col-span-3 flex justify-center py-16">
+                  <div className="w-12 h-12 border-4 border-salmon border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {!eventsLoading && apiEvents.map((item) => (
+                <Link to={`/event/${item.id}`} key={item.id} className="bg-cream rounded-3xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col cursor-pointer border border-gray-200 group">
 
                   <div className="relative h-[250px] md:h-[280px] w-full overflow-hidden">
-                    <img
-                      src={item.img}
-                      alt={item.artist}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
+                    {item.banner_url ? (
+                      <img
+                        src={item.banner_url}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-stanton flex items-center justify-center">
+                        <span className="text-cream text-6xl font-black">🎵</span>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10"></div>
 
                     <div className="absolute top-5 left-5">
-                      <span className="text-cream text-xs font-black italic tracking-widest drop-shadow-md">BOSSHOW</span>
+                      <span className="text-cream text-xs font-black italic tracking-widest drop-shadow-md">{item.location.split(',')[0].toUpperCase()}</span>
                     </div>
                     <div className="absolute top-5 right-5">
                       <span className="text-salmon text-xs font-black tracking-widest drop-shadow-md">CONNECTED</span>
                     </div>
 
                     <div className="absolute bottom-5 left-5 right-5 text-cream">
-                      <div className="flex items-end gap-3 mb-4">
-                        <h3 className="text-[2.5rem] md:text-5xl font-black uppercase leading-none tracking-tighter drop-shadow-md">
-                          {item.artist}
-                        </h3>
-                        <span className="text-sm md:text-base font-bold uppercase leading-tight pb-1 whitespace-pre-line drop-shadow-md text-discos">
-                          {item.action}
-                        </span>
-                      </div>
-
+                      <h3 className="text-[1.8rem] md:text-4xl font-black uppercase leading-tight tracking-tighter drop-shadow-md mb-3">
+                        {item.title}
+                      </h3>
                       <div className="flex justify-between items-center text-[0.55rem] md:text-[0.65rem] font-bold uppercase tracking-widest text-gray-300">
-                        <span>{item.stage}</span>
-                        <span>{item.festival}</span>
-                        <span>{item.date}</span>
+                        <span>{item.location}</span>
+                        <span>{new Date(item.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-6 md:p-8 flex-grow flex items-center">
-                    <p className="text-base md:text-lg text-stanton font-semibold leading-relaxed">
-                      {item.desc}
+                    <p className="text-base md:text-lg text-stanton font-semibold leading-relaxed line-clamp-3">
+                      {item.description}
                     </p>
                   </div>
 
-                </div>
+                </Link>
               ))}
             </div>
 

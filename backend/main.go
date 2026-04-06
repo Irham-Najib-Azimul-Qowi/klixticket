@@ -5,8 +5,13 @@ import (
 	"os"
 	"time"
 
+	"reflect"
+	"strings"
+
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv" // Tambahkan ini
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 	"mastutik-api/config"
 	"mastutik-api/internal/handlers"
 	"mastutik-api/internal/middlewares"
@@ -16,10 +21,19 @@ import (
 )
 
 func main() {
-	// 1. LOAD ENV PALING PERTAMA
-	// Ini krusial agar JWT_SECRET tidak jatuh ke default value saat init package lain
 	if err := godotenv.Load(); err != nil {
 		log.Println("Info: .env file not found, using system environment variables")
+	}
+
+	// Gunakan nama JSON untuk pesan error validator
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+			if name == "-" {
+				return ""
+			}
+			return name
+		})
 	}
 
 	// 2. KONEKSI DB & OPTIMASI POOLING
@@ -86,6 +100,7 @@ func main() {
 		usersGroup.Use(middlewares.RequireAuth())
 		{
 			usersGroup.GET("/me", authHandler.GetMe)
+			usersGroup.PUT("/me", authHandler.UpdateMe)
 		}
 
 		eventsGroup := api.Group("/events")

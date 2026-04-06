@@ -11,6 +11,7 @@ type UserRepository interface {
 	FindByID(id uint) (*models.User, error)
 	CreateOAuthAccount(oauth *models.OAuthAccount) error
 	FindOAuthAccount(provider, providerUserID string) (*models.OAuthAccount, error)
+	UpdateUser(user *models.User) error
 }
 
 type userRepository struct {
@@ -45,4 +46,7 @@ func (r *userRepository) FindOAuthAccount(provider, providerUserID string) (*mod
 	var oauth models.OAuthAccount
 	err := r.db.Where("provider = ? AND provider_user_id = ?", provider, providerUserID).First(&oauth).Error
 	return &oauth, err
+}
+func (r *userRepository) UpdateUser(user *models.User) error {
+	return r.db.Save(user).Error
 }

@@ -19,3 +19,8 @@ type AuthResponse struct {
 	Token string `json:"token"`
 	Role  string `json:"role"`
 }
+
+type UpdateProfileRequest struct {
+	Name  string `json:"name" binding:"required,min=3,max=100"`
+	Email string `json:"email" binding:"required,email"`
+}

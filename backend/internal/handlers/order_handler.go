@@ -46,7 +46,7 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 
 	var req dto.CreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input payload", err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
 		return
 	}
 

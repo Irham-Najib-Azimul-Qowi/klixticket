@@ -54,7 +54,10 @@ func (h *EventHandler) GetPublishedEvents(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Published events retrieved", events)
+	utils.SuccessResponse(c, http.StatusOK, "Published events retrieved", gin.H{
+		"data":  events,
+		"total": len(events), // Simplistic total for now
+	})
 }
 
 func (h *EventHandler) GetPublishedEventByID(c *gin.Context) {
@@ -111,7 +114,7 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 		if bannerUploaded {
 			_ = utils.DeleteManagedUpload(req.BannerURL)
 		}
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input payload", err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
 		return
 	}
 
@@ -136,7 +139,7 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
 		if bannerUploaded {
 			_ = utils.DeleteManagedUpload(req.BannerURL)
 		}
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input payload", err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
 		return
 	}
 
@@ -173,7 +176,7 @@ func (h *EventHandler) CreateTicket(c *gin.Context) {
 
 	var req dto.CreateTicketRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input payload", err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
 		return
 	}
 

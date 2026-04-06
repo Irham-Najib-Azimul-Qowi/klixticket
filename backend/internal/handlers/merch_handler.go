@@ -33,7 +33,10 @@ func (h *MerchandiseHandler) GetPublicMerchandise(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Merchandise retrieved successfully", merchandise)
+	utils.SuccessResponse(c, http.StatusOK, "Merchandise retrieved successfully", gin.H{
+		"data":  merchandise,
+		"total": len(merchandise),
+	})
 }
 
 func (h *MerchandiseHandler) GetAllMerchandiseAdmin(c *gin.Context) {
@@ -79,7 +82,7 @@ func (h *MerchandiseHandler) CreateMerchandise(c *gin.Context) {
 		if imageUploaded {
 			_ = utils.DeleteManagedUpload(req.ImageURL)
 		}
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input payload", err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
 		return
 	}
 
@@ -104,7 +107,7 @@ func (h *MerchandiseHandler) UpdateMerchandise(c *gin.Context) {
 		if imageUploaded {
 			_ = utils.DeleteManagedUpload(req.ImageURL)
 		}
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input payload", err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
 		return
 	}
 
