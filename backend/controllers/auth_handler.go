@@ -1,21 +1,21 @@
-package handlers
+package controllers
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"mastutik-api/internal/models"
-	"mastutik-api/internal/repository"
-	"mastutik-api/internal/services"
+	"mastutik-api/models"
+	"mastutik-api/repositories"
+	"mastutik-api/services"
 	"mastutik-api/pkg/utils"
 )
 
 type AuthHandler struct {
 	authService services.AuthService
-	userRepo    repository.UserRepository
+	userRepo    repositories.UserRepository
 }
 
-func NewAuthHandler(authService services.AuthService, userRepo repository.UserRepository) *AuthHandler {
+func NewAuthHandler(authService services.AuthService, userRepo repositories.UserRepository) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		userRepo:    userRepo,

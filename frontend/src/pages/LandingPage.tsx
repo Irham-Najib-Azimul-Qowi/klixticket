@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import flyerImg from '@/assets/Flyer.webp';
 import tshirtImg from '@/assets/tshirt.webp';
 import { Ticket, ArrowRight, Flame, Menu, X, User } from 'lucide-react';
-import { eventsApi, merchandiseApi, authApi, type Event, type Merchandise } from '@/lib/api';
+import { eventsApi, merchandiseApi, authApi, type Event, type Merchandise } from '@/services/api';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);

@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/models"
-	"mastutik-api/internal/repository"
+	"mastutik-api/dto"
+	"mastutik-api/models"
+	"mastutik-api/repositories"
 )
 
 var (
@@ -38,14 +38,14 @@ type OrderService interface {
 }
 
 type orderService struct {
-	repo      repository.OrderRepository
-	eventRepo repository.EventRepository
-	merchRepo repository.MerchandiseRepository
-	userRepo  repository.UserRepository
+	repo      repositories.OrderRepository
+	eventRepo repositories.EventRepository
+	merchRepo repositories.MerchandiseRepository
+	userRepo  repositories.UserRepository
 	xenditSvc XenditService
 }
 
-func NewOrderService(repo repository.OrderRepository, eventRepo repository.EventRepository, merchRepo repository.MerchandiseRepository, userRepo repository.UserRepository, xenditSvc XenditService) OrderService {
+func NewOrderService(repo repositories.OrderRepository, eventRepo repositories.EventRepository, merchRepo repositories.MerchandiseRepository, userRepo repositories.UserRepository, xenditSvc XenditService) OrderService {
 	return &orderService{
 		repo:      repo,
 		eventRepo: eventRepo,

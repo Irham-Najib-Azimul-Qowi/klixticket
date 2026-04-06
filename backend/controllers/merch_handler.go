@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"errors"
@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/services"
+	"mastutik-api/dto"
+	"mastutik-api/services"
 	"mastutik-api/pkg/utils"
 )
 
@@ -37,6 +37,27 @@ func (h *MerchandiseHandler) GetPublicMerchandise(c *gin.Context) {
 		"data":  merchandise,
 		"total": len(merchandise),
 	})
+}
+
+func (h *MerchandiseHandler) GetPublicMerchandiseByID(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid merchandise ID", err.Error())
+		return
+	}
+
+	merchandise, err := h.service.GetMerchandiseByID(c.Request.Context(), uint(id))
+	if err != nil {
+		if errors.Is(err, services.ErrMerchandiseNotFound) {
+			utils.ErrorResponse(c, http.StatusNotFound, err.Error(), nil)
+			return
+		}
+
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve merchandise", err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Merchandise detail retrieved successfully", merchandise)
 }
 
 func (h *MerchandiseHandler) GetAllMerchandiseAdmin(c *gin.Context) {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Flame, ArrowLeft, MapPin, Calendar, Ticket, Loader2 } from 'lucide-react';
-import { eventsApi, type Event } from '@/lib/api';
+import { eventsApi, type Event } from '@/services/api';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('id-ID', {

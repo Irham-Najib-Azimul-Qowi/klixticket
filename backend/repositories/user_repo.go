@@ -1,8 +1,8 @@
-package repository
+package repositories
 
 import (
 	"gorm.io/gorm"
-	"mastutik-api/internal/models"
+	"mastutik-api/models"
 )
 
 type UserRepository interface {

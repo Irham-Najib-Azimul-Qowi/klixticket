@@ -13,10 +13,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"mastutik-api/config"
-	"mastutik-api/internal/handlers"
-	"mastutik-api/internal/middlewares"
-	"mastutik-api/internal/repository"
-	"mastutik-api/internal/services"
+	"mastutik-api/controllers"
+	"mastutik-api/middlewares"
+	"mastutik-api/repositories"
+	"mastutik-api/services"
 	"mastutik-api/pkg/seeder"
 )
 
@@ -53,10 +53,10 @@ func main() {
 	}
 
 	// 3. DEPENDENCY INJECTION
-	userRepo := repository.NewUserRepository(config.DB)
-	eventRepo := repository.NewEventRepository(config.DB)
-	merchRepo := repository.NewMerchandiseRepository(config.DB)
-	orderRepo := repository.NewOrderRepository(config.DB)
+	userRepo := repositories.NewUserRepository(config.DB)
+	eventRepo := repositories.NewEventRepository(config.DB)
+	merchRepo := repositories.NewMerchandiseRepository(config.DB)
+	orderRepo := repositories.NewOrderRepository(config.DB)
 
 	authService := services.NewAuthService(userRepo)
 	eventService := services.NewEventService(eventRepo)
@@ -65,12 +65,12 @@ func main() {
 	orderService := services.NewOrderService(orderRepo, eventRepo, merchRepo, userRepo, xenditService)
 	dashboardService := services.NewDashboardService(orderRepo, eventRepo)
 
-	authHandler := handlers.NewAuthHandler(authService, userRepo)
-	eventHandler := handlers.NewEventHandler(eventService)
-	merchHandler := handlers.NewMerchandiseHandler(merchService)
-	orderHandler := handlers.NewOrderHandler(orderService)
-	webhookHandler := handlers.NewWebhookHandler(orderService)
-	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+	authHandler := controllers.NewAuthHandler(authService, userRepo)
+	eventHandler := controllers.NewEventHandler(eventService)
+	merchHandler := controllers.NewMerchandiseHandler(merchService)
+	orderHandler := controllers.NewOrderHandler(orderService)
+	webhookHandler := controllers.NewWebhookHandler(orderService)
+	dashboardHandler := controllers.NewDashboardHandler(dashboardService)
 
 	// 4. ROUTER SETUP
 	// Set mode production jika bukan di lokal agar log tidak terlalu berat
@@ -113,6 +113,7 @@ func main() {
 		merchandiseGroup := api.Group("/merchandise")
 		{
 			merchandiseGroup.GET("", merchHandler.GetPublicMerchandise)
+			merchandiseGroup.GET("/:id", merchHandler.GetPublicMerchandiseByID)
 		}
 
 		ordersGroup := api.Group("/orders")

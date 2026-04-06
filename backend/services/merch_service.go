@@ -10,9 +10,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/models"
-	"mastutik-api/internal/repository"
+	"mastutik-api/dto"
+	"mastutik-api/models"
+	"mastutik-api/repositories"
 	"mastutik-api/pkg/utils"
 )
 
@@ -28,12 +28,12 @@ type MerchandiseService interface {
 }
 
 type merchandiseService struct {
-	repo repository.MerchandiseRepository
+	repo repositories.MerchandiseRepository
 }
 
 var nonMerchSlugCharacterPattern = regexp.MustCompile(`[^a-z0-9-]+`)
 
-func NewMerchandiseService(repo repository.MerchandiseRepository) MerchandiseService {
+func NewMerchandiseService(repo repositories.MerchandiseRepository) MerchandiseService {
 	return &merchandiseService{repo: repo}
 }
 

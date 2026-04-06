@@ -9,7 +9,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"mastutik-api/internal/models"
+	"mastutik-api/models"
 	"mastutik-api/pkg/utils"
 )
 

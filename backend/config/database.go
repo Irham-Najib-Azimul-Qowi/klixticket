@@ -9,7 +9,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"mastutik-api/internal/models"
+	"mastutik-api/models"
 )
 
 var DB *gorm.DB

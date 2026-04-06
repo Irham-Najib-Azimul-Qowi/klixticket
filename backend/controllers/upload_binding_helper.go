@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 
-	"mastutik-api/internal/dto"
+	"mastutik-api/dto"
 	"mastutik-api/pkg/utils"
 )
 

@@ -10,9 +10,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/models"
-	"mastutik-api/internal/repository"
+	"mastutik-api/dto"
+	"mastutik-api/models"
+	"mastutik-api/repositories"
 	"mastutik-api/pkg/utils"
 )
 
@@ -54,10 +54,10 @@ type EventService interface {
 }
 
 type eventService struct {
-	repo repository.EventRepository
+	repo repositories.EventRepository
 }
 
-func NewEventService(repo repository.EventRepository) EventService {
+func NewEventService(repo repositories.EventRepository) EventService {
 	return &eventService{repo: repo}
 }
 

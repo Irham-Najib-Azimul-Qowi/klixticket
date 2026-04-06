@@ -1,4 +1,4 @@
-package repository
+package repositories
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"mastutik-api/internal/models"
+	"mastutik-api/models"
 )
 
 type MerchandiseRepository interface {

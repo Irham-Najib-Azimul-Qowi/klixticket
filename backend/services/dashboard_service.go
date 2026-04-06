@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/repository"
+	"mastutik-api/dto"
+	"mastutik-api/repositories"
 )
 
 type DashboardService interface {
@@ -14,11 +14,11 @@ type DashboardService interface {
 }
 
 type dashboardService struct {
-	orderRepo repository.OrderRepository
-	eventRepo repository.EventRepository
+	orderRepo repositories.OrderRepository
+	eventRepo repositories.EventRepository
 }
 
-func NewDashboardService(orderRepo repository.OrderRepository, eventRepo repository.EventRepository) DashboardService {
+func NewDashboardService(orderRepo repositories.OrderRepository, eventRepo repositories.EventRepository) DashboardService {
 	return &dashboardService{
 		orderRepo: orderRepo,
 		eventRepo: eventRepo,

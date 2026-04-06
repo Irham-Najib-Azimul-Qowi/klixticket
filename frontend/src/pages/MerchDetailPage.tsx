@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Flame, ArrowLeft, Package, ShoppingCart, Loader2 } from 'lucide-react';
-import { merchandiseApi, type Merchandise } from '@/lib/api';
+import { merchandiseApi, type Merchandise } from '@/services/api';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('id-ID', {

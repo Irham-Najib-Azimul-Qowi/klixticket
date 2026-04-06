@@ -13,8 +13,8 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/models"
+	"mastutik-api/dto"
+	"mastutik-api/models"
 )
 
 var serviceWorkingDirMu sync.Mutex

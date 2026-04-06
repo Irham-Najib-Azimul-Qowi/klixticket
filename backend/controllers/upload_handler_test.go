@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"bytes"
@@ -16,8 +16,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/models"
+	"mastutik-api/dto"
+	"mastutik-api/models"
 )
 
 var handlerWorkingDirMu sync.Mutex

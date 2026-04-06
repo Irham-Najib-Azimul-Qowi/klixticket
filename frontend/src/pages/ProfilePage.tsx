@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Flame, User as UserIcon, LogOut, Loader2, Save, ArrowLeft } from 'lucide-react';
-import { authApi } from '@/lib/api';
-import type { User } from '@/lib/api';
+import { authApi } from '@/services/api';
+import type { User } from '@/services/api';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();

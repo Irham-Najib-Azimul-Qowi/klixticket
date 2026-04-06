@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"google.golang.org/api/idtoken"
-	"mastutik-api/internal/models"
-	"mastutik-api/internal/repository"
+	"mastutik-api/models"
+	"mastutik-api/repositories"
 	"mastutik-api/pkg/utils"
 )
 
@@ -19,10 +19,10 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo repository.UserRepository
+	userRepo repositories.UserRepository
 }
 
-func NewAuthService(repo repository.UserRepository) AuthService {
+func NewAuthService(repo repositories.UserRepository) AuthService {
 	return &authService{userRepo: repo}
 }
 

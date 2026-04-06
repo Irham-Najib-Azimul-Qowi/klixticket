@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Flame, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { authApi } from '@/services/api';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();

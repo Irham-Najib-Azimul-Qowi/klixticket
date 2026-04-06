@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"errors"
@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mastutik-api/internal/dto"
-	"mastutik-api/internal/services"
+	"mastutik-api/dto"
+	"mastutik-api/services"
 	"mastutik-api/pkg/utils"
 )
 
