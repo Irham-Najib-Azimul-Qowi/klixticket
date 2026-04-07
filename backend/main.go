@@ -3,14 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	"time"
-
-	"reflect"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"mastutik-api/config"
 	"mastutik-api/controllers"
@@ -18,6 +12,7 @@ import (
 	"mastutik-api/repositories"
 	"mastutik-api/services"
 	"mastutik-api/pkg/seeder"
+	"mastutik-api/routes"
 )
 
 func main() {
@@ -25,16 +20,8 @@ func main() {
 		log.Println("Info: .env file not found, using system environment variables")
 	}
 
-	// Gunakan nama JSON untuk pesan error validator
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
-			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-			if name == "-" {
-				return ""
-			}
-			return name
-		})
-	}
+	// 1. SETUP VALIDATOR & CONFIG
+	config.SetupValidator()
 
 	// 2. KONEKSI DB & OPTIMASI POOLING
 	config.ConnectDB()
@@ -73,94 +60,23 @@ func main() {
 	dashboardHandler := controllers.NewDashboardHandler(dashboardService)
 
 	// 4. ROUTER SETUP
-	// Set mode production jika bukan di lokal agar log tidak terlalu berat
 	if os.Getenv("APP_ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	r := gin.Default()
-
-	// Gunakan middleware yang sudah dipindah
 	r.Use(middlewares.CORSMiddleware())
-	r.Static("/uploads", "./uploads")
 
-	// 5. API ENDPOINTS V1
-	api := r.Group("/api/v1")
-	{
-		// ... (isi routes kamu tetap sama seperti sebelumnya)
-		authGroup := api.Group("/auth")
-		authGroup.Use(middlewares.NewSimpleRateLimit(10, time.Minute))
-		{
-			authGroup.POST("/register", authHandler.Register)
-			authGroup.POST("/login", authHandler.Login)
-			authGroup.POST("/google", authHandler.GoogleLogin)
-		}
-
-		usersGroup := api.Group("/users")
-		usersGroup.Use(middlewares.RequireAuth())
-		{
-			usersGroup.GET("/me", authHandler.GetMe)
-			usersGroup.PUT("/me", authHandler.UpdateMe)
-		}
-
-		eventsGroup := api.Group("/events")
-		{
-			eventsGroup.GET("", eventHandler.GetPublishedEvents)
-			eventsGroup.GET("/", eventHandler.GetPublishedEvents)
-			eventsGroup.GET("/:id", eventHandler.GetPublishedEventByID)
-		}
-
-		merchandiseGroup := api.Group("/merchandise")
-		{
-			merchandiseGroup.GET("", merchHandler.GetPublicMerchandise)
-			merchandiseGroup.GET("/:id", merchHandler.GetPublicMerchandiseByID)
-		}
-
-		ordersGroup := api.Group("/orders")
-		ordersGroup.Use(middlewares.RequireAuth())
-		{
-			ordersGroup.POST("", orderHandler.CreateOrder)
-			ordersGroup.GET("/me", orderHandler.GetMyOrders)
-			ordersGroup.GET("/:id", orderHandler.GetOrderByID)
-		}
-
-		webhookGroup := api.Group("/webhooks")
-		{
-			webhookGroup.POST("/xendit", webhookHandler.XenditCallback)
-		}
-
-		adminGroup := api.Group("/admin")
-		{
-			adminAuthGroup := adminGroup.Group("/auth")
-			adminAuthGroup.Use(middlewares.NewSimpleRateLimit(10, time.Minute))
-			{
-				adminAuthGroup.POST("/login", authHandler.AdminLogin)
-			}
-
-			adminProtected := adminGroup.Group("/")
-			adminProtected.Use(middlewares.RequireAuth(), middlewares.RequireRole("admin"))
-			{
-				adminProtected.GET("/events", eventHandler.GetAllEventsAdmin)
-				adminProtected.GET("/events/:id", eventHandler.GetEventByIDAdmin)
-				adminProtected.POST("/events", eventHandler.CreateEvent)
-				adminProtected.PUT("/events/:id", eventHandler.UpdateEvent)
-				adminProtected.DELETE("/events/:id", eventHandler.DeleteEvent)
-				adminProtected.POST("/events/:id/tickets", eventHandler.CreateTicket)
-				adminProtected.PUT("/tickets/:ticket_id", eventHandler.UpdateTicketStatus)
-				adminProtected.DELETE("/tickets/:ticket_id", eventHandler.DeleteTicket)
-				adminProtected.GET("/merchandise", merchHandler.GetAllMerchandiseAdmin)
-				adminProtected.GET("/merchandise/:id", merchHandler.GetMerchandiseByIDAdmin)
-				adminProtected.POST("/merchandise", merchHandler.CreateMerchandise)
-				adminProtected.PUT("/merchandise/:id", merchHandler.UpdateMerchandise)
-				adminProtected.DELETE("/merchandise/:id", merchHandler.DeleteMerchandise)
-				adminProtected.GET("/dashboard/summary", dashboardHandler.GetSummary)
-				adminProtected.GET("/dashboard/sales-chart", dashboardHandler.GetSalesChart)
-				adminProtected.GET("/orders", orderHandler.GetAllOrdersAdmin)
-				adminProtected.GET("/orders/:id", orderHandler.GetOrderByIDAdmin)
-				adminProtected.PATCH("/orders/:id/check-in", orderHandler.CheckInOrderAdmin)
-			}
-		}
-	}
+	// 5. CALL ROUTE SETUP
+	routes.SetupRoutes(
+		r,
+		authHandler,
+		eventHandler,
+		merchHandler,
+		orderHandler,
+		webhookHandler,
+		dashboardHandler,
+	)
 
 	port := os.Getenv("PORT")
 	if port == "" {
