@@ -4,6 +4,7 @@ type CreateOrderRequest struct {
 	Items            []OrderItemRequest            `json:"items"`
 	TicketItems      []OrderItemRequest            `json:"ticket_items"`
 	MerchandiseItems []OrderMerchandiseItemRequest `json:"merchandise_items"`
+	PaymentMethod    string                        `json:"payment_method,omitempty"`
 }
 
 type OrderItemRequest struct {

@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import EventDetailPage from './pages/EventDetailPage';
 import MerchDetailPage from './pages/MerchDetailPage';
 import ProfilePage from './pages/ProfilePage';
+import Checkout from './pages/Checkout';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -26,6 +27,7 @@ const App: React.FC = () => {
         <Route path="/event/:id" element={<EventDetailPage />} />
         <Route path="/merchandise/:id" element={<MerchDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/checkout" element={<Checkout />} />
 
         {/* Admin Routes with Layout Wrapper */}
         <Route path="/admin" element={<AdminLayout />}>

@@ -210,53 +210,54 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              {(() => {
+                const TICKETS = [
+                  { id: 1, name: "Presale 1", type: "Tiket Terusan 3 Hari", price: 350000, isSoldOut: true, recommended: false },
+                  { id: 2, name: "Presale 2", type: "Tiket Terusan 3 Hari", price: 550000, isSoldOut: false, recommended: true }
+                ];
 
-              <div className="bg-white border-4 border-gray-200 rounded-3xl p-8 md:p-12 relative overflow-hidden opacity-60 grayscale transition-all">
-                <div className="absolute top-10 right-[-35px] bg-burgundy text-cream px-12 py-2 rotate-45 font-black text-xl border-2 border-black shadow-lg">
-                  SOLD OUT
-                </div>
+                return TICKETS.map((ticket, index) => (
+                  <div key={index} className={`bg-white border-4 border-black rounded-3xl p-8 md:p-12 relative transition-all ${ticket.isSoldOut ? 'opacity-60 grayscale' : 'shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2'}`}>
+                    {ticket.isSoldOut && (
+                      <div className="absolute top-10 right-[-35px] bg-burgundy text-cream px-12 py-2 rotate-45 font-black text-xl border-2 border-black shadow-lg z-10">
+                        SOLD OUT
+                      </div>
+                    )}
+                    {ticket.recommended && !ticket.isSoldOut && (
+                      <div className="absolute top-6 left-6 bg-discos text-cream px-4 py-1 rounded-full font-black text-xs uppercase border-2 border-black">
+                        rekomendasi
+                      </div>
+                    )}
 
-                <h3 className="text-3xl md:text-4xl font-black uppercase mb-2 text-black">Presale 1</h3>
-                <p className="text-gray-500 font-bold mb-8 uppercase tracking-widest text-sm">Tiket Terusan 3 Hari</p>
+                    <h3 className={`text-3xl md:text-4xl font-black uppercase mb-2 ${ticket.recommended ? 'mt-4 text-salmon' : 'text-black'}`}>{ticket.name}</h3>
+                    <p className={`font-bold mb-8 uppercase tracking-widest text-sm ${ticket.isSoldOut ? 'text-gray-500' : 'text-gray-400'}`}>{ticket.type}</p>
 
-                <div className="mb-10">
-                  <span className="text-5xl md:text-6xl font-black tracking-tighter text-black">RP 350.000</span>
-                </div>
+                    <div className="mb-10">
+                      <span className={`text-5xl md:text-6xl font-black tracking-tighter ${ticket.isSoldOut ? 'text-black' : 'text-stanton'}`}>
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(ticket.price)}
+                      </span>
+                    </div>
 
-                <ul className="space-y-4 mb-12 font-bold text-gray-400 uppercase text-sm">
-                  <li className="flex items-center gap-3">✓ akses semua stage</li>
-                  <li className="flex items-center gap-3">✓ eksklusif wristband</li>
-                  <li className="flex items-center gap-3">✓ madiun pride experience</li>
-                </ul>
+                    <ul className={`space-y-4 mb-12 font-bold uppercase text-sm ${ticket.isSoldOut ? 'text-gray-400' : 'text-black'}`}>
+                      <li className="flex items-center gap-3"><Ticket className="w-5 h-5" /> akses semua stage</li>
+                      <li className="flex items-center gap-3"><Ticket className="w-5 h-5" /> eksklusif wristband</li>
+                      <li className="flex items-center gap-3"><Ticket className="w-5 h-5" /> madiun pride experience</li>
+                    </ul>
 
-                <button disabled className="w-full bg-gray-200 text-gray-500 py-5 rounded-2xl text-2xl font-black uppercase cursor-not-allowed">
-                  Habis Terjual
-                </button>
-              </div>
-
-              <div className="bg-white border-4 border-black rounded-3xl p-8 md:p-12 relative shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-2">
-                <div className="absolute top-6 left-6 bg-discos text-cream px-4 py-1 rounded-full font-black text-xs uppercase border-2 border-black">
-                  rekomendasi
-                </div>
-
-                <h3 className="text-3xl md:text-4xl font-black uppercase mb-2 mt-4 text-salmon">Presale 2</h3>
-                <p className="text-gray-400 font-bold mb-8 uppercase tracking-widest text-sm">Tiket Terusan 3 Hari</p>
-
-                <div className="mb-10">
-                  <span className="text-5xl md:text-6xl font-black tracking-tighter text-stanton">RP 550.000</span>
-                </div>
-
-                <ul className="space-y-4 mb-12 font-bold text-black uppercase text-sm">
-                  <li className="flex items-center gap-3 text-discos"><Ticket className="w-5 h-5" /> akses semua stage</li>
-                  <li className="flex items-center gap-3 text-discos"><Ticket className="w-5 h-5" /> eksklusif wristband</li>
-                  <li className="flex items-center gap-3 text-discos"><Ticket className="w-5 h-5" /> madiun pride experience</li>
-                </ul>
-
-                <button className="w-full bg-salmon text-cream border-4 border-black py-5 rounded-2xl text-2xl font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
-                  Sikat Sekarang!
-                </button>
-              </div>
-
+                    {ticket.isSoldOut ? (
+                      <button disabled className="w-full bg-gray-200 text-gray-500 py-5 rounded-2xl text-2xl font-black uppercase cursor-not-allowed">
+                        Habis Terjual
+                      </button>
+                    ) : (
+                      <Link to={`/checkout?ticketId=${ticket.id}&name=${encodeURIComponent(ticket.name)}&price=${ticket.price}`}>
+                        <button className="w-full bg-salmon text-cream border-4 border-black py-5 rounded-2xl text-2xl font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
+                          Sikat Sekarang!
+                        </button>
+                      </Link>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </section>

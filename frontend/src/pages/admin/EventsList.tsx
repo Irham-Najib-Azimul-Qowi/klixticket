@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { adminApi } from '@/services/api';
+import type { Event } from '@/types';
+
+function formatPrice(price: number) {
+  if (price === 0) return 'Free';
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+}
 
 const EventsList: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminApi.getAllEvents()
+      .then(res => setEvents(res.data || []))
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -28,40 +45,51 @@ const EventsList: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Event Title</TableHead>
-                <TableHead>Date & Time</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>Location</TableHead>
-                <TableHead>Options</TableHead>
+                <TableHead>Options (Price)</TableHead>
                 <TableHead>Quota</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell className="font-semibold">Symphony of The Stars</TableCell>
-                <TableCell className="text-muted-foreground">Oct 12, 2026</TableCell>
-                <TableCell className="text-muted-foreground">Jakarta Arena</TableCell>
-                <TableCell>Rp 500,000</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">800 / 1000</Badge>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-semibold">DevConnect Summit</TableCell>
-                <TableCell className="text-muted-foreground">Nov 20, 2026</TableCell>
-                <TableCell className="text-muted-foreground">ICE BSD</TableCell>
-                <TableCell>Rp 150,000</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">150 / 300</Badge>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-semibold">Culinary Night Fest</TableCell>
-                <TableCell className="text-muted-foreground">Dec 05, 2026</TableCell>
-                <TableCell className="text-muted-foreground">GBK Plaza</TableCell>
-                <TableCell>Free</TableCell>
-                <TableCell>
-                  <Badge variant="destructive">Full / 500</Badge>
-                </TableCell>
-              </TableRow>
+              {loading ? (
+                 <TableRow>
+                   <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">Loading events...</TableCell>
+                 </TableRow>
+              ) : events.length === 0 ? (
+                 <TableRow>
+                   <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">No events found.</TableCell>
+                 </TableRow>
+              ) : (
+                events.map(event => {
+                  const firstTicket = event.ticket_types?.[0];
+                  const sold = firstTicket ? firstTicket.quota - firstTicket.remaining_quota : 0;
+                  const total = firstTicket ? firstTicket.quota : 0;
+                  const price = firstTicket?.price || 0;
+                  
+                  return (
+                    <TableRow key={event.id}>
+                      <TableCell className="font-semibold">{event.title}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(event.start_date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{event.location}</TableCell>
+                      <TableCell>{formatPrice(price)}</TableCell>
+                      <TableCell>
+                        <Badge variant={sold >= total && total > 0 ? "destructive" : "secondary"}>
+                          {sold} / {total}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                         <Badge variant={event.publish_status === 'published' ? 'default' : 'secondary'} className={event.publish_status === 'published' ? 'bg-green-600 hover:bg-green-700' : ''}>
+                           {event.publish_status}
+                         </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>

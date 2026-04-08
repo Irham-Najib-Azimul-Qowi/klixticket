@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { adminApi } from '@/services/api';
+import type { Order } from '@/types';
+
+function formatPrice(price: number) {
+  if (price === 0) return 'Free';
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+}
 
 const OrdersList: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminApi.getAllOrders()
+      .then(res => setOrders(res.data || []))
+      .catch(() => setOrders([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -27,33 +44,37 @@ const OrdersList: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell className="font-semibold">#TRX-001</TableCell>
-                <TableCell className="text-muted-foreground">Budi Santoso</TableCell>
-                <TableCell className="text-muted-foreground">Symphony of The Stars</TableCell>
-                <TableCell>Rp 500,000</TableCell>
-                <TableCell>
-                  <Badge variant="default" className="bg-green-600 hover:bg-green-700">Paid</Badge>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-semibold">#TRX-002</TableCell>
-                <TableCell className="text-muted-foreground">Siti Aminah</TableCell>
-                <TableCell className="text-muted-foreground">DevConnect Summit</TableCell>
-                <TableCell>Rp 150,000</TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-semibold">#TRX-003</TableCell>
-                <TableCell className="text-muted-foreground">Andi Saputra</TableCell>
-                <TableCell className="text-muted-foreground">Culinary Night Fest</TableCell>
-                <TableCell>Free</TableCell>
-                <TableCell>
-                  <Badge variant="destructive">Expired</Badge>
-                </TableCell>
-              </TableRow>
+              {loading ? (
+                 <TableRow>
+                   <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Loading orders...</TableCell>
+                 </TableRow>
+              ) : orders.length === 0 ? (
+                 <TableRow>
+                   <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">No orders found.</TableCell>
+                 </TableRow>
+              ) : (
+                orders.map(order => {
+                  const eventName = order.order_items?.[0]?.ticket_type?.name || order.order_items?.[0]?.item_name || 'N/A';
+                  
+                  return (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-semibold text-xs">...{order.id.split('-').pop()}</TableCell>
+                      <TableCell className="text-muted-foreground">{order.user?.name || 'Guest'}</TableCell>
+                      <TableCell className="text-muted-foreground max-w-[200px] truncate">{eventName}</TableCell>
+                      <TableCell>{formatPrice(order.total_amount)}</TableCell>
+                      <TableCell>
+                         <Badge variant={order.status === 'paid' ? 'default' : order.status === 'pending' ? 'secondary' : 'destructive'} 
+                           className={
+                             order.status === 'paid' ? 'bg-green-600 hover:bg-green-700' :
+                             order.status === 'pending' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100' : ''
+                           }>
+                           {order.status}
+                         </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>

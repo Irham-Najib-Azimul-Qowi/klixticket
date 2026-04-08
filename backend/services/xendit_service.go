@@ -5,15 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type XenditService interface {
-	CreateInvoice(orderID uuid.UUID, email string, amount float64, itemsDescription string) (invoiceID string, checkoutURL string, err error)
+	CreateInvoice(orderID uuid.UUID, email string, amount float64, itemsDescription string, paymentMethod string) (invoiceID string, checkoutURL string, err error)
 }
 
 type xenditService struct {
@@ -21,15 +23,24 @@ type xenditService struct {
 }
 
 func NewXenditService() XenditService {
+	key := strings.TrimSpace(os.Getenv("XENDIT_API_KEY"))
+	// LIAT DI TERMINAL GO AR! Muncul gak key-nya?
+	fmt.Println("INFO: Xendit Key yang terbaca:", key)
 	return &xenditService{
-		secretKey: os.Getenv("XENDIT_API_KEY"),
+		secretKey: key,
 	}
 }
 
-func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount float64, itemsDescription string) (string, string, error) {
-	// Jika Key kosong, tetap gunakan Mock untuk testing lokal
+func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount float64, itemsDescription string, paymentMethod string) (string, string, error) {
 	if s.secretKey == "" {
-		return "inv_mock_" + uuid.New().String()[:8], "https://checkout-staging.xendit.co/web/mock", nil
+		s.secretKey = strings.TrimSpace(os.Getenv("XENDIT_API_KEY"))
+	}
+
+	fmt.Printf("INFO: Membuat invoice untuk Order %s dengan Metode: %s\n", orderID, paymentMethod)
+
+	// Jika Key tetap kosong, kembalikan Error (Bukan URL Mock yang 404)
+	if s.secretKey == "" {
+		return "", "", fmt.Errorf("XENDIT_API_KEY is not configured. Please add it to your .env file and restart the server.")
 	}
 
 	// 1. Persiapkan Payload sesuai API Xendit V2
@@ -40,6 +51,20 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 		"description":      itemsDescription,
 		"invoice_duration": 86400, // 24 jam
 	}
+
+	// Mapping Metode Pembayaran untuk Xendit V2 Invoices (Hanya jika diset)
+	if paymentMethod != "" {
+		switch paymentMethod {
+		case "BCA":
+			payload["available_banks"] = []map[string]interface{}{{"bank_code": "BCA", "collection_type": "POOL"}}
+		case "BRI":
+			payload["available_banks"] = []map[string]interface{}{{"bank_code": "BRI", "collection_type": "POOL"}}
+		case "QRIS":
+			payload["available_qr_codes"] = []map[string]interface{}{{"external_id": "qr-" + orderID.String(), "type": "DYNAMIC"}}
+		}
+	}
+	// Jika paymentMethod kosong, biarkan payload tanpa available_banks/available_qr_codes
+	// agar Xendit menampilkan SEMUA metode yang aktif di dashboard.
 
 	jsonData, _ := json.Marshal(payload)
 
@@ -62,19 +87,37 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 	}
 	defer resp.Body.Close()
 
-	// 5. Decode Response
+	// 5. Baca Response Body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read xendit response: %v", err)
+	}
+
 	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", "", err
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return "", "", fmt.Errorf("failed to parse xendit response: %v. Raw: %s", err, string(bodyBytes))
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return "", "", fmt.Errorf("xendit api error: %v", result["message"])
+		// Log error buat developer liat di console
+		fmt.Printf("DEBUG: Xendit Error Response: %s\n", string(bodyBytes))
+		
+		msg, _ := result["message"].(string)
+		if msg == "" {
+			msg = string(bodyBytes) // fallback ke raw body kalau gak ada field message
+		}
+		return "", "", fmt.Errorf("xendit api error (Status %d): %v", resp.StatusCode, msg)
 	}
 
 	// 6. Ambil data yang dibutuhkan
-	invoiceID := result["id"].(string)
-	checkoutURL := result["invoice_url"].(string)
+	invoiceID, ok1 := result["id"].(string)
+	checkoutURL, ok2 := result["invoice_url"].(string)
+
+	if !ok1 || !ok2 {
+		// kalau xendit ngirim error, kita tangkep pesannya dhan
+		msg, _ := result["message"].(string)
+		return "", "", fmt.Errorf("xendit response ngaco: %v", msg)
+	}/* */
 
 	return invoiceID, checkoutURL, nil
 }

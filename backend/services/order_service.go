@@ -211,10 +211,10 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 		return nil, errors.New("invalid user context")
 	}
 
-	invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(newOrderID, user.Email, totalAmount, itemDescriptions)
+	invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(newOrderID, user.Email, totalAmount, itemDescriptions, req.PaymentMethod)
 	if err != nil {
 		tx.Rollback()
-		return nil, errors.New("failed to communicate with payment gateway")
+		return nil, fmt.Errorf("failed to communicate with payment gateway: %v", err)
 	}
 
 	// Masukkan payment details ke order
