@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"time"
 
 	"google.golang.org/api/idtoken"
 	"mastutik-api/models"
@@ -16,6 +17,9 @@ type AuthService interface {
 	LoginUser(req models.LoginRequest) (*models.AuthResponse, error)
 	LoginAdmin(req models.LoginRequest) (*models.AuthResponse, error)
 	GoogleLogin(req models.GoogleLoginRequest) (*models.AuthResponse, error)
+	RequestPasswordReset(req models.ForgotPasswordRequest) (string, error)
+	ResetPassword(req models.ResetPasswordRequest) error
+	ChangePassword(userID uint, req models.ChangePasswordRequest) error
 }
 
 type authService struct {
@@ -32,7 +36,12 @@ func (s *authService) RegisterUser(req models.RegisterRequest) (*models.User, er
 		return nil, errors.New("email already structured / registered")
 	}
 
-	// 2. Hash password
+	// 2. Cek kekuatan password
+	if !utils.IsStrongPassword(req.Password) {
+		return nil, errors.New("password harus minimal 8 karakter dan mengandung kombinasi huruf serta angka")
+	}
+
+	// 3. Hash password
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return nil, err
@@ -85,6 +94,7 @@ func (s *authService) LoginUser(req models.LoginRequest) (*models.AuthResponse, 
 	return &models.AuthResponse{
 		Token: token,
 		Role:  user.Role,
+		User:  user,
 	}, nil
 }
 
@@ -106,6 +116,7 @@ func (s *authService) LoginAdmin(req models.LoginRequest) (*models.AuthResponse,
 	return &models.AuthResponse{
 		Token: token,
 		Role:  user.Role,
+		User:  user,
 	}, nil
 }
 
@@ -170,5 +181,90 @@ func (s *authService) GoogleLogin(req models.GoogleLoginRequest) (*models.AuthRe
 	return &models.AuthResponse{
 		Token: token,
 		Role:  finalUser.Role,
+		User:  finalUser,
 	}, nil
+}
+
+func (s *authService) RequestPasswordReset(req models.ForgotPasswordRequest) (string, error) {
+	user, err := s.userRepo.FindByEmail(req.Email)
+	if err != nil || user.ID == 0 {
+		// Security: Don't leak if email exists or not
+		return "", nil
+	}
+
+	token, err := utils.GenerateRandomToken(32)
+	if err != nil {
+		return "", err
+	}
+
+	expiresAt := time.Now().Add(1 * time.Hour)
+	user.ResetPasswordToken = &token
+	user.ResetPasswordExpiresAt = &expiresAt
+
+	if err := s.userRepo.UpdateUser(user); err != nil {
+		return "", err
+	}
+
+	// Send email synchronously to ensure we catch errors
+	err = utils.SendResetPasswordEmail(user.Email, token)
+	if err != nil {
+		// Log the error but maybe don't stop the flow if you want generic response, 
+		// however the user asked NOT to say "success" if it fails.
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (s *authService) ResetPassword(req models.ResetPasswordRequest) error {
+	user, err := s.userRepo.FindByResetToken(req.Token)
+	if err != nil || user.ID == 0 {
+		return errors.New("invalid or expired reset token")
+	}
+
+	if user.ResetPasswordExpiresAt.Before(time.Now()) {
+		return errors.New("reset token has expired")
+	}
+
+	if !utils.IsStrongPassword(req.NewPassword) {
+		return errors.New("password harus minimal 8 karakter dan mengandung kombinasi huruf serta angka")
+	}
+
+	hashedPassword, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = &hashedPassword
+	user.ResetPasswordToken = nil
+	user.ResetPasswordExpiresAt = nil
+
+	return s.userRepo.UpdateUser(user)
+}
+
+func (s *authService) ChangePassword(userID uint, req models.ChangePasswordRequest) error {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil || user.ID == 0 {
+		return errors.New("user not found")
+	}
+
+	if user.PasswordHash == nil {
+		return errors.New("this account uses google login, please set a password via forgot password first if you wish to use password login")
+	}
+
+	if !utils.CheckPasswordHash(req.OldPassword, *user.PasswordHash) {
+		return errors.New("password lama tidak sesuai")
+	}
+
+	if !utils.IsStrongPassword(req.NewPassword) {
+		return errors.New("password baru harus minimal 8 karakter dan mengandung kombinasi huruf serta angka")
+	}
+
+	hashedPassword, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = &hashedPassword
+	return s.userRepo.UpdateUser(user)
 }

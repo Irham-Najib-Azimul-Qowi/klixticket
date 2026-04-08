@@ -8,13 +8,19 @@ import RegisterPage from './pages/RegisterPage';
 import EventDetailPage from './pages/EventDetailPage';
 import MerchDetailPage from './pages/MerchDetailPage';
 import ProfilePage from './pages/ProfilePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import Checkout from './pages/Checkout';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFailed from './pages/PaymentFailed';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
 import EventsList from './pages/admin/EventsList';
 import CreateEvent from './pages/admin/CreateEvent';
 import OrdersList from './pages/admin/OrdersList';
+import MerchList from './pages/admin/MerchList';
+import CreateMerch from './pages/admin/CreateMerch';
 
 const App: React.FC = () => {
   return (
@@ -27,18 +33,19 @@ const App: React.FC = () => {
         <Route path="/event/:id" element={<EventDetailPage />} />
         <Route path="/merchandise/:id" element={<MerchDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
 
         {/* Admin Routes with Layout Wrapper */}
         <Route path="/admin" element={<AdminLayout />}>
-          {/* Default dashboard at /admin */}
           <Route index element={<Dashboard />} />
-
-          {/* Event management routes */}
           <Route path="events" element={<EventsList />} />
           <Route path="events/create" element={<CreateEvent />} />
-
-          {/* Order management routes */}
+          <Route path="merchandise" element={<MerchList />} />
+          <Route path="merch/create" element={<CreateMerch />} />
           <Route path="orders" element={<OrdersList />} />
         </Route>
       </Routes>

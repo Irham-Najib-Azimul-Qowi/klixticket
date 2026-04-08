@@ -14,5 +14,22 @@ export const orderService = {
     
     const parsed = await handleResponse<Order>(res);
     return parsed;
+  },
+
+  async getMyOrders(): Promise<Order[]> {
+    const res = await fetch(`${API_BASE_URL}/orders/my`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    const parsed = await handleResponse<Order[]>(res);
+    return parsed;
+  },
+
+  async getByID(id: string): Promise<Order> {
+    const res = await fetch(`${API_BASE_URL}/orders/${id}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<Order>(res);
   }
 };

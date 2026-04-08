@@ -304,7 +304,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req dto.CreateEventReque
 
 	publishStatus := req.PublishStatus
 	if publishStatus == "" {
-		publishStatus = "draft"
+		publishStatus = "published" // Default to published for instant sync
 	}
 
 	event := &models.Event{
@@ -405,7 +405,11 @@ func (s *eventService) UpdateEvent(ctx context.Context, id uint, req dto.UpdateE
 	if req.BannerURL != nil {
 		event.BannerURL = normalizeOptionalString(req.BannerURL)
 	}
-	event.PublishStatus = req.PublishStatus
+	if req.PublishStatus == "" {
+		event.PublishStatus = "published"
+	} else {
+		event.PublishStatus = req.PublishStatus
+	}
 
 	bannerChanged := !sameOptionalString(previousBannerURL, event.BannerURL)
 	committed := false

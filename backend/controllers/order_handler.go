@@ -9,6 +9,7 @@ import (
 	"mastutik-api/dto"
 	"mastutik-api/services"
 	"mastutik-api/pkg/utils"
+	"github.com/google/uuid"
 )
 
 type OrderHandler struct {
@@ -94,6 +95,12 @@ func (h *OrderHandler) GetOrderByID(c *gin.Context) {
 		return
 	}
 
+	// Validate UUID
+	if _, err := uuid.Parse(orderID); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid Order ID format (UUID expected)", nil)
+		return
+	}
+
 	order, err := h.service.GetOrderByID(c.Request.Context(), orderID, userID.(uint))
 	if err != nil {
 		if err.Error() == "unauthorized: you do not own this order" {
@@ -132,6 +139,12 @@ func (h *OrderHandler) GetOrderByIDAdmin(c *gin.Context) {
 		return
 	}
 
+	// Validate UUID
+	if _, err := uuid.Parse(orderID); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid Order ID format (UUID expected)", nil)
+		return
+	}
+
 	order, err := h.service.GetOrderByIDAdmin(c.Request.Context(), orderID)
 	if err != nil {
 		handleOrderServiceError(c, err, "Failed to retrieve order")
@@ -151,6 +164,12 @@ func (h *OrderHandler) CheckInOrderAdmin(c *gin.Context) {
 	orderID := c.Param("id")
 	if orderID == "" {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Order ID is required", nil)
+		return
+	}
+
+	// Validate UUID
+	if _, err := uuid.Parse(orderID); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid Order ID format (UUID expected)", nil)
 		return
 	}
 

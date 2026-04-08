@@ -100,239 +100,197 @@ func SeedUser(db *gorm.DB) error {
 func SeedEvents(db *gorm.DB) error {
 	var count int64
 	db.Model(&models.Event{}).Count(&count)
-	if count > 0 {
-		log.Println("Info: event seeder skipped, data already exists")
+	if count >= 10 {
+		log.Println("Info: event seeder skipped, sufficient data already exists")
 		return nil
 	}
 
 	now := time.Now()
-	bannerRAN := "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&q=80&w=1200"
-	bannerTENXI := "https://images.unsplash.com/photo-1540039155732-684735035727?auto=format&fit=crop&q=80&w=1200"
-	bannerJROCKS := "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=1200"
-	bannerDJ := "https://images.unsplash.com/photo-1571266752771-8522083d4a88?auto=format&fit=crop&q=80&w=1200"
-	bannerAkustik := "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&q=80&w=1200"
-
+	
 	events := []models.Event{
 		{
 			Title:         "RAN Membawakan J-ROCKS",
-			Slug:          "ran-membawakan-j-rocks-connected-2026",
-			Description:   "RAN tampil memukau membawakan lagu-lagu hits J-ROCKS di panggung utama Connected 2026. Sebuah kolaborasi lintas genre yang belum pernah ada sebelumnya di Madiun. Nikmati pengalaman festival musik yang tak terlupakan bersama ribuan penonton.",
+			Slug:          "ran-membawakan-j-rocks-2026",
+			Description:   "RAN tampil memukau membawakan lagu-lagu hits J-ROCKS di panggung utama Connected 2026. Sebuah kolaborasi lintas genre yang belum pernah ada sebelumnya di Madiun.",
 			Location:      "Boss Stage, Madiun",
 			StartDate:     time.Date(2026, 9, 5, 15, 0, 0, 0, now.Location()),
 			EndDate:       time.Date(2026, 9, 5, 17, 0, 0, 0, now.Location()),
-			BannerURL:     &bannerRAN,
+			BannerURL:     ptr("https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&q=80&w=1200"),
 			PublishStatus: "published",
 			TicketTypes: []models.TicketType{
-				{
-					Name:           "Presale 1",
-					Description:    "Tiket terusan 3 hari - Akses semua stage",
-					Price:          350000,
-					Quota:          500,
-					RemainingQuota: 0,
-					SalesStartAt:   now.AddDate(0, -3, 0),
-					SalesEndAt:     now.AddDate(0, -1, 0),
-					ActiveStatus:   false,
-				},
-				{
-					Name:           "Presale 2",
-					Description:    "Tiket terusan 3 hari - Akses semua stage + Eksklusif Wristband",
-					Price:          550000,
-					Quota:          1000,
-					RemainingQuota: 342,
-					SalesStartAt:   now.AddDate(0, -1, 0),
-					SalesEndAt:     time.Date(2026, 8, 30, 23, 59, 0, 0, now.Location()),
-					ActiveStatus:   true,
-				},
+				{Name: "Presale 1", Price: 250000, Quota: 300, RemainingQuota: 0, SalesStartAt: now.AddDate(0, -3, 0), SalesEndAt: now.AddDate(0, -1, 0), ActiveStatus: false},
+				{Name: "Presale 2", Price: 450000, Quota: 500, RemainingQuota: 124, SalesStartAt: now.AddDate(0, -1, 0), SalesEndAt: now.AddDate(0, 5, 0), ActiveStatus: true},
 			},
 		},
 		{
 			Title:         "TENXI, JEMSII, NAYKILLA",
-			Slug:          "tenxi-jemsii-naykilla-connected-2026",
-			Description:   "Triple bill yang bakal bikin lantai dansa goyang nonstop! TENXI, JEMSII, dan NAYKILLA hadir serentak di Sat-Set Stage Connected 2026. Bawa energi terbaikmu dan siapkan diri untuk malam yang paling panas di kota pendekar.",
+			Slug:          "tenxi-jemsii-naykilla-2026",
+			Description:   "Triple bill yang bakal bikin lantai dansa goyang nonstop! TENXI, JEMSII, dan NAYKILLA hadir serentak di Sat-Set Stage Connected 2026.",
 			Location:      "Sat-Set Stage, Madiun",
 			StartDate:     time.Date(2026, 9, 6, 19, 0, 0, 0, now.Location()),
 			EndDate:       time.Date(2026, 9, 6, 23, 0, 0, 0, now.Location()),
-			BannerURL:     &bannerTENXI,
+			BannerURL:     ptr("https://images.unsplash.com/photo-1540039155732-684735035727?auto=format&fit=crop&q=80&w=1200"),
 			PublishStatus: "published",
 			TicketTypes: []models.TicketType{
-				{
-					Name:           "Presale 2",
-					Description:    "Tiket terusan 3 hari - Akses semua stage",
-					Price:          550000,
-					Quota:          1000,
-					RemainingQuota: 217,
-					SalesStartAt:   now.AddDate(0, -1, 0),
-					SalesEndAt:     time.Date(2026, 8, 30, 23, 59, 0, 0, now.Location()),
-					ActiveStatus:   true,
-				},
+				{Name: "Presale 1", Price: 150000, Quota: 200, RemainingQuota: 0, SalesStartAt: now.AddDate(0, -2, 0), SalesEndAt: now.AddDate(0, -1, 0), ActiveStatus: false},
+				{Name: "Presale 2", Price: 300000, Quota: 300, RemainingQuota: 45, SalesStartAt: now.AddDate(0, -1, 0), SalesEndAt: now.AddDate(0, 5, 0), ActiveStatus: true},
 			},
 		},
 		{
-			Title:         "J-ROCKS Membawakan RAN",
-			Slug:          "j-rocks-membawakan-ran-connected-2026",
-			Description:   "Giliran J-ROCKS yang membalas! Band rock legendaris Indonesia ini akan membawakan lagu-lagu hits RAN dengan aransemen rock yang epic. Hingar Bingar Stage siap meledak malam itu. Jangan sampai kamu lewatkan momen bersejarah ini.",
-			Location:      "Hingar Bingar Stage, Madiun",
-			StartDate:     time.Date(2026, 9, 5, 20, 0, 0, 0, now.Location()),
-			EndDate:       time.Date(2026, 9, 5, 22, 30, 0, 0, now.Location()),
-			BannerURL:     &bannerJROCKS,
+			Title:         "Madiun Night Carnival",
+			Slug:          "madiun-night-carnival-2026",
+			Description:   "Parade seni dan budaya terbesar di Madiun. Menampilkan ratusan talenta lokal dengan kostum spektakuler dan atraksi lampu yang memukau.",
+			Location:      "Pahlawan Street Center, Madiun",
+			StartDate:     time.Date(2026, 6, 20, 19, 0, 0, 0, now.Location()),
+			EndDate:       time.Date(2026, 6, 20, 23, 0, 0, 0, now.Location()),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=1200"),
 			PublishStatus: "published",
 			TicketTypes: []models.TicketType{
-				{
-					Name:           "Presale 2",
-					Description:    "Tiket terusan 3 hari - Akses semua stage + Eksklusif Wristband",
-					Price:          550000,
-					Quota:          1000,
-					RemainingQuota: 489,
-					SalesStartAt:   now.AddDate(0, -1, 0),
-					SalesEndAt:     time.Date(2026, 8, 30, 23, 59, 0, 0, now.Location()),
-					ActiveStatus:   true,
-				},
+				{Name: "VIP Row", Price: 200000, Quota: 100, RemainingQuota: 50, SalesStartAt: now.AddDate(0, -1, 0), SalesEndAt: now.AddDate(0, 2, 0), ActiveStatus: true},
+				{Name: "Festival", Price: 50000, Quota: 1000, RemainingQuota: 800, SalesStartAt: now.AddDate(0, -1, 0), SalesEndAt: now.AddDate(0, 2, 0), ActiveStatus: true},
 			},
 		},
 		{
-			Title:         "DJ DIPHA BARUS - Late Night Set",
-			Slug:          "dj-dipha-barus-late-night-connected-2026",
-			Description:   "Tutup malam dengan fire! DJ Dipha Barus akan menghadirkan late night set yang nonstop dari pukul 23.00 hingga 02.00. Electronic beats yang bakal bikin kamu lupa waktu. Ini dia penutup yang sempurna untuk hari pertama Connected 2026.",
-			Location:      "Sat-Set Stage, Madiun",
-			StartDate:     time.Date(2026, 9, 5, 23, 0, 0, 0, now.Location()),
-			EndDate:       time.Date(2026, 9, 6, 2, 0, 0, 0, now.Location()),
-			BannerURL:     &bannerDJ,
+			Title:         "Electronic Dance Festival",
+			Slug:          "edm-festival-madiun",
+			Description:   "Madiun bergetar dengan dentuman musik elektronik dari DJ internasional dan lokal. Laser show dan sistem suara kelas dunia.",
+			Location:      "Wilis Stadium, Madiun",
+			StartDate:     time.Date(2026, 7, 15, 17, 0, 0, 0, now.Location()),
+			EndDate:       time.Date(2026, 7, 16, 02, 0, 0, 0, now.Location()),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=1200"),
 			PublishStatus: "published",
 			TicketTypes: []models.TicketType{
-				{
-					Name:           "Festival Pass",
-					Description:    "Tiket terusan 3 hari - Full access semua stage dan area",
-					Price:          750000,
-					Quota:          500,
-					RemainingQuota: 128,
-					SalesStartAt:   now.AddDate(0, -1, 0),
-					SalesEndAt:     time.Date(2026, 8, 30, 23, 59, 0, 0, now.Location()),
-					ActiveStatus:   true,
-				},
+				{Name: "GA Early", Price: 350000, Quota: 500, RemainingQuota: 100, SalesStartAt: now.AddDate(0, -2, 0), SalesEndAt: now.AddDate(0, 3, 0), ActiveStatus: true},
+				{Name: "VIP Backstage", Price: 1500000, Quota: 50, RemainingQuota: 10, SalesStartAt: now.AddDate(0, -2, 0), SalesEndAt: now.AddDate(0, 3, 0), ActiveStatus: true},
 			},
 		},
 		{
-			Title:         "Akustik Session: Madiun Pride Night",
-			Slug:          "akustik-session-madiun-pride-night-2026",
-			Description:   "Malam yang hangat dan intim di bawah bintang. Madiun Pride Night menghadirkan sesi akustik dari musisi-musisi lokal terbaik Madiun Raya. Duduk santai, nikmati musik, dan rasakan kebanggaan sebagai bagian dari kota pendekar yang berbudaya.",
-			Location:      "Acoustic Corner, Madiun",
-			StartDate:     time.Date(2026, 9, 7, 17, 0, 0, 0, now.Location()),
-			EndDate:       time.Date(2026, 9, 7, 21, 0, 0, 0, now.Location()),
-			BannerURL:     &bannerAkustik,
+			Title:         "Festival Kuliner Nusantara",
+			Slug:          "festival-kuliner-2026",
+			Description:   "Menikmati sajian khas dari seluruh penjuru Indonesia dalam satu lokasi. Dilengkapi dengan demo masak chef ternama.",
+			Location:      "Alun-alun Madiun",
+			StartDate:     now.AddDate(0, 1, 0),
+			EndDate:       now.AddDate(0, 1, 2),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1200"),
 			PublishStatus: "published",
 			TicketTypes: []models.TicketType{
-				{
-					Name:           "Regular",
-					Description:    "Akses ke Acoustic Corner area",
-					Price:          150000,
-					Quota:          300,
-					RemainingQuota: 212,
-					SalesStartAt:   now.AddDate(0, -1, 0),
-					SalesEndAt:     time.Date(2026, 9, 7, 15, 0, 0, 0, now.Location()),
-					ActiveStatus:   true,
-				},
-				{
-					Name:           "VIP Table",
-					Description:    "Meja VIP dengan minuman welcome drink dan snack",
-					Price:          350000,
-					Quota:          50,
-					RemainingQuota: 18,
-					SalesStartAt:   now.AddDate(0, -1, 0),
-					SalesEndAt:     time.Date(2026, 9, 7, 15, 0, 0, 0, now.Location()),
-					ActiveStatus:   true,
-				},
+				{Name: "All-Day Pass", Price: 25000, Quota: 5000, RemainingQuota: 2500, SalesStartAt: now, SalesEndAt: now.AddDate(0, 2, 0), ActiveStatus: true},
+			},
+		},
+		{
+			Title:         "Indie Rock Concert: The SIGIT",
+			Slug:          "the-sigit-live-madiun",
+			Description:   "Unit rock kawakan asal Bandung siap menghentak Madiun! Persiapkan energi kalian untuk malam yang bising dan tak terlupakan.",
+			Location:      "Gedung Tri Dharma, Madiun",
+			StartDate:     now.AddDate(0, 2, 10),
+			EndDate:       now.AddDate(0, 2, 10).Add(4 * time.Hour),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=1200"),
+			PublishStatus: "published",
+			TicketTypes: []models.TicketType{
+				{Name: "Pre-sale", Price: 120000, Quota: 400, RemainingQuota: 150, SalesStartAt: now, SalesEndAt: now.AddDate(0, 3, 0), ActiveStatus: true},
+			},
+		},
+		{
+			Title:         "Workshop Photography: Street Soul",
+			Slug:          "workshop-photography-2026",
+			Description:   "Belajar teknik fotografi jalanan langsung dari fotografer profesional. Sesi teori dan hunting bersama di kota Madiun.",
+			Location:      "Connected Studio, Madiun",
+			StartDate:     now.AddDate(0, 0, 14),
+			EndDate:       now.AddDate(0, 0, 14).Add(6 * time.Hour),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1452784444945-3f4227ec2f2e?auto=format&fit=crop&q=80&w=1200"),
+			PublishStatus: "published",
+			TicketTypes: []models.TicketType{
+				{Name: "Full Session", Price: 500000, Quota: 20, RemainingQuota: 5, SalesStartAt: now.AddDate(0, -1, 0), SalesEndAt: now.AddDate(0, 1, 0), ActiveStatus: true},
+			},
+		},
+		{
+			Title:         "Yoga Sun & Glow",
+			Slug:          "yoga-sun-glow-2026",
+			Description:   "Sesi yoga bersama saat matahari terbit untuk ketenangan jiwa dan kebugaran tubuh. Dilengkapi dengan healthy breakfast.",
+			Location:      "Taman Bantaran, Madiun",
+			StartDate:     now.AddDate(0, 1, 5),
+			EndDate:       now.AddDate(0, 1, 5).Add(3 * time.Hour),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1200"),
+			PublishStatus: "published",
+			TicketTypes: []models.TicketType{
+				{Name: "Package A", Price: 75000, Quota: 50, RemainingQuota: 20, SalesStartAt: now, SalesEndAt: now.AddDate(0, 2, 0), ActiveStatus: true},
+			},
+		},
+		{
+			Title:         "E-Sport Championship: MLBB",
+			Slug:          "esport-mlbb-madiun-2026",
+			Description:   "Turnamen Mobile Legends terbesar di karesidenan Madiun. Total hadiah puluhan juta rupiah!",
+			Location:      "Sun City Mall, Madiun",
+			StartDate:     now.AddDate(0, 2, 20),
+			EndDate:       now.AddDate(0, 2, 22),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200"),
+			PublishStatus: "published",
+			TicketTypes: []models.TicketType{
+				{Name: "Spectator Pass", Price: 15000, Quota: 500, RemainingQuota: 400, SalesStartAt: now, SalesEndAt: now.AddDate(0, 3, 0), ActiveStatus: true},
+			},
+		},
+		{
+			Title:         "Connected Art Exhibition",
+			Slug:          "art-exhibition-2026",
+			Description:   "Pameran seni rupa kontemporer dari seniman lokal dan nasional. Menampilkan lukisan, instalasi, dan seni digital.",
+			Location:      "Gedung Kesenian, Madiun",
+			StartDate:     now.AddDate(0, 3, 0),
+			EndDate:       now.AddDate(0, 3, 14),
+			BannerURL:     ptr("https://images.unsplash.com/photo-1492691523567-6273c325d2a4?auto=format&fit=crop&q=80&w=1200"),
+			PublishStatus: "published",
+			TicketTypes: []models.TicketType{
+				{Name: "General Entry", Price: 30000, Quota: 1000, RemainingQuota: 900, SalesStartAt: now, SalesEndAt: now.AddDate(0, 4, 0), ActiveStatus: true},
 			},
 		},
 	}
 
 	for _, event := range events {
-		if err := db.Create(&event).Error; err != nil {
-			log.Printf("Warning: failed to seed event '%s': %v", event.Title, err)
+		var existing models.Event
+		if db.Where("slug = ?", event.Slug).First(&existing).Error != nil {
+			if err := db.Create(&event).Error; err != nil {
+				log.Printf("Warning: failed to seed event '%s': %v", event.Title, err)
+			}
 		}
 	}
 
-	log.Println("Event seeder completed successfully!")
+	log.Println("Event seeder enriched successfully!")
 	return nil
 }
 
 func SeedMerchandise(db *gorm.DB) error {
 	var count int64
 	db.Model(&models.Merchandise{}).Count(&count)
-	if count > 0 {
-		log.Println("Info: merchandise seeder skipped, data already exists")
+	if count >= 10 {
+		log.Println("Info: merchandise seeder skipped, sufficient data already exists")
 		return nil
 	}
 
-	imgTee := "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800"
-	imgHoodie := "https://images.unsplash.com/photo-1556821840-3a63f15732ce?auto=format&fit=crop&q=80&w=800"
-	imgTote := "https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&q=80&w=800"
-	imgCap := "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=800"
-	imgWristband := "https://images.unsplash.com/photo-1528566516386-4b8f405cbc6b?auto=format&fit=crop&q=80&w=800"
-	imgPoster := "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=800"
-
 	merchandise := []models.Merchandise{
-		{
-			Name:         "Connected Oversize Tee",
-			Slug:         "connected-oversize-tee",
-			Description:  "Kaos oversize premium dengan print logo Connected 2026 di dada kiri dan full-print artwork di bagian belakang. Bahan 100% Cotton Combed 30s, adem dan nyaman sepanjang hari. Tersedia dalam warna hitam dan putih.",
-			Price:        180000,
-			Stock:        150,
-			ImageURL:     &imgTee,
-			ActiveStatus: true,
-		},
-		{
-			Name:         "Connected Hoodie",
-			Slug:         "connected-hoodie",
-			Description:  "Hoodie tebal berkualitas dengan desain eksklusif Connected 2026. Cocok untuk kamu yang mau tampil kece setelah festival. Bahan fleece premium anti-pilling, ada kantong depan dan hoodie adjustable. Limited edition!",
-			Price:        385000,
-			Stock:        80,
-			ImageURL:     &imgHoodie,
-			ActiveStatus: true,
-		},
-		{
-			Name:         "Connected Tote Bag",
-			Slug:         "connected-tote-bag",
-			Description:  "Tote bag canvas tebal dengan artwork eksklusif Connected 2026. Kapasitas besar, cocok buat bawa barang bawaan festival kamu. Bahan canvas 12oz yang kuat dan tahan lama. Print screen printing dengan tinta water-based yang ramah lingkungan.",
-			Price:        95000,
-			Stock:        200,
-			ImageURL:     &imgTote,
-			ActiveStatus: true,
-		},
-		{
-			Name:         "Connected Snapback Cap",
-			Slug:         "connected-snapback-cap",
-			Description:  "Topi snapback eksklusif dengan embroidery logo Connected. Bahan twill yang kuat dengan sistem snapback adjustable yang nyaman di semua ukuran kepala. Warna hitam dengan aksen salmon sesuai brand Connected.",
-			Price:        145000,
-			Stock:        100,
-			ImageURL:     &imgCap,
-			ActiveStatus: true,
-		},
-		{
-			Name:         "Connected Festival Wristband",
-			Slug:         "connected-festival-wristband",
-			Description:  "Wristband eksklusif Connected 2026 edisi koleksi. Bahan silicone premium dengan print logo Connected berwarna. Bawa pulang kenangan dari Connected sebagai aksesoris kebanggaanmu. Pack of 3 wristbands.",
-			Price:        55000,
-			Stock:        300,
-			ImageURL:     &imgWristband,
-			ActiveStatus: true,
-		},
-		{
-			Name:         "Connected Poster A2",
-			Slug:         "connected-poster-a2",
-			Description:  "Poster resmi Connected 2026 ukuran A2 (42x59cm) dengan artwork eksklusif. Print menggunakan teknik high-quality offset printing dengan finishing glossy. Kolektor item yang wajib kamu punya! Datang dengan tube packaging agar aman.",
-			Price:        75000,
-			Stock:        120,
-			ImageURL:     &imgPoster,
-			ActiveStatus: true,
-		},
+		{Name: "Connected Oversize Tee", Slug: "connected-tee-2026", Description: "Kaos premium 100% cotton combed 30s dengan artwork eksklusif.", Price: 180000, Stock: 150, ImageURL: ptr("https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Connected Hoodie", Slug: "connected-hoodie-2026", Description: "Hoodie fleece premium dengan embroidery logo.", Price: 385000, Stock: 80, ImageURL: ptr("https://images.unsplash.com/photo-1556821840-3a63f15732ce?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Lanyard: Connected Edition", Slug: "lanyard-connected", Description: "Lanyard lebar 2cm dengan print bolak balik.", Price: 35000, Stock: 200, ImageURL: ptr("https://images.unsplash.com/photo-1622219809260-ce065fc5277f?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Enamel Pin Set", Slug: "enamel-pin-set", Description: "Set isi 3 pin enamel dengan desain karakter Connected.", Price: 75000, Stock: 100, ImageURL: ptr("https://images.unsplash.com/photo-1590487988337-37418a03291d?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Metal Keychain", Slug: "metal-keychain", Description: "Gantungan kunci logam dengan ukiran logo.", Price: 45000, Stock: 150, ImageURL: ptr("https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Connected Bucket Hat", Slug: "bucket-hat-2026", Description: "Topi bucket dua sisi (reversible) warna hitam/salmon.", Price: 125000, Stock: 60, ImageURL: ptr("https://images.unsplash.com/photo-1556306535-0959288307f1?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Sticker Pack: Vol 1", Slug: "sticker-pack-v1", Description: "Paket sticker vinyl laminasi isi 10 desain.", Price: 25000, Stock: 500, ImageURL: ptr("https://images.unsplash.com/photo-1572375924201-49f70043a9cc?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Canvas Tote Bag", Slug: "canvas-tote-2026", Description: "Tas kanvas kuat untuk kebutuhan harian festival.", Price: 85000, Stock: 150, ImageURL: ptr("https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Stainless Tumblr 500ml", Slug: "stainless-tumblr", Description: "Botol minum tahan panas/dingin khusus kolaborasi.", Price: 210000, Stock: 40, ImageURL: ptr("https://images.unsplash.com/photo-1602143307185-844875955bb6?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
+		{Name: "Tech Accessory Pouch", Slug: "tech-pouch-connected", Description: "Pouch untuk menyimpan kabel dan aksesoris gadget.", Price: 110000, Stock: 70, ImageURL: ptr("https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&q=80&w=800"), ActiveStatus: true},
 	}
 
 	for _, merch := range merchandise {
-		if err := db.Create(&merch).Error; err != nil {
-			log.Printf("Warning: failed to seed merchandise '%s': %v", merch.Name, err)
+		var existing models.Merchandise
+		if db.Where("slug = ?", merch.Slug).First(&existing).Error != nil {
+			if err := db.Create(&merch).Error; err != nil {
+				log.Printf("Warning: failed to seed merchandise '%s': %v", merch.Name, err)
+			}
 		}
 	}
 
-	log.Println("Merchandise seeder completed successfully!")
+	log.Println("Merchandise seeder enriched successfully!")
 	return nil
+}
+
+func ptr(s string) *string {
+	return &s
 }

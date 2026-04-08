@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"mastutik-api/dto"
@@ -182,6 +183,11 @@ func (r *orderRepository) FindOrdersByUserID(ctx context.Context, userID uint, l
 }
 
 func (r *orderRepository) FindOrderByID(ctx context.Context, orderID string) (*models.Order, error) {
+	// Guard against non-UUID strings to prevent DB errors
+	if _, err := uuid.Parse(orderID); err != nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
 	var order models.Order
 
 	err := orderDetailPreloads(r.db.WithContext(ctx)).
@@ -195,6 +201,11 @@ func (r *orderRepository) FindOrderByID(ctx context.Context, orderID string) (*m
 }
 
 func (r *orderRepository) FindOrderByIDWithTx(tx *gorm.DB, orderID string) (*models.Order, error) {
+	// Guard against non-UUID strings to prevent DB errors
+	if _, err := uuid.Parse(orderID); err != nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
 	var order models.Order
 
 	err := orderDetailPreloads(tx).

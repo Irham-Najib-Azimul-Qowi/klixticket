@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Flame, Menu, X, User, ShoppingCart } from 'lucide-react';
+import { eventsApi, merchandiseApi, authApi, type Event, type Merchandise } from '@/services/api';
+import { useCart } from '@/context/CartContext';
+import CartDrawer from '@/components/CartDrawer';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import flyerImg from '@/assets/Flyer.webp';
 import tshirtImg from '@/assets/tshirt.webp';
-import { Ticket, ArrowRight, Flame, Menu, X, User } from 'lucide-react';
-import { eventsApi, merchandiseApi, authApi, type Event, type Merchandise } from '@/services/api';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
@@ -73,6 +75,8 @@ const MarqueeBanner = ({ text, bgClass, rotateClass, reverse = false }: { text: 
 
 const LandingPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { getItemCount } = useCart();
   const marqueeText = " CONNECTED LAGI • FESTIVAL MUSIK • KONSER LOKAL • ".repeat(15);
 
   // ─── API State ───────────────────────────────────────────────────────────
@@ -95,6 +99,51 @@ const LandingPage: React.FC = () => {
       .catch(() => setApiMerch([]))
       .finally(() => setMerchLoading(false));
   }, []);
+
+  const eventScrollRef = useRef<HTMLDivElement>(null);
+  const [isEventsHovered, setIsEventsHovered] = useState(false);
+  const scrollPosRef = useRef(0);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftStart = useRef(0);
+
+  useEffect(() => {
+    let animationFrameId: number;
+    const scroll = () => {
+      // Hanya gerak otomatis jika tidak di-hover, tidak sedang drag, dan ada data
+      if (eventScrollRef.current && !isEventsHovered && !isDragging.current && apiEvents.length > 0) {
+        scrollPosRef.current += 1.2; // Kecepatan konstan yang smooth
+        
+        const maxScroll = eventScrollRef.current.scrollWidth / 2;
+        if (scrollPosRef.current >= maxScroll) {
+          scrollPosRef.current = 0;
+        }
+        eventScrollRef.current.scrollLeft = scrollPosRef.current;
+      }
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+    animationFrameId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isEventsHovered, apiEvents]);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!eventScrollRef.current) return;
+    isDragging.current = true;
+    startX.current = e.pageX - eventScrollRef.current.offsetLeft;
+    scrollLeftStart.current = eventScrollRef.current.scrollLeft;
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current || !eventScrollRef.current) return;
+    const x = e.pageX - eventScrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 2;
+    eventScrollRef.current.scrollLeft = scrollLeftStart.current - walk;
+    scrollPosRef.current = eventScrollRef.current.scrollLeft;
+  };
+
+  const stopDragging = () => {
+    isDragging.current = false;
+  };
 
   return (
     <>
@@ -127,8 +176,7 @@ const LandingPage: React.FC = () => {
               <a href="#tickets" className="text-stanton hover:text-salmon hover:-translate-y-1 hover:-rotate-2 transition-all">Ticket</a>
               <a href="#events" className="text-stanton hover:text-discos hover:-translate-y-1 hover:rotate-2 transition-all">Line Up</a>
               <a href="#" className="text-stanton hover:text-salmon hover:-translate-y-1 hover:-rotate-2 transition-all">Rundown</a>
-              <a href="#shop" className="text-stanton hover:text-discos hover:-translate-y-1 hover:rotate-2 transition-all">Shop</a>
-              {currentUser ? (
+                {currentUser ? (
                 <Link to="/profile" className="flex items-center gap-3 group/profile">
                   <div className="w-10 h-10 rounded-full border-2 border-black overflow-hidden bg-cream shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform group-hover/profile:-translate-y-1">
                     {currentUser.avatar_url ? (
@@ -146,6 +194,19 @@ const LandingPage: React.FC = () => {
               ) : (
                 <Link to="/login" className="bg-salmon text-cream border-4 border-black px-5 py-2 text-base font-black uppercase tracking-tighter shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">Masuk</Link>
               )}
+
+              {/* Cart Toggle */}
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                className="relative bg-white border-4 border-black p-2 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all group"
+              >
+                <ShoppingCart className="w-6 h-6 text-stanton group-hover:text-salmon transition-colors" />
+                {getItemCount() > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-salmon text-cream text-[10px] font-black w-6 h-6 rounded-full border-2 border-black flex items-center justify-center animate-bounce">
+                    {getItemCount()}
+                  </span>
+                )}
+              </button>
             </div>
 
             <button
@@ -201,7 +262,7 @@ const LandingPage: React.FC = () => {
           <div className="max-w-[1400px] mx-auto px-4 md:px-8">
 
             <div className="text-center mb-16">
-              <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-stanton mb-4">
+              <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-stanton">
                 AMANKAN SLOTMU!
               </h2>
               <p className="text-xl md:text-2xl font-bold uppercase text-discos tracking-tight">
@@ -209,55 +270,78 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {(() => {
-                const TICKETS = [
-                  { id: 1, name: "Presale 1", type: "Tiket Terusan 3 Hari", price: 350000, isSoldOut: true, recommended: false },
-                  { id: 2, name: "Presale 2", type: "Tiket Terusan 3 Hari", price: 550000, isSoldOut: false, recommended: true }
-                ];
+            <div className="flex justify-center max-w-[1400px] mx-auto">
+              {apiEvents.length === 0 && !eventsLoading ? (
+                <div className="text-center py-20 font-black uppercase text-stanton opacity-50">
+                   Belum ada event yang tersedia
+                </div>
+              ) : (
+                (() => {
+                  const closestEvent = [...apiEvents].sort((a, b) => 
+                    new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+                  )[0];
 
-                return TICKETS.map((ticket, index) => (
-                  <div key={index} className={`bg-white border-4 border-black rounded-3xl p-8 md:p-12 relative transition-all ${ticket.isSoldOut ? 'opacity-60 grayscale' : 'shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2'}`}>
-                    {ticket.isSoldOut && (
-                      <div className="absolute top-10 right-[-35px] bg-burgundy text-cream px-12 py-2 rotate-45 font-black text-xl border-2 border-black shadow-lg z-10">
-                        SOLD OUT
+                  if (!closestEvent) return null;
+
+                  const sortedTiers = [...(closestEvent.ticket_types || [])].sort((a, b) => a.price - b.price);
+                  const now = new Date();
+                  const activeTier = sortedTiers.find(t => {
+                    const start = new Date(t.sales_start_at);
+                    const end = new Date(t.sales_end_at);
+                    return now >= start && now <= end && t.remaining_quota > 0;
+                  }) || sortedTiers[0];
+
+                  const isSoldOut = closestEvent.ticket_types?.every(t => t.remaining_quota <= 0);
+
+                  return (
+                    <div key={closestEvent.id} className={`w-full max-w-lg bg-white border-4 border-black rounded-3xl p-8 relative transition-all ${isSoldOut ? 'opacity-60 grayscale' : 'shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2'}`}>
+                      {isSoldOut && (
+                        <div className="absolute top-10 right-[-35px] bg-burgundy text-cream px-12 py-2 rotate-45 font-black text-xl border-2 border-black shadow-lg z-10">
+                          SOLD OUT
+                        </div>
+                      )}
+                      
+                      <div className="aspect-[4/5] bg-gray-100 rounded-2xl border-4 border-black overflow-hidden mb-6 relative group/img">
+                        {closestEvent.banner_url ? (
+                          <img src={closestEvent.banner_url} alt={closestEvent.title} className="w-full h-full object-cover transition-transform group-hover/img:scale-110" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-stanton text-cream text-6xl">🎵</div>
+                        )}
+                        <div className="absolute bottom-4 left-4 right-4 bg-cream border-2 border-black p-2 rounded-lg font-black uppercase text-xs">
+                          {new Date(closestEvent.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                        </div>
                       </div>
-                    )}
-                    {ticket.recommended && !ticket.isSoldOut && (
-                      <div className="absolute top-6 left-6 bg-discos text-cream px-4 py-1 rounded-full font-black text-xs uppercase border-2 border-black">
-                        rekomendasi
+
+                      <h3 className="text-2xl font-black uppercase mb-2 text-stanton line-clamp-2 min-h-[4rem]">{closestEvent.title}</h3>
+                      
+                      <div className="mb-8">
+                        {activeTier ? (
+                          <>
+                            <p className="text-xs font-black text-discos uppercase tracking-widest mb-1">{activeTier.name}</p>
+                            <span className="text-4xl font-black tracking-tighter text-black">
+                              {formatPrice(activeTier.price)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-4xl font-black tracking-tighter text-black">HTM TBA</span>
+                        )}
                       </div>
-                    )}
 
-                    <h3 className={`text-3xl md:text-4xl font-black uppercase mb-2 ${ticket.recommended ? 'mt-4 text-salmon' : 'text-black'}`}>{ticket.name}</h3>
-                    <p className={`font-bold mb-8 uppercase tracking-widest text-sm ${ticket.isSoldOut ? 'text-gray-500' : 'text-gray-400'}`}>{ticket.type}</p>
-
-                    <div className="mb-10">
-                      <span className={`text-5xl md:text-6xl font-black tracking-tighter ${ticket.isSoldOut ? 'text-black' : 'text-stanton'}`}>
-                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(ticket.price)}
-                      </span>
-                    </div>
-
-                    <ul className={`space-y-4 mb-12 font-bold uppercase text-sm ${ticket.isSoldOut ? 'text-gray-400' : 'text-black'}`}>
-                      <li className="flex items-center gap-3"><Ticket className="w-5 h-5" /> akses semua stage</li>
-                      <li className="flex items-center gap-3"><Ticket className="w-5 h-5" /> eksklusif wristband</li>
-                      <li className="flex items-center gap-3"><Ticket className="w-5 h-5" /> madiun pride experience</li>
-                    </ul>
-
-                    {ticket.isSoldOut ? (
-                      <button disabled className="w-full bg-gray-200 text-gray-500 py-5 rounded-2xl text-2xl font-black uppercase cursor-not-allowed">
-                        Habis Terjual
-                      </button>
-                    ) : (
-                      <Link to={`/checkout?ticketId=${ticket.id}&name=${encodeURIComponent(ticket.name)}&price=${ticket.price}`}>
-                        <button className="w-full bg-salmon text-cream border-4 border-black py-5 rounded-2xl text-2xl font-black uppercase shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
-                          Sikat Sekarang!
+                      {isSoldOut ? (
+                        <button disabled className="w-full bg-gray-200 text-gray-500 py-4 rounded-xl text-xl font-black uppercase cursor-not-allowed border-2 border-black">
+                          Habis Terjual
                         </button>
-                      </Link>
-                    )}
-                  </div>
-                ));
-              })()}
+                      ) : (
+                        <Link to={`/event/${closestEvent.id}`}>
+                          <button className="w-full bg-salmon text-cream border-4 border-black py-4 rounded-xl text-xl font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
+                            Sikat Tiket!
+                          </button>
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })()
+              )}
             </div>
           </div>
         </section>
@@ -326,73 +410,92 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        <section id="events" className="bg-white py-24 relative">
+        <section id="events" className="bg-white py-16 relative overflow-hidden border-t-8 border-black">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 relative z-10">
 
-            <div className="mb-12">
-              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-stanton">
-                Jadwal & Lineup
-              </h2>
-              <div className="w-24 h-2 bg-salmon mt-4"></div>
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+              <div>
+                <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-stanton">
+                  Event Event Kami
+                </h2>
+                <div className="w-32 h-3 bg-salmon mt-4"></div>
+              </div>
+              <p className="text-xl font-bold uppercase text-discos max-w-md md:text-right">
+                jangan lewatkan event seru dari kami.
+              </p>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div 
+            className="w-full relative select-none"
+            onMouseEnter={() => setIsEventsHovered(true)}
+            onMouseLeave={() => {
+              setIsEventsHovered(false);
+              stopDragging();
+            }}
+          >
+            <div 
+              ref={eventScrollRef}
+              onMouseDown={onMouseDown}
+              onMouseMove={onMouseMove}
+              onMouseUp={stopDragging}
+              onMouseLeave={stopDragging}
+              className="flex overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing gap-6 px-4 md:px-8 py-4"
+            >
               {eventsLoading && (
-                <div className="col-span-3 flex justify-center py-16">
-                  <div className="w-12 h-12 border-4 border-salmon border-t-transparent rounded-full animate-spin" />
+                <div className="w-full flex justify-center py-12">
+                  <div className="w-10 h-10 border-4 border-salmon border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
-              {!eventsLoading && apiEvents.map((item) => (
-                <Link to={`/event/${item.id}`} key={item.id} className="bg-cream rounded-3xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col cursor-pointer border border-gray-200 group">
 
-                  <div className="relative h-[250px] md:h-[280px] w-full overflow-hidden">
+              {!eventsLoading && apiEvents.length === 0 && (
+                <div className="flex-shrink-0 w-[420px]">
+                  <div className="h-[270px] bg-cream border-4 border-black rounded-3xl flex flex-col items-center justify-center text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                    <span className="text-4xl mb-2">🎟️</span>
+                    <p className="text-base font-black uppercase text-stanton">Belum ada event</p>
+                  </div>
+                </div>
+              )}
+              
+              {!eventsLoading && apiEvents.length > 0 && [...apiEvents, ...apiEvents].map((item, index) => (
+                <Link 
+                  to={`/event/${item.id}`} 
+                  key={`${item.id}-${index}`} 
+                  className="group cursor-pointer w-[390px] md:w-[450px] flex-shrink-0"
+                  onDragStart={(e) => e.preventDefault()}
+                >
+                  {/* Image box — same pattern as merchandise */}
+                  <div className="relative w-full h-[270px] bg-white border-4 border-black rounded-3xl overflow-hidden mb-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-none group-hover:translate-x-1 group-hover:translate-y-1 transition-all">
                     {item.banner_url ? (
                       <img
                         src={item.banner_url}
                         alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 pointer-events-none"
                       />
                     ) : (
-                      <div className="w-full h-full bg-stanton flex items-center justify-center">
-                        <span className="text-cream text-6xl font-black">🎵</span>
+                      <div className="w-full h-full bg-stanton flex items-center justify-center pointer-events-none">
+                        <span className="text-cream text-5xl font-black">🎵</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10"></div>
-
-                    <div className="absolute top-5 left-5">
-                      <span className="text-cream text-xs font-black italic tracking-widest drop-shadow-md">{item.location.split(',')[0].toUpperCase()}</span>
-                    </div>
-                    <div className="absolute top-5 right-5">
-                      <span className="text-salmon text-xs font-black tracking-widest drop-shadow-md">CONNECTED</span>
-                    </div>
-
-                    <div className="absolute bottom-5 left-5 right-5 text-cream">
-                      <h3 className="text-[1.8rem] md:text-4xl font-black uppercase leading-tight tracking-tighter drop-shadow-md mb-3">
-                        {item.title}
-                      </h3>
-                      <div className="flex justify-between items-center text-[0.55rem] md:text-[0.65rem] font-bold uppercase tracking-widest text-gray-300">
-                        <span>{item.location}</span>
-                        <span>{new Date(item.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}</span>
-                      </div>
-                    </div>
                   </div>
 
-                  <div className="p-6 md:p-8 flex-grow flex items-center">
-                    <p className="text-base md:text-lg text-stanton font-semibold leading-relaxed line-clamp-3">
-                      {item.description}
-                    </p>
-                  </div>
-
+                  {/* Text below — same pattern as merchandise: title + subtitle */}
+                  <h3 className="text-2xl font-black uppercase tracking-tighter text-stanton group-hover:text-salmon transition-colors line-clamp-1">{item.title}</h3>
+                  <p className="text-xl font-black text-black mt-1">
+                    {new Date(item.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
+                  </p>
+                  <span className="text-sm font-bold text-discos uppercase mt-2 inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                    Lihat Detail <ArrowRight className="w-4 h-4" />
+                  </span>
                 </Link>
               ))}
             </div>
 
-            <div className="mt-16 flex justify-center">
-              <button className="bg-black text-cream rounded-full px-10 py-4 text-lg font-bold uppercase tracking-widest transition-transform hover:-translate-y-1 hover:shadow-lg">
-                LIHAT SEMUA JADWAL
+            <div className="mt-12 flex justify-center">
+              <button className="bg-salmon text-cream border-4 border-black px-10 py-4 text-xl font-black uppercase tracking-tighter shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center gap-3">
+                Lihat Semua Event <ArrowRight className="w-6 h-6" />
               </button>
             </div>
-
           </div>
         </section>
 
@@ -448,6 +551,9 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </footer>
+
+        {/* Cart Drawer Component */}
+        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       </div>
     </>
   );

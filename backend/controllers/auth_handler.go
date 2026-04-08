@@ -39,8 +39,20 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	token, err := h.authService.LoginUser(models.LoginRequest{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		// If auto-login fails for some reason, just return user without token
+		utils.SuccessResponse(c, http.StatusCreated, "User registered successfully", gin.H{
+			"user": user,
+		})
+		return
+	}
+
 	utils.SuccessResponse(c, http.StatusCreated, "User registered successfully", gin.H{
-		"token": "", // Token is null for register because usually they have to login / auto-login. Let's fix this later if needed.
+		"token": token.Token,
 		"user": gin.H{
 			"id":    user.ID,
 			"name":  user.Name,
@@ -164,15 +176,72 @@ func (h *AuthHandler) UpdateMe(c *gin.Context) {
 	user.Name = req.Name
 	user.Email = req.Email
 
+	// Menggunakan Updates untuk menjamin field terupdate dengan benar
 	if err := h.userRepo.UpdateUser(user); err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal memperbarui profil", err.Error())
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Profil berhasil diperbarui", gin.H{
-		"id":    user.ID,
-		"name":  user.Name,
-		"email": user.Email,
-		"role":  user.Role,
-	})
+	// Kembalikan objek user lengkap (tanpa password) agar frontend mendapatkan data terbaru termasuk avatar_url
+	utils.SuccessResponse(c, http.StatusOK, "Profil berhasil diperbarui", user)
+}
+
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req models.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
+		return
+	}
+
+	token, err := h.authService.RequestPasswordReset(req)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal memproses permintaan reset password", err.Error())
+		return
+	}
+
+	// Security: Always return success message even if email not found
+	// In production, we'd send it via email.
+	// We log it for now since we haven't implemented real email sending yet
+	if token != "" {
+		// Log the token/link for development purposes
+		println("DEBUG Reset Password Link: http://localhost:5173/reset-password?token=" + token)
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Jika email terdaftar, instruksi reset password telah dikirim.", nil)
+}
+
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req models.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
+		return
+	}
+
+	if err := h.authService.ResetPassword(req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Password berhasil direset, silakan login kembali.", nil)
+}
+
+func (h *AuthHandler) ChangePassword(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		return
+	}
+
+	var req models.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
+		return
+	}
+
+	if err := h.authService.ChangePassword(userID.(uint), req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Password berhasil diubah", nil)
 }

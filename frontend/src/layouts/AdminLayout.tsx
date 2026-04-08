@@ -1,18 +1,40 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, ShoppingCart, LogOut, Menu, X, Ticket } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, CalendarDays, ShoppingCart, LogOut, Menu, X, Ticket, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { authApi } from '@/services/api';
 
 const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const user = authApi.getUser();
+
+  useEffect(() => {
+    // Check if logged in
+    if (!authApi.isLoggedIn()) {
+      navigate('/login');
+      return;
+    }
+    
+    // Check if admin
+    if (user?.role !== 'admin') {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const navLinks = [
     { path: '/admin', name: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
     { path: '/admin/events', name: 'Events', icon: <CalendarDays className="w-5 h-5" /> },
+    { path: '/admin/merchandise', name: 'Merchandise', icon: <Package className="w-5 h-5" /> },
     { path: '/admin/orders', name: 'Orders', icon: <ShoppingCart className="w-5 h-5" /> },
   ];
+
+  const handleLogout = () => {
+    authApi.logout();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-muted/30 font-sans flex">
@@ -57,7 +79,11 @@ const AdminLayout: React.FC = () => {
         </div>
 
         <div className="p-4 border-t border-border">
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            onClick={handleLogout}
+          >
              <LogOut className="w-5 h-5 mr-3" />
              Logout
           </Button>
@@ -79,12 +105,12 @@ const AdminLayout: React.FC = () => {
           <div className="ml-auto flex items-center space-x-4">
             <div className="flex items-center space-x-3 pl-4">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium leading-none">Admin User</p>
-                <p className="text-xs text-muted-foreground mt-1">admin@mastutik.com</p>
+                <p className="text-sm font-medium leading-none">{user?.name || 'Admin User'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{user?.email || 'admin@mastutik.com'}</p>
               </div>
               <Avatar>
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarImage src={user?.avatar_url || "https://github.com/shadcn.png"} />
+                <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase() || 'AD'}</AvatarFallback>
               </Avatar>
             </div>
           </div>

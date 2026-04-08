@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Flame, ArrowLeft, Package, ShoppingCart, Loader2 } from 'lucide-react';
 import { merchandiseApi, type Merchandise } from '@/services/api';
+import { useCart } from '@/context/CartContext';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('id-ID', {
@@ -18,6 +19,7 @@ const MerchDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [qty, setQty] = useState(1);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     if (!id) return;
@@ -30,6 +32,20 @@ const MerchDetailPage: React.FC = () => {
 
   const isOutOfStock = merch ? merch.stock === 0 : false;
 
+  const handleAddToCart = () => {
+    if (!merch) return;
+    addToCart({
+      id: merch.id,
+      type: 'merchandise',
+      name: merch.name,
+      price: merch.price,
+      quantity: qty,
+      image_url: merch.image_url
+    });
+    // Optional: show a toast or open cart drawer
+    // navigate('/'); // Or stay here
+  };
+
   return (
     <div className="min-h-screen bg-cream font-sans text-black selection:bg-discos selection:text-cream overflow-x-hidden">
       {/* Navbar */}
@@ -41,9 +57,9 @@ const MerchDetailPage: React.FC = () => {
           </Link>
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-stanton font-black uppercase text-sm tracking-widest hover:text-salmon transition-colors"
+            className="bg-white border-4 border-black px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-black uppercase text-xs md:text-sm tracking-widest shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center gap-3 group"
           >
-            <ArrowLeft className="w-4 h-4" /> Kembali
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> Kembali
           </button>
         </div>
       </nav>
@@ -144,18 +160,37 @@ const MerchDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {/* CTA Button */}
-              <button
-                disabled={isOutOfStock}
-                className={`w-full py-5 rounded-2xl text-2xl font-black uppercase tracking-tighter border-4 border-black transition-all flex items-center justify-center gap-3 ${
-                  isOutOfStock
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-salmon text-cream shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1'
-                }`}
-              >
-                <ShoppingCart className="w-7 h-7" />
-                {isOutOfStock ? 'Habis Terjual' : 'Tambah ke Keranjang'}
-              </button>
+              {/* CTA Buttons */}
+              <div className="flex flex-col gap-4">
+                <button
+                  disabled={isOutOfStock}
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    params.set('merchId', String(merch.id));
+                    params.set('name', merch.name);
+                    params.set('price', String(merch.price));
+                    params.set('qty', String(qty));
+                    navigate(`/checkout?${params.toString()}`);
+                  }}
+                  className={`w-full py-5 rounded-3xl text-3xl font-black uppercase tracking-tighter border-4 border-black transition-all flex items-center justify-center gap-4 ${
+                    isOutOfStock
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                      : 'bg-salmon text-cream shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1'
+                  }`}
+                >
+                  <ShoppingCart className="w-8 h-8" />
+                  {isOutOfStock ? 'HABIS TERJUAL' : 'BELI SEKARANG'}
+                </button>
+
+                {!isOutOfStock && (
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full py-4 rounded-2xl text-lg font-black uppercase tracking-tight border-4 border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-3"
+                  >
+                    <Package className="w-6 h-6" /> Tambah ke Keranjang
+                  </button>
+                )}
+              </div>
 
               <p className="mt-4 text-xs font-bold uppercase tracking-widest text-gray-400 text-center">
                 * Pengiriman ke seluruh Indonesia

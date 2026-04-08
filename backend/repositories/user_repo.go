@@ -12,6 +12,7 @@ type UserRepository interface {
 	CreateOAuthAccount(oauth *models.OAuthAccount) error
 	FindOAuthAccount(provider, providerUserID string) (*models.OAuthAccount, error)
 	UpdateUser(user *models.User) error
+	FindByResetToken(token string) (*models.User, error)
 }
 
 type userRepository struct {
@@ -49,4 +50,10 @@ func (r *userRepository) FindOAuthAccount(provider, providerUserID string) (*mod
 }
 func (r *userRepository) UpdateUser(user *models.User) error {
 	return r.db.Save(user).Error
+}
+
+func (r *userRepository) FindByResetToken(token string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("reset_password_token = ?", token).First(&user).Error
+	return &user, err
 }
