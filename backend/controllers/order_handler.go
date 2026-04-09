@@ -32,6 +32,8 @@ func handleOrderServiceError(c *gin.Context, err error, fallbackMessage string) 
 	case errors.Is(err, services.ErrWebhookAlreadyHandled):
 		utils.SuccessResponse(c, http.StatusOK, "Webhook already processed", nil)
 	default:
+		// Sebagian error checkout atau Xendit (misal: stok habis) sekarang membawa ErrOrderValidation
+		// jadi akan tertangkap di case atas. Jika tetap kesini, berarti benar-benar 500.
 		utils.ErrorResponse(c, http.StatusInternalServerError, fallbackMessage, err.Error())
 	}
 }

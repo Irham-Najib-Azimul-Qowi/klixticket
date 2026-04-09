@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"log"
 	"mastutik-api/dto"
 	"mastutik-api/services"
 	"mastutik-api/pkg/utils"
@@ -58,6 +59,23 @@ func (h *EventHandler) GetPublishedEvents(c *gin.Context) {
 		"data":  events,
 		"total": len(events), // Simplistic total for now
 	})
+}
+
+func (h *EventHandler) GetNearestEvent(c *gin.Context) {
+	log.Println("GET /events/nearest - Request received")
+	event, err := h.service.GetNearestEvent(c.Request.Context())
+	if err != nil {
+		log.Printf("GET /events/nearest - Error: %v", err)
+		handleEventServiceError(c, err, "Failed to fetch event detail")
+		return
+	}
+
+	if event == nil {
+		utils.SuccessResponse(c, http.StatusOK, "Belum ada event tersedia", nil)
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Nearest event retrieved", event)
 }
 
 func (h *EventHandler) GetPublishedEventByID(c *gin.Context) {

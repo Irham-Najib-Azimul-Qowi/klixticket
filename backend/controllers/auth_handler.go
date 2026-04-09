@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"mastutik-api/models"
@@ -22,6 +23,37 @@ func NewAuthHandler(authService services.AuthService, userRepo repositories.User
 	}
 }
 
+// sanitizeError prevents technical details from leaking to the UI
+func (h *AuthHandler) sanitizeError(err error) string {
+	msg := err.Error()
+
+	// Map technical errors to user-friendly messages
+	switch msg {
+	case "invalid email or password":
+		return "Email atau password salah"
+	case "email already structured / registered":
+		return "Email sudah terdaftar, silakan gunakan email lain"
+	case "invalid google token":
+		return "Sesi Google telah berakhir, silakan login kembali"
+	case "google login temporarily unavailable":
+		return "Layanan Google sedang tidak tersedia"
+	case "unauthorized: you do not have admin privileges":
+		return "Anda tidak memiliki akses admin"
+	case "user not found":
+		return "Pengguna tidak ditemukan"
+	case "password lama tidak sesuai":
+		return "Password lama tidak sesuai"
+	}
+
+	// Catch-all for internal/system errors to avoid leakage
+	if len(msg) > 30 || (msg != "" && (msg[0] == 'J' || msg[0] == 'e' || msg[0] == 's')) {
+		// If it looks like a system error (long, starts with JWT, environment, sql, etc)
+		return "Terjadi kesalahan pada sistem, silakan coba beberapa saat lagi"
+	}
+
+	return msg
+}
+
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req models.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -31,11 +63,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	user, err := h.authService.RegisterUser(req)
 	if err != nil {
-		msg := err.Error()
-		if msg == "email already structured / registered" {
-			msg = "Email sudah terdaftar, silakan gunakan email lain"
-		}
-		utils.ErrorResponse(c, http.StatusConflict, msg, nil)
+		utils.ErrorResponse(c, http.StatusConflict, h.sanitizeError(err), nil)
 		return
 	}
 
@@ -44,7 +72,6 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
-		// If auto-login fails for some reason, just return user without token
 		utils.SuccessResponse(c, http.StatusCreated, "User registered successfully", gin.H{
 			"user": user,
 		})
@@ -71,11 +98,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	authResponse, err := h.authService.LoginUser(req)
 	if err != nil {
-		msg := err.Error()
-		if msg == "invalid email or password" {
-			msg = "Email atau password salah"
-		}
-		utils.ErrorResponse(c, http.StatusUnauthorized, msg, nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, h.sanitizeError(err), nil)
 		return
 	}
 
@@ -101,7 +124,7 @@ func (h *AuthHandler) AdminLogin(c *gin.Context) {
 
 	authResponse, err := h.authService.LoginAdmin(req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusUnauthorized, err.Error(), nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, h.sanitizeError(err), nil)
 		return
 	}
 
@@ -117,7 +140,7 @@ func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 
 	authResponse, err := h.authService.GoogleLogin(req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusUnauthorized, err.Error(), nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, h.sanitizeError(err), nil)
 		return
 	}
 
@@ -127,17 +150,16 @@ func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 func (h *AuthHandler) GetMe(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Sesi tidak valid", nil)
 		return
 	}
 
 	user, err := h.userRepo.FindByID(userID.(uint))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusNotFound, "User not found", nil)
+		utils.ErrorResponse(c, http.StatusNotFound, "Pengguna tidak ditemukan", nil)
 		return
 	}
 
-	// Jangan kembalikan password hash
 	utils.SuccessResponse(c, http.StatusOK, "User profile retrieved", gin.H{
 		"id":    user.ID,
 		"name":  user.Name,
@@ -149,7 +171,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 func (h *AuthHandler) UpdateMe(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Sesi tidak valid", nil)
 		return
 	}
 
@@ -161,14 +183,13 @@ func (h *AuthHandler) UpdateMe(c *gin.Context) {
 
 	user, err := h.userRepo.FindByID(userID.(uint))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusNotFound, "User not found", nil)
+		utils.ErrorResponse(c, http.StatusNotFound, "Pengguna tidak ditemukan", nil)
 		return
 	}
 
-	// Cek jika email mau diubah, apakah sudah dipakai orang lain
 	if req.Email != user.Email {
 		if existingUser, _ := h.userRepo.FindByEmail(req.Email); existingUser.ID != 0 {
-			utils.ErrorResponse(c, http.StatusConflict, "Email sudah terdaftar, silakan gunakan email lain", nil)
+			utils.ErrorResponse(c, http.StatusConflict, "Email sudah terdaftar", nil)
 			return
 		}
 	}
@@ -176,34 +197,28 @@ func (h *AuthHandler) UpdateMe(c *gin.Context) {
 	user.Name = req.Name
 	user.Email = req.Email
 
-	// Menggunakan Updates untuk menjamin field terupdate dengan benar
 	if err := h.userRepo.UpdateUser(user); err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal memperbarui profil", err.Error())
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal memperbarui profil", nil)
 		return
 	}
 
-	// Kembalikan objek user lengkap (tanpa password) agar frontend mendapatkan data terbaru termasuk avatar_url
 	utils.SuccessResponse(c, http.StatusOK, "Profil berhasil diperbarui", user)
 }
 
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req models.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", nil)
 		return
 	}
 
 	token, err := h.authService.RequestPasswordReset(req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal memproses permintaan reset password", err.Error())
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal memproses permintaan", nil)
 		return
 	}
 
-	// Security: Always return success message even if email not found
-	// In production, we'd send it via email.
-	// We log it for now since we haven't implemented real email sending yet
-	if token != "" {
-		// Log the token/link for development purposes
+	if token != "" && os.Getenv("APP_ENV") != "production" {
 		println("DEBUG Reset Password Link: http://localhost:5173/reset-password?token=" + token)
 	}
 
@@ -213,12 +228,12 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req models.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", nil)
 		return
 	}
 
 	if err := h.authService.ResetPassword(req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error(), nil)
+		utils.ErrorResponse(c, http.StatusBadRequest, h.sanitizeError(err), nil)
 		return
 	}
 
@@ -228,18 +243,18 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Sesi tidak valid", nil)
 		return
 	}
 
 	var req models.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", utils.FormatValidationError(err))
+		utils.ErrorResponse(c, http.StatusBadRequest, "Input tidak valid", nil)
 		return
 	}
 
 	if err := h.authService.ChangePassword(userID.(uint), req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error(), nil)
+		utils.ErrorResponse(c, http.StatusBadRequest, h.sanitizeError(err), nil)
 		return
 	}
 

@@ -1,6 +1,6 @@
 import type { ApiError } from '../types';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080') + '/api/v1';
 export const IMAGE_BASE_URL = import.meta.env.VITE_SERVER_URL || API_BASE_URL.replace('/api/v1', '');
 
 export class RequestError extends Error {
@@ -20,16 +20,55 @@ export function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/**
+ * Handle API responses and standardize errors
+ */
 export async function handleResponse<T>(res: Response): Promise<T> {
-  const data = await res.json();
+  // If no content (204), return empty object
+  if (res.status === 204) return {} as T;
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    // If response is not JSON
+    if (!res.ok) {
+        throw new RequestError('Respon server tidak valid', res.status.toString());
+    }
+    return {} as T;
+  }
+
   if (!res.ok) {
+    // 1. Auto-redirect on 401 Unauthorized
+    if (res.status === 401) {
+      console.warn('Session expired or unauthorized. Redirecting to login...');
+      // Clear token to avoid endless loops
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      
+      // Only redirect if not already on login/register page
+      const currentPath = window.location.pathname;
+      if (!['/login', '/register', '/auth'].includes(currentPath)) {
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+      }
+    }
+
     const err = data as ApiError;
+    // Map internal error messages to something user-friendly
+    let message = err.message || 'Terjadi kesalahan pada server';
+    
+    // Hardening: Stop leaking environment variable issues to the user
+    if (message.includes('JWT_SECRET') || message.includes('environment variable')) {
+      message = 'Sistem sedang dalam pemeliharaan, silakan coba lagi nanti.';
+    }
+
     throw new RequestError(
-      err.message || 'Terjadi kesalahan pada server',
+      message,
       res.status.toString(),
       err.errors
     );
   }
-  // The backend wraps success in { status, message, data }
+
+  // The backend wraps success in { success, message, data }
   return data.data as T;
 }

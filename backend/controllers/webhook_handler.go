@@ -26,8 +26,14 @@ func (h *WebhookHandler) XenditCallback(c *gin.Context) {
 	callbackToken := c.GetHeader("x-callback-token")
 	expectedToken := os.Getenv("XENDIT_WEBHOOK_TOKEN")
 
-	if expectedToken != "" && callbackToken != expectedToken {
-		log.Println("Unauthorized webhook attempt")
+	if expectedToken == "" {
+		log.Println("CRITICAL: XENDIT_WEBHOOK_TOKEN is not set in environment variables!")
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Webhook security configuration missing", nil)
+		return
+	}
+
+	if callbackToken != expectedToken {
+		log.Printf("Unauthorized webhook attempt from IP: %s\n", c.ClientIP())
 		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized Webhook Call", nil)
 		return
 	}

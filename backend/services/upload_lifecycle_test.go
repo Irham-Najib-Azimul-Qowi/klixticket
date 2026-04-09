@@ -1,3 +1,4 @@
+// Package services provides testing for service lifecycles.
 package services
 
 import (
@@ -15,11 +16,13 @@ import (
 
 	"mastutik-api/dto"
 	"mastutik-api/models"
+	"mastutik-api/repositories"
 )
 
 var serviceWorkingDirMu sync.Mutex
 
 type eventRepoStub struct {
+	repositories.EventRepository
 	db                 *gorm.DB
 	event              *models.Event
 	updated            *models.Event
@@ -164,11 +167,16 @@ func (r *eventRepoStub) DeactivateTicketsExceptWithTx(_ *gorm.DB, eventID uint, 
 	return nil
 }
 
+func (r *eventRepoStub) FindNearest(ctx context.Context, now time.Time) (*models.Event, error) { return nil, nil }
+
 type merchandiseRepoStub struct {
+	repositories.MerchandiseRepository
 	merchandise *models.Merchandise
 	updated     *models.Merchandise
 	deleted     *models.Merchandise
 }
+
+func (r *merchandiseRepoStub) DecrementStock(tx *gorm.DB, id uint, quantity int) error { return nil }
 
 func (r *merchandiseRepoStub) FindAllActive(context.Context, int, int) ([]models.Merchandise, error) {
 	return nil, nil

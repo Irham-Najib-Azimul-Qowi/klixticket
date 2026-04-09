@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -17,7 +18,8 @@ type MerchandiseRepository interface {
 	Update(ctx context.Context, merchandise *models.Merchandise) error
 	Delete(ctx context.Context, merchandise *models.Merchandise) error
 	FindByIDWithLock(tx *gorm.DB, id uint) (*models.Merchandise, error)
-	UpdateStockWithTx(tx *gorm.DB, id uint, newStock int) error
+	UpdateStockWithTx(tx *gorm.DB, id uint, stock int) error
+	DecrementStock(tx *gorm.DB, id uint, quantity int) error
 	Count(ctx context.Context) (int64, error)
 }
 
@@ -103,10 +105,24 @@ func (r *merchandiseRepository) FindByIDWithLock(tx *gorm.DB, id uint) (*models.
 	return &merchandise, nil
 }
 
-func (r *merchandiseRepository) UpdateStockWithTx(tx *gorm.DB, id uint, newStock int) error {
-	return tx.Model(&models.Merchandise{}).
-		Where("id = ?", id).
-		Update("stock", newStock).Error
+func (r *merchandiseRepository) UpdateStockWithTx(tx *gorm.DB, id uint, stock int) error {
+	return tx.Model(&models.Merchandise{}).Where("id = ?", id).Update("stock", stock).Error
+}
+
+func (r *merchandiseRepository) DecrementStock(tx *gorm.DB, id uint, quantity int) error {
+	result := tx.Model(&models.Merchandise{}).
+		Where("id = ? AND stock >= ?", id, quantity).
+		Update("stock", gorm.Expr("stock - ?", quantity))
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("insufficient stock")
+	}
+
+	return nil
 }
 
 func (r *merchandiseRepository) Count(ctx context.Context) (int64, error) {

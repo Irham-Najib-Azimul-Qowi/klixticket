@@ -1,3 +1,4 @@
+// Package controllers provides testing for API handlers.
 package controllers
 
 import (
@@ -37,6 +38,10 @@ func (noopEventService) GetAllEvents(context.Context, dto.EventListQuery) ([]mod
 }
 
 func (noopEventService) GetEventByID(context.Context, uint) (*models.Event, error) {
+	return nil, nil
+}
+
+func (noopEventService) GetNearestEvent(context.Context) (*models.Event, error) {
 	return nil, nil
 }
 

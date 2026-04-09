@@ -21,6 +21,7 @@ type EventRepository interface {
 	FindByID(ctx context.Context, id uint) (*models.Event, error)
 	CountActivePublished(ctx context.Context, now time.Time) (int64, error)
 	FindByIDWithTx(tx *gorm.DB, id uint) (*models.Event, error)
+	FindNearest(ctx context.Context, now time.Time) (*models.Event, error)
 	CreateWithTx(tx *gorm.DB, event *models.Event) error
 	BulkCreateTicketsWithTx(tx *gorm.DB, tickets []models.TicketType) error
 	Update(ctx context.Context, event *models.Event) error
@@ -90,8 +91,6 @@ func (r *eventRepository) FindAllPublished(ctx context.Context, now time.Time, l
 		Preload("TicketTypes", func(db *gorm.DB) *gorm.DB {
 			return ticketSelectColumns(db).
 				Where("active_status = ?", true).
-				Where("sales_start_at <= ?", now).
-				Where("sales_end_at >= ?", now).
 				Order("sales_start_at asc")
 		}).
 		Where("publish_status = ?", "published").
@@ -101,6 +100,26 @@ func (r *eventRepository) FindAllPublished(ctx context.Context, now time.Time, l
 		Offset(offset).
 		Find(&events).Error
 	return events, err
+}
+
+func (r *eventRepository) FindNearest(ctx context.Context, now time.Time) (*models.Event, error) {
+	var event models.Event
+
+	err := eventSelectColumns(r.db.WithContext(ctx)).
+		Preload("TicketTypes", func(db *gorm.DB) *gorm.DB {
+			return ticketSelectColumns(db).
+				Where("active_status = ?", true).
+				Order("price asc")
+		}).
+		Where("publish_status = ?", "published").
+		Where("end_date >= ?", now).
+		Order("start_date asc").
+		First(&event).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &event, nil
 }
 
 func (r *eventRepository) FindPublishedByID(ctx context.Context, id uint, now time.Time) (*models.Event, error) {

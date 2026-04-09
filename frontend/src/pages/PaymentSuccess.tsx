@@ -1,13 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Ticket } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const PaymentSuccess: React.FC = () => {
   const { clearCart } = useCart();
 
+  const navigate = useNavigate();
+
   React.useEffect(() => {
-    clearCart();
+    // Small delay to ensure state doesn't conflict with initial render
+    const timer = setTimeout(() => {
+      clearCart();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [clearCart]);
 
   return (
@@ -42,26 +48,28 @@ const PaymentSuccess: React.FC = () => {
               <ul className="space-y-4 text-sm font-bold uppercase tracking-widest text-white/60">
                   <li className="flex items-start gap-4">
                       <span className="text-neon-pink">/</span>
-                      <span>CHECK YOUR EMAIL FOR THE E-TICKET.</span>
+                      <span>CHECK YOUR PROFILE TO ACCESS YOUR E-TICKET.</span>
                   </li>
                   <li className="flex items-start gap-4">
                       <span className="text-neon-pink">/</span>
-                      <span>VIEW YOUR ORDER FILE IN YOUR PROFILE.</span>
+                      <span>YOUR TICKET QR CODE IS UNIQUE AND SECURE.</span>
                   </li>
               </ul>
           </div>
 
           <div className="flex flex-col gap-4 pt-8 border-t border-white/10">
-            <Link to="/profile">
-              <button className="w-full bg-white text-black py-6 text-2xl font-heading uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all flex items-center justify-center gap-4 transform hover:-rotate-1">
-                ACCESS TICKETS <ArrowRight className="w-6 h-6" />
-              </button>
-            </Link>
-            <Link to="/">
-              <button className="w-full bg-transparent border border-white/20 text-white py-5 text-xl font-heading uppercase tracking-widest hover:border-white transition-all">
-                RETURN TO GRID
-              </button>
-            </Link>
+            <button 
+              onClick={() => navigate('/profile/tickets')}
+              className="w-full bg-white text-black py-6 text-2xl font-heading uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all flex items-center justify-center gap-4 transform hover:-rotate-1"
+            >
+              ACCESS TICKETS <ArrowRight className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={() => navigate('/')}
+              className="w-full bg-transparent border border-white/20 text-white py-5 text-xl font-heading uppercase tracking-widest hover:border-white transition-all"
+            >
+              RETURN TO GRID
+            </button>
           </div>
         </div>
       </div>

@@ -95,20 +95,23 @@ const LandingPage: React.FC = () => {
     return () => lenis.destroy();
   }, []);
 
-  const [apiEvents, setApiEvents] = useState<Event[]>([]);
+  const [nearestEvent, setNearestEvent] = useState<Event | null>(null);
   const [apiMerch, setApiMerch] = useState<Merchandise[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [merchLoading, setMerchLoading] = useState(true);
   const currentUser = authApi.getUser();
 
-  useEffect(() => {
-    eventsApi.getPublished({ limit: 6 })
-      .then(res => setApiEvents(res.data || []))
-      .catch(() => setApiEvents([]))
-      .finally(() => setEventsLoading(false));
-  }, []);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    eventsApi.getNearestEvent()
+      .then(res => setNearestEvent(res))
+      .catch(() => setNearestEvent(null))
+      .finally(() => setEventsLoading(false));
+
     merchandiseApi.getPublic()
       .then(res => setApiMerch(res.data || []))
       .catch(() => setApiMerch([]))
@@ -147,7 +150,7 @@ const LandingPage: React.FC = () => {
   useEffect(() => {
     let animationFrameId: number;
     const scroll = () => {
-      const displayEvents = apiEvents.length > 0 ? apiEvents : MOCK_LINEUP;
+      const displayEvents = nearestEvent ? [nearestEvent] : MOCK_LINEUP;
       if (eventScrollRef.current && !isEventsHovered && !isDragging.current && displayEvents.length > 0) {
         scrollPosRef.current += 1.2;
         const maxScroll = eventScrollRef.current.scrollWidth / 2;
@@ -160,7 +163,7 @@ const LandingPage: React.FC = () => {
     };
     animationFrameId = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isEventsHovered, apiEvents, MOCK_LINEUP]);
+  }, [isEventsHovered, nearestEvent]);
 
   const onMouseDown = (e: React.MouseEvent) => {
     if (!eventScrollRef.current) return;
@@ -409,89 +412,94 @@ const LandingPage: React.FC = () => {
                 SECURE YOUR SPOT FOR THE MOST ANTICIPATED EVENT OF THE YEAR
               </p>
             </div>
-
-            <div className="w-full">
-              {apiEvents.length === 0 && !eventsLoading ? (
+            <div className="w-full space-y-32">
+              {!nearestEvent && !eventsLoading ? (
                 <div className="text-center py-20 font-heading text-5xl uppercase opacity-20">
                   NO TICKETS AVAILABLE
                 </div>
-              ) : (
-                (() => {
-                  // Find the main event (GIXS DI KOTA) or fallback to the closest one
-                  const mainEvent = apiEvents.find(e => e.title.toUpperCase().includes('GIXS DI KOTA')) || 
-                                   [...apiEvents].sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())[0];
-                  
-                  if (!mainEvent || !mainEvent.ticket_types) return null;
+              ) : nearestEvent && (
+                <div className="space-y-12">
+                  <div className="flex items-center gap-6">
+                    <div className="h-[2px] flex-1 bg-white/10"></div>
+                    <h3 className="text-4xl md:text-6xl font-heading uppercase tracking-tighter text-neon-pink">
+                      {nearestEvent.title}
+                    </h3>
+                    <div className="h-[2px] flex-1 bg-white/10"></div>
+                  </div>
 
-                  return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                      {mainEvent.ticket_types.map((ticket) => {
-                        const isSoldOut = ticket.remaining_quota <= 0;
-                        const isPresale = ticket.name.toUpperCase().includes('PRESALE');
-                        
-                        return (
-                          <div 
-                            key={ticket.id} 
-                            className={`group relative bg-dark-grey border border-white/10 p-10 transition-all ${isSoldOut ? 'opacity-40 grayscale' : 'hover:border-neon-pink hover:-translate-y-2'}`}
-                          >
-                            {isPresale && (
-                              <div className="absolute top-0 right-10 bg-neon-pink text-white px-4 py-1 font-heading text-sm uppercase tracking-widest translate-y-[-50%]">
-                                HOT DEAL
-                              </div>
-                            )}
-                            
-                            <div className="mb-10">
-                              <span className="text-white/40 font-bold tracking-[0.3em] text-[10px] mb-4 block uppercase opacity-60">
-                                TIER CATEGORY
-                              </span>
-                              <h3 className="text-4xl font-heading leading-none mb-6 group-hover:text-neon-pink transition-colors uppercase">
-                                {ticket.name}
-                              </h3>
-                              <p className="text-xs font-bold text-white/30 uppercase tracking-[0.2em] mb-8 line-clamp-2">
-                                {ticket.description || 'General Admission Pass'}
-                              </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {nearestEvent.ticket_types?.map((ticket) => {
+                      const isSoldOut = ticket.remaining_quota <= 0;
+                      const isExpired = new Date(ticket.sales_end_at) < new Date();
+                      const isPresale = ticket.name.toUpperCase().includes('PRESALE');
+                      
+                      return (
+                        <div 
+                          key={ticket.id} 
+                          className={`group relative bg-dark-grey border border-white/10 p-10 transition-all ${(isSoldOut || isExpired) ? 'opacity-40 grayscale' : 'hover:border-neon-pink hover:-translate-y-2'}`}
+                        >
+                          {isPresale && !isSoldOut && !isExpired && (
+                            <div className="absolute top-0 right-10 bg-neon-pink text-white px-4 py-1 font-heading text-sm uppercase tracking-widest translate-y-[-50%]">
+                              HOT DEAL
                             </div>
-
-                            <div className="mb-12">
-                               <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] block mb-2">PRICE</span>
-                               <span className="text-5xl font-heading tracking-tighter text-white">
-                                 {formatPrice(ticket.price)}
-                               </span>
-                            </div>
-
-                            {isSoldOut ? (
-                              <button disabled className="w-full bg-white/5 text-white/20 py-4 font-heading text-xl uppercase cursor-not-allowed border border-white/5">
-                                SOLD OUT
-                              </button>
-                            ) : (
-                              <button 
-                                onClick={() => {
-                                  const params = new URLSearchParams();
-                                  params.set('ticketId', String(ticket.id));
-                                  params.set('name', `${mainEvent.title} - ${ticket.name}`);
-                                  params.set('price', String(ticket.price));
-                                  window.location.href = `/checkout?${params.toString()}`;
-                                }}
-                                className="w-full bg-white text-black font-heading text-2xl py-5 hover:bg-neon-pink hover:text-white transition-all tracking-widest uppercase"
-                              >
-                                BUY NOW
-                              </button>
-                            )}
-
-                            {!isSoldOut && (
-                              <div className="mt-6 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-neon-pink">
-                                <i className="fa-solid fa-bolt text-xs"></i>
-                                <span>{ticket.remaining_quota} SEATS LEFT</span>
-                              </div>
-                            )}
+                          )}
+                          
+                          <div className="mb-10">
+                            <span className="text-white/40 font-bold tracking-[0.3em] text-[10px] mb-4 block uppercase opacity-60">
+                              TIER CATEGORY
+                            </span>
+                            <h4 className="text-4xl font-heading leading-none mb-6 group-hover:text-neon-pink transition-colors uppercase">
+                              {ticket.name}
+                            </h4>
+                            <p className="text-xs font-bold text-white/30 uppercase tracking-[0.2em] mb-8 line-clamp-2">
+                              {ticket.description || 'General Admission Pass'}
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()
+
+                          <div className="mb-12">
+                             <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] block mb-2">PRICE</span>
+                             <span className="text-5xl font-heading tracking-tighter text-white">
+                               {formatPrice(ticket.price)}
+                             </span>
+                          </div>
+
+                          {isSoldOut ? (
+                            <button disabled className="w-full bg-white/5 text-white/20 py-4 font-heading text-xl uppercase cursor-not-allowed border border-white/5 shadow-inner">
+                              SOLD OUT
+                            </button>
+                          ) : isExpired ? (
+                            <button disabled className="w-full bg-white/5 text-neon-pink py-4 font-heading text-xl uppercase cursor-not-allowed border border-neon-pink/20">
+                              SALES ENDED
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => {
+                                const params = new URLSearchParams();
+                                params.set('ticketId', String(ticket.id));
+                                params.set('name', `${nearestEvent.title} - ${ticket.name}`);
+                                params.set('price', String(ticket.price));
+                                window.location.href = `/checkout?${params.toString()}`;
+                              }}
+                              className="w-full bg-white text-black font-heading text-2xl py-5 hover:bg-neon-pink hover:text-white transition-all tracking-widest uppercase"
+                            >
+                              BUY NOW
+                            </button>
+                          )}
+
+                          {!(isSoldOut || isExpired) && (
+                            <div className="mt-6 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-neon-pink">
+                              <i className="fa-solid fa-bolt text-xs"></i>
+                              <span>{ticket.remaining_quota} SEATS LEFT</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
+
           </div>
         </section>
 
@@ -508,9 +516,9 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+            <div className="flex overflow-x-auto scrollbar-hide gap-12 pb-12 snap-x snap-mandatory">
               {!merchLoading && apiMerch.length === 0 && (
-                <div className="group cursor-pointer">
+                <div className="group cursor-pointer min-w-[300px] md:min-w-[400px] snap-start">
                   <div className="relative aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
                     <img src={tshirtImg} alt="Official Tee" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
                   </div>
@@ -519,8 +527,8 @@ const LandingPage: React.FC = () => {
                 </div>
               )}
 
-              {apiMerch.slice(0, 4).map(item => (
-                <Link to={`/merchandise/${item.id}`} key={item.id} className="group cursor-pointer">
+              {apiMerch.map(item => (
+                <Link to={`/merchandise/${item.id}`} key={item.id} className="group cursor-pointer min-w-[300px] md:min-w-[400px] snap-start">
                   <div className="relative aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
                     <img 
                       src={formatImageURL(item.image_url)} 

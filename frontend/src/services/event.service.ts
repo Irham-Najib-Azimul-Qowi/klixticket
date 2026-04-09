@@ -16,8 +16,13 @@ export const eventService = {
     return handleResponse<Event>(res);
   },
 
-  async getByID(id: number): Promise<Event> {
+  async getPublishedByID(id: string): Promise<Event> {
     const res = await fetch(`${API_BASE_URL}/events/${id}`);
+    return handleResponse<Event>(res);
+  },
+
+  async getNearestEvent(): Promise<Event> {
+    const res = await fetch(`${API_BASE_URL}/events/nearest`);
     return handleResponse<Event>(res);
   },
 };

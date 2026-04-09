@@ -153,4 +153,5 @@ export interface CreateOrderRequest {
   ticket_items?: OrderItemRequest[];
   merchandise_items?: { merchandise_id: number; quantity: number }[];
   payment_method?: string;
+  idempotency_key?: string;
 }

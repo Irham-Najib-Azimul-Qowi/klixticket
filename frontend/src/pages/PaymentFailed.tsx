@@ -1,8 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { XCircle, RefreshCcw, HelpCircle } from 'lucide-react';
 
 const PaymentFailed: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <>
       <style>{`
@@ -48,16 +50,18 @@ const PaymentFailed: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-4 pt-8 border-t border-white/10">
-            <Link to="/checkout">
-              <button className="w-full bg-white text-black py-6 text-2xl font-heading uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all flex items-center justify-center gap-4 transform hover:-rotate-1">
-                RETRY PAYMENT <RefreshCcw className="w-6 h-6" />
-              </button>
-            </Link>
-            <Link to="/">
-              <button className="w-full bg-transparent border border-white/20 text-white py-5 text-xl font-heading uppercase tracking-widest hover:border-white transition-all">
-                ABORT TO TERMINAL
-              </button>
-            </Link>
+            <button 
+              onClick={() => navigate('/checkout')}
+              className="w-full bg-white text-black py-6 text-2xl font-heading uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all flex items-center justify-center gap-4 transform hover:-rotate-1"
+            >
+              RETRY PAYMENT <RefreshCcw className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={() => navigate('/')}
+              className="w-full bg-transparent border border-white/20 text-white py-5 text-xl font-heading uppercase tracking-widest hover:border-white transition-all"
+            >
+              ABORT TO TERMINAL
+            </button>
           </div>
         </div>
       </div>

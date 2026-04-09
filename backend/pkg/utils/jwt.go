@@ -8,7 +8,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var JWTSecret = []byte(os.Getenv("JWT_SECRET"))
+// GetJWTSecret Fetch secret inside functions to ensure .env is already loaded
+func GetJWTSecret() ([]byte, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return nil, errors.New("JWT_SECRET environment variable is not set")
+	}
+	return []byte(secret), nil
+}
 
 type Claims struct {
 	UserID uint   `json:"user_id"`
@@ -17,11 +24,12 @@ type Claims struct {
 }
 
 func GenerateToken(userID uint, role string) (string, error) {
-	if len(JWTSecret) == 0 {
-		JWTSecret = []byte("super_secret_default_key") // Fallback for dev mode
+	secret, err := GetJWTSecret()
+	if err != nil {
+		return "", err
 	}
 
-	expirationTime := time.Now().Add(24 * time.Hour) // Token aktif 24 jam
+	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
 		Role:   role,
@@ -32,16 +40,17 @@ func GenerateToken(userID uint, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(JWTSecret)
+	return token.SignedString(secret)
 }
 
 func ValidateToken(signedToken string) (*Claims, error) {
-	if len(JWTSecret) == 0 {
-		JWTSecret = []byte("super_secret_default_key")
+	secret, err := GetJWTSecret()
+	if err != nil {
+		return nil, err
 	}
 
 	token, err := jwt.ParseWithClaims(signedToken, &Claims{}, func(t *jwt.Token) (interface{}, error) {
-		return JWTSecret, nil
+		return secret, nil
 	})
 
 	if err != nil {

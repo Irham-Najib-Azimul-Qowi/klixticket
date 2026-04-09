@@ -39,6 +39,7 @@ type EventService interface {
 	// Public
 	GetPublishedEvents(ctx context.Context, query dto.EventListQuery) ([]models.Event, error)
 	GetPublishedEventByID(ctx context.Context, id uint) (*models.Event, error)
+	GetNearestEvent(ctx context.Context) (*models.Event, error)
 
 	// Admin
 	GetAllEvents(ctx context.Context, query dto.EventListQuery) ([]models.Event, error)
@@ -248,6 +249,21 @@ func (s *eventService) GetPublishedEventByID(ctx context.Context, id uint) (*mod
 			return nil, ErrEventNotFound
 		}
 
+		return nil, err
+	}
+
+	return event, nil
+}
+
+func (s *eventService) GetNearestEvent(ctx context.Context) (*models.Event, error) {
+	ctx, cancel := withEventTimeout(ctx)
+	defer cancel()
+
+	event, err := s.repo.FindNearest(ctx, time.Now())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrEventNotFound
+		}
 		return nil, err
 	}
 

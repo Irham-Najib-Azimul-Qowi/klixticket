@@ -29,21 +29,23 @@ func SeedAdmin(db *gorm.DB) error {
 
 	var existingUser models.User
 	err := db.Where("email = ?", adminEmail).First(&existingUser).Error
+	
+	hashedPassword, hashErr := utils.HashPassword(adminPassword)
+	if hashErr != nil {
+		return hashErr
+	}
+
 	if err == nil {
-		if existingUser.Role != "admin" {
-			existingUser.Role = "admin"
-			if saveErr := db.Save(&existingUser).Error; saveErr != nil {
-				return saveErr
-			}
+		// User exists, update role and password to match .env
+		existingUser.Role = "admin"
+		existingUser.PasswordHash = &hashedPassword
+		if saveErr := db.Save(&existingUser).Error; saveErr != nil {
+			return saveErr
 		}
+		log.Printf("Admin user updated/synced: %s", adminEmail)
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	} else {
-		hashedPassword, err := utils.HashPassword(adminPassword)
-		if err != nil {
-			return err
-		}
-
 		admin := &models.User{
 			Name:         adminName,
 			Email:        adminEmail,
@@ -98,13 +100,6 @@ func SeedUser(db *gorm.DB) error {
 }
 
 func SeedEvents(db *gorm.DB) error {
-	var count int64
-	db.Model(&models.Event{}).Count(&count)
-	if count >= 10 {
-		log.Println("Info: event seeder skipped, sufficient data already exists")
-		return nil
-	}
-
 	now := time.Now()
 	
 	events := []models.Event{
@@ -244,7 +239,25 @@ func SeedEvents(db *gorm.DB) error {
 
 	for _, event := range events {
 		var existing models.Event
-		if db.Where("slug = ?", event.Slug).First(&existing).Error != nil {
+		if err := db.Where("slug = ?", event.Slug).Preload("TicketTypes").First(&existing).Error; err == nil {
+			// Event exists, update its basic info and tickets
+			event.ID = existing.ID
+			db.Model(&existing).Updates(event)
+
+			// Sync Ticket Types
+			for _, tt := range event.TicketTypes {
+				db.Model(&models.TicketType{}).
+					Where("event_id = ? AND name = ?", existing.ID, tt.Name).
+					Updates(map[string]interface{}{
+						"quota":           tt.Quota,
+						"remaining_quota": tt.RemainingQuota,
+						"active_status":   true,
+						"sales_start_at":  tt.SalesStartAt,
+						"sales_end_at":    tt.SalesEndAt,
+					})
+			}
+		} else {
+			// New event, create it
 			if err := db.Create(&event).Error; err != nil {
 				log.Printf("Warning: failed to seed event '%s': %v", event.Title, err)
 			}

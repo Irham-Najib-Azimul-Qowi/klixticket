@@ -47,7 +47,7 @@ func SetupRoutes(
 		eventsGroup := api.Group("/events")
 		{
 			eventsGroup.GET("", eventHandler.GetPublishedEvents)
-			eventsGroup.GET("/", eventHandler.GetPublishedEvents)
+			eventsGroup.GET("/nearest", eventHandler.GetNearestEvent)
 			eventsGroup.GET("/:id", eventHandler.GetPublishedEventByID)
 		}
 
@@ -62,7 +62,8 @@ func SetupRoutes(
 		ordersGroup := api.Group("/orders")
 		ordersGroup.Use(middlewares.RequireAuth())
 		{
-			ordersGroup.POST("", orderHandler.CreateOrder)
+			// Prevent double orders via spamming from the same IP (1 request per 12s on average)
+			ordersGroup.POST("", middlewares.NewSimpleRateLimit(5, time.Minute), orderHandler.CreateOrder)
 			ordersGroup.GET("/my", orderHandler.GetMyOrders) // Changed from /me to /my
 			ordersGroup.GET("/:id", orderHandler.GetOrderByID)
 		}

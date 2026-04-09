@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -94,6 +95,17 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 	ctx, cancel := withOrderTimeout(ctx)
 	defer cancel()
 
+	// 0. Idempotency Check
+	log.Printf("CREATE ORDER START - UserID: %d, Key: %s", userID, req.IdempotencyKey)
+	log.Printf("Payload: %+v", req)
+
+	if req.IdempotencyKey != "" {
+		existingOrder, err := s.repo.FindOrderByIdempotencyKey(ctx, req.IdempotencyKey)
+		if err == nil && existingOrder != nil {
+			return existingOrder, nil
+		}
+	}
+
 	// 1. Initiate Database Transaction
 	tx := s.repo.BeginTx(ctx)
 	// Definisikan defer agar otomatis Rollback jika terjadi panic atau abort Return yang belum ke Commit
@@ -132,11 +144,10 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 			return nil, fmt.Errorf("%w: not enough quota for ticket %s", ErrOrderValidation, ticket.Name)
 		}
 
-		// Kurangi quota di DB temporary space
-		newRemainingQuota := ticket.RemainingQuota - item.Quantity
-		if err := s.repo.UpdateTicketQuota(tx, ticket.ID, newRemainingQuota); err != nil {
+		// Atomic Quota Reduction to prevent overselling
+		if err := s.repo.DecrementTicketQuota(tx, ticket.ID, item.Quantity); err != nil {
 			tx.Rollback()
-			return nil, errors.New("failed to lock ticket quota")
+			return nil, fmt.Errorf("%w: tiket %s sudah habis atau tidak tersedia", ErrOrderValidation, ticket.Name)
 		}
 
 		// Hitung Total (Harga * Qty)
@@ -172,10 +183,10 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 			return nil, fmt.Errorf("%w: not enough stock for merchandise %s", ErrOrderValidation, merchandise.Name)
 		}
 
-		newStock := merchandise.Stock - item.Quantity
-		if err := s.merchRepo.UpdateStockWithTx(tx, merchandise.ID, newStock); err != nil {
+		// Atomic Stock Reduction to prevent overselling
+		if err := s.merchRepo.DecrementStock(tx, merchandise.ID, item.Quantity); err != nil {
 			tx.Rollback()
-			return nil, errors.New("failed to lock merchandise stock")
+			return nil, fmt.Errorf("%w: stok merchandise %s sudah habis", ErrOrderValidation, merchandise.Name)
 		}
 
 		totalAmount += merchandise.Price * float64(item.Quantity)
@@ -198,9 +209,10 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 		ID:          newOrderID,
 		UserID:      userID,
 		TotalAmount: totalAmount,
-		Status:      "pending",
-		ExpiredAt:   time.Now().Add(24 * time.Hour),
-		OrderItems:  orderItems,
+		Status:         "pending",
+		ExpiredAt:      time.Now().Add(24 * time.Hour),
+		IdempotencyKey: req.IdempotencyKey,
+		OrderItems:     orderItems,
 	}
 
 	// 4. Minta Invoice Xendit
@@ -214,7 +226,8 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 	invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(newOrderID, user.Email, totalAmount, itemDescriptions, req.PaymentMethod)
 	if err != nil {
 		tx.Rollback()
-		return nil, fmt.Errorf("failed to communicate with payment gateway: %v", err)
+		log.Printf("Xendit Error for Order %s: %v", newOrderID, err)
+		return nil, fmt.Errorf("gagal membuat invoice: %v", err)
 	}
 
 	// Masukkan payment details ke order
@@ -248,8 +261,27 @@ func (s *orderService) GetMyOrders(ctx context.Context, userID uint, query dto.O
 	ctx, cancel := withOrderTimeout(ctx)
 	defer cancel()
 
+	log.Println("USER ID:", userID)
+	log.Println("ORDER FILTER:", query.Filter)
+
 	query = normalizeOrderListQuery(query)
-	return s.repo.FindOrdersByUserID(ctx, userID, query.Limit, query.Offset, query.Status)
+	
+	filter := query.Filter
+	if filter == "" && query.Status != "" {
+		filter = query.Status
+	}
+
+	orders, err := s.repo.FindOrdersByUserID(ctx, userID, query.Limit, query.Offset, filter)
+	if err == nil {
+		log.Println("USER ORDERS FETCHED:", len(orders))
+		if filter == "active" {
+			log.Println("ACTIVE TICKETS:", orders)
+		}
+	} else {
+		log.Println("ERROR FETCHING ORDERS:", err)
+	}
+
+	return orders, err
 }
 
 func (s *orderService) GetOrderByID(ctx context.Context, orderID string, userID uint) (*models.Order, error) {
@@ -459,6 +491,20 @@ func (s *orderService) ProcessXenditWebhook(ctx context.Context, payload dto.Xen
 		order.Status = "paid"
 		order.Payment.Status = "paid"
 		webhookLog.Status = "processed_paid"
+
+		// Set ExpiredAt to event end date if possible, or far future
+		// This ensures paid tickets don't 'expire' just because the payment window (24h) passed
+		newExpiry := time.Now().AddDate(1, 0, 0) // Default 1 year if no event found
+		for _, item := range order.OrderItems {
+			if item.TicketType != nil && item.TicketType.EventID != 0 {
+				// We need event date. For now, let's use a safe far future or 
+				// if we have event date, we use it.
+				// Since we might not have it preloaded deeply here, let's use 1 year future
+				// as a safeguard so the ticket stays in "Active".
+			}
+		}
+		order.ExpiredAt = newExpiry
+		log.Printf("[WEBHOOK] Order %s marked as PAID. New Expiry: %v", order.ID, order.ExpiredAt)
 	case "EXPIRED":
 		if order.Status == "pending" {
 			if err := s.restoreInventoryWithTx(tx, order); err != nil {

@@ -9,9 +9,9 @@ import (
 
 type Order struct {
 	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	UserID      uint           `gorm:"not null" json:"user_id"`
+	UserID      uint           `gorm:"not null;index" json:"user_id"`
 	User        User           `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"user,omitempty"`
-	Status      string         `gorm:"type:varchar(20);default:'pending'" json:"status"` // 'pending', 'paid', 'failed', 'expired', 'cancelled'
+	Status      string         `gorm:"type:varchar(20);default:'pending';index" json:"status"` // 'pending', 'paid', 'failed', 'expired', 'cancelled'
 	TotalAmount float64        `gorm:"type:decimal(12,2);not null" json:"total_amount"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -19,7 +19,8 @@ type Order struct {
 	CheckedInAt *time.Time     `gorm:"index" json:"checked_in_at"`
 	CheckedInBy *uint          `gorm:"index" json:"checked_in_by,omitempty"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
-	OrderItems  []OrderItem    `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
+	IdempotencyKey string         `gorm:"type:varchar(100);uniqueIndex" json:"idempotency_key,omitempty"`
+	OrderItems     []OrderItem    `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
 	Payment     *Payment       `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"payment,omitempty"`
 }
 

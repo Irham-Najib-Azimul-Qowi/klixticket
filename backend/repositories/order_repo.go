@@ -17,13 +17,15 @@ type OrderRepository interface {
 	BeginTx(ctx context.Context) *gorm.DB
 
 	FindTicketTypeWithLock(tx *gorm.DB, ticketID uint) (*models.TicketType, error)
-	UpdateTicketQuota(tx *gorm.DB, ticketID uint, newQuota int) error
+	UpdateTicketQuota(tx *gorm.DB, id uint, quota int) error
+	DecrementTicketQuota(tx *gorm.DB, id uint, quantity int) error
+	FindOrderByIdempotencyKey(ctx context.Context, key string) (*models.Order, error)
 
 	// Create
 	CreateOrderWithTx(tx *gorm.DB, order *models.Order) error
 
 	// Read
-	FindOrdersByUserID(ctx context.Context, userID uint, limit, offset int, status string) ([]models.Order, error)
+	FindOrdersByUserID(ctx context.Context, userID uint, limit, offset int, filter string) ([]models.Order, error)
 	FindOrderByID(ctx context.Context, orderID string) (*models.Order, error)
 	FindOrderByIDWithTx(tx *gorm.DB, orderID string) (*models.Order, error)
 
@@ -164,16 +166,34 @@ func (r *orderRepository) CreateOrderWithTx(tx *gorm.DB, order *models.Order) er
 	return tx.Create(order).Error
 }
 
-func (r *orderRepository) FindOrdersByUserID(ctx context.Context, userID uint, limit, offset int, status string) ([]models.Order, error) {
+func (r *orderRepository) FindOrdersByUserID(ctx context.Context, userID uint, limit, offset int, filter string) ([]models.Order, error) {
 	var orders []models.Order
 
 	query := orderSelectColumns(r.db.WithContext(ctx)).
+		Preload("OrderItems.TicketType").
+		Preload("OrderItems.Merchandise").
 		Preload("Payment", func(preloadDB *gorm.DB) *gorm.DB {
 			return paymentSelectColumns(preloadDB)
 		}).
 		Where("user_id = ?", userID)
-	if status != "" {
-		query = query.Where("status = ?", status)
+
+	now := time.Now()
+
+	switch filter {
+	case "active":
+		// Tiket Aktif: sudah dibayar, belum check-in, dan belum expired
+		query = query.Where("status = ?", "paid").
+			Where("checked_in_at IS NULL").
+			Where("expired_at > ?", now)
+	case "history":
+		// Riwayat: sudah check-in ATAU sudah expired ATAU status bukan paid
+		query = query.Where(
+			r.db.Where("checked_in_at IS NOT NULL").
+				Or("expired_at <= ?", now).
+				Or("status <> ?", "paid"),
+		)
+	default:
+		// Jika tidak ada filter, kembalikan semua yang terbaru
 	}
 
 	err := query.
@@ -346,8 +366,36 @@ func (r *orderRepository) FindTicketTypeWithLock(tx *gorm.DB, ticketID uint) (*m
 	return &ticketType, nil
 }
 
-func (r *orderRepository) UpdateTicketQuota(tx *gorm.DB, ticketID uint, newQuota int) error {
-	return tx.Model(&models.TicketType{}).Where("id = ?", ticketID).Update("remaining_quota", newQuota).Error
+func (r *orderRepository) UpdateTicketQuota(tx *gorm.DB, id uint, quota int) error {
+	return tx.Model(&models.TicketType{}).Where("id = ?", id).Update("remaining_quota", quota).Error
+}
+
+func (r *orderRepository) DecrementTicketQuota(tx *gorm.DB, id uint, quantity int) error {
+	// Atomic update with check: update ticket_types set remaining_quota = remaining_quota - X where id = Y and remaining_quota >= X
+	result := tx.Model(&models.TicketType{}).
+		Where("id = ? AND remaining_quota >= ?", id, quantity).
+		Update("remaining_quota", gorm.Expr("remaining_quota - ?", quantity))
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("insufficient quota")
+	}
+
+	return nil
+}
+
+func (r *orderRepository) FindOrderByIdempotencyKey(ctx context.Context, key string) (*models.Order, error) {
+	var order models.Order
+	err := orderDetailPreloads(r.db.WithContext(ctx)).
+		Where("idempotency_key = ?", key).
+		First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
 }
 
 func (r *orderRepository) CountPaidOrders(ctx context.Context) (int64, error) {

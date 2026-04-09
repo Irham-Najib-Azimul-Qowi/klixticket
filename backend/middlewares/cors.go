@@ -19,8 +19,19 @@ func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 
-		if _, exists := allowedOriginsMap[origin]; exists {
+		// If origin is in our allowed list, or if we have "*" in our list
+		allowed := false
+		if _, exists := allowedOriginsMap["*"]; exists {
+			allowed = true
+		} else if _, exists := allowedOriginsMap[origin]; exists {
+			allowed = true
+		}
+
+		if allowed && origin != "" {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		} else if origin == "" {
+			// Optional: for tools like postman
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")

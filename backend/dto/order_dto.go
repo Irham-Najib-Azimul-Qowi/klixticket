@@ -5,6 +5,7 @@ type CreateOrderRequest struct {
 	TicketItems      []OrderItemRequest            `json:"ticket_items"`
 	MerchandiseItems []OrderMerchandiseItemRequest `json:"merchandise_items"`
 	PaymentMethod    string                        `json:"payment_method,omitempty"`
+	IdempotencyKey   string                        `json:"idempotency_key,omitempty"`
 }
 
 type OrderItemRequest struct {
@@ -22,4 +23,5 @@ type OrderListQuery struct {
 	Offset        int    `form:"offset" binding:"omitempty,min=0"`
 	Status        string `form:"status" binding:"omitempty,oneof=pending paid failed expired cancelled"`
 	PaymentStatus string `form:"payment_status" binding:"omitempty,oneof=pending paid failed expired"`
+	Filter        string `form:"filter" binding:"omitempty,oneof=active history"`
 }

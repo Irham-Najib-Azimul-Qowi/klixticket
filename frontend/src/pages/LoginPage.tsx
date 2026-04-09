@@ -66,7 +66,12 @@ const LoginPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Google Login Error:", err);
-      setError(err.message || 'Failed to login via Google. Please try again.');
+      // Detailed error for common developer misconfigurations
+      if (err.message && (err.message.includes('origin') || err.message.includes('Forbidden'))) {
+        setError('Konfigurasi Google OAuth salah (Origin Not Allowed). Pastikan http://localhost:5173 terdaftar di Google Cloud Console.');
+      } else {
+        setError(err.message || 'Failed to login via Google. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

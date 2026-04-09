@@ -61,11 +61,14 @@ const Checkout: React.FC = () => {
         .filter(i => i.type === 'merchandise')
         .map(i => ({ merchandise_id: i.id as number, quantity: i.quantity }));
 
+      const idempotencyKey = `ord_${currentUser.id}_${Date.now()}`;
+
       const orderData = await orderApi.createOrder({
         items: [],
         ticket_items,
         merchandise_items,
-        payment_method: 'xendit'
+        payment_method: 'xendit',
+        idempotency_key: idempotencyKey
       });
 
       if (orderData.payment?.checkout_url) {

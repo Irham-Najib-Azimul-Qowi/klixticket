@@ -29,6 +29,20 @@ func NewSimpleRateLimit(limit int, window time.Duration) gin.HandlerFunc {
 		window:  window,
 	}
 
+	// Cleanup task to prevent memory leak on 1GB RAM VPS
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		for range ticker.C {
+			limiter.mu.Lock()
+			for k, v := range limiter.entries {
+				if time.Now().After(v.windowEnds) {
+					delete(limiter.entries, k)
+				}
+			}
+			limiter.mu.Unlock()
+		}
+	}()
+
 	return func(c *gin.Context) {
 		key := c.ClientIP() + ":" + c.FullPath()
 		now := time.Now()

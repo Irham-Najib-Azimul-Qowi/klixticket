@@ -16,8 +16,13 @@ export const orderService = {
     return parsed;
   },
 
-  async getMyOrders(): Promise<Order[]> {
-    const res = await fetch(`${API_BASE_URL}/orders/my`, {
+  async getMyOrders(params?: { status?: string; filter?: string }): Promise<Order[]> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.filter) query.set('filter', params.filter);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    
+    const res = await fetch(`${API_BASE_URL}/orders/my${qs}`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });

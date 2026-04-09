@@ -4,17 +4,22 @@ import { User as UserIcon, Loader2, ArrowRight, Mail, Ticket, ShoppingBag, Histo
 import { authApi, orderApi } from '@/services/api';
 import type { User, Order } from '@/services/api';
 
-const ProfilePage: React.FC = () => {
+interface ProfilePageProps {
+  tab?: 'items' | 'history' | 'account' | 'security';
+}
+
+const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+  const [historyOrders, setHistoryOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [activeSection, setActiveSection] = useState<'items' | 'history' | 'account' | 'security'>('items');
+  const [activeSection, setActiveSection] = useState<'items' | 'history' | 'account' | 'security'>(tab || 'items');
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const [oldPassword, setOldPassword] = useState('');
@@ -22,16 +27,30 @@ const ProfilePage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
+    if (tab) {
+      setActiveSection(tab);
+    }
+  }, [tab]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userData, ordersData] = await Promise.all([
+        console.log("FETCHING PROFILE DATA");
+        const [userData, activeOrdersData, historyOrdersData] = await Promise.all([
           authApi.getMe(),
-          orderApi.getMyOrders()
+          orderApi.getMyOrders({ filter: 'active' }),
+          orderApi.getMyOrders({ filter: 'history' })
         ]);
+        
         setUser(userData);
-        setName(userData.name);
-        setEmail(userData.email);
-        setOrders(ordersData || []);
+        setName(userData.name || '');
+        setEmail(userData.email || '');
+        setActiveOrders(activeOrdersData || []);
+        setHistoryOrders(historyOrdersData || []);
+        
+        console.log("USER ID:", userData.id);
+        console.log("ACTIVE TICKETS:", activeOrdersData);
+        console.log("HISTORY ORDERS:", historyOrdersData);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch profile data');
         if (err.status === 401) {
@@ -89,11 +108,7 @@ const ProfilePage: React.FC = () => {
     navigate('/login');
   };
 
-  const myPaidItems = (Array.isArray(orders) ? orders : [])
-    .filter(o => o.status?.toLowerCase() === 'paid')
-    .flatMap(o => (o.order_items || []).map(item => ({ ...item, orderId: o.id })));
-
-  const historyOrders = (Array.isArray(orders) ? orders : []);
+  const myPaidItems = activeOrders.flatMap(o => (o.order_items || []).map(item => ({ ...item, orderId: o.id })));
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
@@ -117,6 +132,7 @@ const ProfilePage: React.FC = () => {
             <span className="text-lg font-heading uppercase tracking-tighter">KlixTicket</span>
           </Link>
           <div className="flex items-center gap-6">
+             <Link to="/" className="text-[9px] font-bold text-white/50 uppercase tracking-widest hover:text-neon-pink transition-colors">Kembali ke Landing Page</Link>
              {user?.role === 'admin' && (
               <Link to="/admin" className="px-4 py-1.5 bg-neon-pink/10 text-neon-pink border border-neon-pink/20 rounded-sm font-bold text-[9px] uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all">Go to Admin</Link>
             )}
@@ -157,38 +173,38 @@ const ProfilePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
            
            {/* Navigation Sidebar */}
-           <aside className="lg:col-span-3">
-              <div className="flex flex-col gap-1">
-                 <button 
-                  onClick={() => setActiveSection('items')} 
-                  className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'items' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
-                 >
-                    <Package size={18} />
-                    <span>My Items</span>
-                 </button>
-                 <button 
-                  onClick={() => setActiveSection('history')} 
-                  className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'history' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
-                 >
-                    <History size={18} />
-                    <span>Order History</span>
-                 </button>
-                 <button 
-                  onClick={() => setActiveSection('account')} 
-                  className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'account' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
-                 >
-                    <UserIcon size={18} />
-                    <span>Profile Info</span>
-                 </button>
-                 <button 
-                  onClick={() => setActiveSection('security')} 
-                  className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'security' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
-                 >
-                    <Key size={18} />
-                    <span>Security</span>
-                 </button>
-              </div>
-           </aside>
+            <aside className="lg:col-span-3">
+               <div className="flex flex-col gap-1">
+                  <button 
+                   onClick={() => { setActiveSection('items'); navigate('/profile/tickets'); }} 
+                   className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'items' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
+                  >
+                     <Package size={18} />
+                     <span>My Items</span>
+                  </button>
+                  <button 
+                   onClick={() => { setActiveSection('history'); navigate('/profile/history'); }} 
+                   className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'history' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
+                  >
+                     <History size={18} />
+                     <span>Order History</span>
+                  </button>
+                  <button 
+                   onClick={() => { setActiveSection('account'); navigate('/profile'); }} 
+                   className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'account' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
+                  >
+                     <UserIcon size={18} />
+                     <span>Profile Info</span>
+                  </button>
+                  <button 
+                   onClick={() => { setActiveSection('security'); navigate('/profile/security'); }} 
+                   className={`flex items-center gap-4 px-6 py-4 font-heading text-sm uppercase tracking-widest border transition-all ${activeSection === 'security' ? 'bg-white text-black border-white' : 'text-white/40 border-white/5 hover:bg-white/5 hover:text-white'}`}
+                  >
+                     <Key size={18} />
+                     <span>Security</span>
+                  </button>
+               </div>
+            </aside>
 
            {/* Content Area */}
            <div className="lg:col-span-9">
@@ -226,7 +242,15 @@ const ProfilePage: React.FC = () => {
                             <h3 className="text-xl font-heading uppercase text-white mb-8 group-hover:text-neon-pink transition-colors truncate relative z-10">{item.item_name}</h3>
                             <div className="flex items-center justify-between relative z-10">
                                <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Ref: {item.orderId?.slice(-8).toUpperCase()}</span>
-                               <span className="flex items-center gap-1 text-[9px] font-black uppercase text-white tracking-widest">View Details <ArrowRight size={10} /></span>
+                               <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/order/${item.orderId}/ticket`);
+                                }}
+                                className="flex items-center gap-1 text-[9px] font-black uppercase text-neon-pink tracking-widest hover:text-white transition-colors"
+                               >
+                                  VIEW TICKET <ArrowRight size={10} />
+                               </button>
                             </div>
                           </div>
                         ))
@@ -264,10 +288,18 @@ const ProfilePage: React.FC = () => {
                                      <td className="p-4 text-[10px] text-white/20 whitespace-nowrap">{new Date(order.created_at).toLocaleString()}</td>
                                      <td className="p-4 font-heading text-[11px] uppercase truncate max-w-[150px]">{order.order_items?.[0]?.item_name || 'Multiple Assets'}</td>
                                      <td className="p-4 font-heading text-[11px] text-white/60">{formatPrice(order.total_amount)}</td>
-                                     <td className="p-4 text-right">
+                                     <td className="p-4 text-right flex items-center justify-end gap-3">
                                         <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border border-white/20 text-white`}>
                                            {order.status}
                                         </span>
+                                        {order.status.toLowerCase() === 'paid' && (
+                                          <Link 
+                                           to={`/order/${order.id}/ticket`}
+                                           className="text-[9px] font-bold uppercase tracking-widest text-neon-pink hover:text-white transition-colors"
+                                          >
+                                            VIEW
+                                          </Link>
+                                        )}
                                      </td>
                                   </tr>
                                 ))
@@ -441,9 +473,16 @@ const ProfilePage: React.FC = () => {
                       <p className="font-mono text-neon-pink text-sm tracking-widest select-all">REF-{selectedItem.orderId?.toUpperCase()}</p>
                    </div>
                    
-                   <p className="text-white/20 text-[9px] font-bold uppercase tracking-widest leading-relaxed">
+                   <p className="text-white/20 text-[9px] font-bold uppercase tracking-widest leading-relaxed mb-6">
                       Present this interface at the authorized checkpoint for validation. Ownership is non-transferable via this node.
                    </p>
+
+                   <button 
+                     onClick={() => navigate(`/order/${selectedItem.orderId}/ticket`)}
+                     className="w-full py-4 bg-white text-black font-heading text-lg uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all transform hover:-rotate-1"
+                   >
+                     OPEN OFFICIAL TICKET
+                   </button>
                 </div>
             </div>
          </div>
