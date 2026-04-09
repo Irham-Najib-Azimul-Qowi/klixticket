@@ -87,6 +87,13 @@ func (r *eventRepository) FindAllPublished(ctx context.Context, now time.Time, l
 	var events []models.Event
 
 	err := eventSelectColumns(r.db.WithContext(ctx)).
+		Preload("TicketTypes", func(db *gorm.DB) *gorm.DB {
+			return ticketSelectColumns(db).
+				Where("active_status = ?", true).
+				Where("sales_start_at <= ?", now).
+				Where("sales_end_at >= ?", now).
+				Order("sales_start_at asc")
+		}).
 		Where("publish_status = ?", "published").
 		Where("end_date >= ?", now).
 		Order("start_date asc").

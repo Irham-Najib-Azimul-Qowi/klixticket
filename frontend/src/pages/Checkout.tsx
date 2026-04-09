@@ -32,7 +32,7 @@ const Checkout: React.FC = () => {
       }] 
     : items;
 
-  const PPN_RATE = 0.11;
+  const PPN_RATE = 0;
   const subtotal = isDirectBuy ? (directPrice * directQty) : getTotalPrice();
   const ppn = subtotal * PPN_RATE;
   const total = subtotal + ppn;
@@ -214,7 +214,7 @@ const Checkout: React.FC = () => {
                          <span>{formatPrice(subtotal)}</span>
                       </div>
                       <div className="flex justify-between items-center text-white/40 text-xs font-bold uppercase tracking-widest">
-                         <span>Tax (PPN 11%)</span>
+                         <span>Tax (0%)</span>
                          <span>{formatPrice(ppn)}</span>
                       </div>
                       <div className="pt-6 mt-6 border-t border-white/10 flex flex-col items-center">

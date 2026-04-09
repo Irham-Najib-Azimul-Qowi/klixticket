@@ -11,6 +11,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    allowedHosts: [
+      '846b-103-215-73-250.ngrok-free.app'
+    ],
     proxy: {
       '/uploads': {
         target: 'http://localhost:8080',

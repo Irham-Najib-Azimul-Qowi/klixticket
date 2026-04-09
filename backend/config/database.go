@@ -57,6 +57,14 @@ func ConnectDB() {
 	if err != nil {
 		log.Fatal("Failed to auto-migrate database schema:", err)
 	}
+
+	// Fix check constraints for Sold Out state (quota >= 0)
+	// GORM AutoMigrate doesn't update existing check constraints, so we force it.
+	database.Exec("ALTER TABLE ticket_types DROP CONSTRAINT IF EXISTS chk_ticket_types_quota")
+	database.Exec("ALTER TABLE ticket_types ADD CONSTRAINT chk_ticket_types_quota CHECK (quota >= 0)")
+	database.Exec("ALTER TABLE ticket_types DROP CONSTRAINT IF EXISTS chk_ticket_types_remaining_quota")
+	database.Exec("ALTER TABLE ticket_types ADD CONSTRAINT chk_ticket_types_remaining_quota CHECK (remaining_quota >= 0)")
+
 	fmt.Println("Database migration completed successfully!")
 
 	DB = database

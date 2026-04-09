@@ -37,7 +37,7 @@ const CreateEvent: React.FC = () => {
   });
 
   const [ticketTiers, setTicketTiers] = useState([
-    { name: 'General Admission', description: 'Standard entry access', price: '', quota: '', sales_start_at: '', sales_end_at: '' }
+    { name: 'General Admission', price: '', quota: '' }
   ]);
 
   const handleEventChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -58,7 +58,7 @@ const CreateEvent: React.FC = () => {
   };
 
   const addTier = () => {
-    setTicketTiers([...ticketTiers, { name: '', description: '', price: '', quota: '', sales_start_at: '', sales_end_at: '' }]);
+    setTicketTiers([...ticketTiers, { name: '', price: '', quota: '' }]);
   };
 
   const removeTier = (index: number) => {
@@ -92,11 +92,11 @@ const CreateEvent: React.FC = () => {
     try {
       const ticketTypes = ticketTiers.map(t => ({
         name: t.name,
-        description: t.description,
+        description: t.name || 'General Admission', // Auto-fill description
         price: Number(t.price),
         quota: Number(t.quota),
-        sales_start_at: t.sales_start_at ? new Date(t.sales_start_at).toISOString() : '',
-        sales_end_at: t.sales_end_at ? new Date(t.sales_end_at).toISOString() : '',
+        sales_start_at: new Date().toISOString(), // Auto-fill start date (now)
+        sales_end_at: eventData.end_date ? new Date(eventData.end_date).toISOString() : new Date().toISOString(), // Auto-fill end date
         active_status: true,
       }));
 
@@ -287,83 +287,52 @@ const CreateEvent: React.FC = () => {
                   </button>
                </div>
 
-               <div className="space-y-10">
+                <div className="space-y-4">
                   {ticketTiers.map((tier, idx) => (
-                     <div key={idx} className="p-10 bg-slate-50 rounded-[40px] relative border border-slate-100 group animate-in slide-in-from-right-4 duration-300 shadow-inner">
-                        <div className="absolute -top-4 -left-4 w-10 h-10 bg-indigo-600 text-white font-black flex items-center justify-center rounded-2xl shadow-xl shadow-indigo-600/30 text-xs">
-                           0{idx + 1}
+                     <div key={idx} className="p-6 bg-slate-50 rounded-2xl relative border border-slate-100 group animate-in slide-in-from-right-2 duration-300 shadow-sm">
+                        <div className="absolute -top-3 -left-3 w-8 h-8 bg-indigo-600 text-white font-black flex items-center justify-center rounded-xl shadow-lg shadow-indigo-600/20 text-[10px]">
+                           {idx + 1}
                         </div>
                         {ticketTiers.length > 1 && (
                            <button 
                               onClick={() => removeTier(idx)}
-                              className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                              className="absolute top-2 right-2 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                               title="Remove Tier"
                            >
-                              <X size={20} />
+                              <X size={16} />
                            </button>
                         )}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                           <div className="space-y-3">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tier Designation</label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                           <div className="space-y-2">
+                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Name</label>
                               <input 
                                  name="name"
                                  value={tier.name}
                                  onChange={(e) => handleTierChange(idx, e)}
-                                 placeholder="Tier Name"
-                                 className="w-full bg-white border border-slate-200 px-5 py-4 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 focus:bg-white transition-all shadow-sm" 
+                                 placeholder="e.g. Presale 1"
+                                 className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 transition-all shadow-sm" 
                               />
                            </div>
-                           <div className="space-y-3">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Valuation (IDR)</label>
+                           <div className="space-y-2">
+                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Price (IDR)</label>
                               <input 
                                  name="price"
                                  type="number"
                                  value={tier.price}
                                  onChange={(e) => handleTierChange(idx, e)}
-                                 placeholder="Amount"
-                                 className="w-full bg-white border border-slate-200 px-5 py-4 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 focus:bg-white transition-all shadow-sm" 
+                                 placeholder="0"
+                                 className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 transition-all shadow-sm" 
                               />
                            </div>
-                           <div className="space-y-3">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Unit Capacity</label>
+                           <div className="space-y-2">
+                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Capacity</label>
                               <input 
                                  name="quota"
                                  type="number"
                                  value={tier.quota}
                                  onChange={(e) => handleTierChange(idx, e)}
-                                 placeholder="Inventory Size"
-                                 className="w-full bg-white border border-slate-200 px-5 py-4 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 focus:bg-white transition-all shadow-sm" 
-                              />
-                           </div>
-                           <div className="space-y-3">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sales Window Start</label>
-                              <input 
-                                 name="sales_start_at"
-                                 type="datetime-local"
-                                 value={tier.sales_start_at}
-                                 onChange={(e) => handleTierChange(idx, e)}
-                                 className="w-full bg-white border border-slate-200 px-5 py-4 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 focus:bg-white transition-all shadow-sm" 
-                              />
-                           </div>
-                           <div className="space-y-3">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sales Window Close</label>
-                              <input 
-                                 name="sales_end_at"
-                                 type="datetime-local"
-                                 value={tier.sales_end_at}
-                                 onChange={(e) => handleTierChange(idx, e)}
-                                 className="w-full bg-white border border-slate-200 px-5 py-4 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 focus:bg-white transition-all shadow-sm" 
-                              />
-                           </div>
-                           <div className="space-y-3 col-span-full">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-indigo-400">Bracket Specific Logic (Optional)</label>
-                              <textarea 
-                                 name="description"
-                                 rows={2}
-                                 value={tier.description}
-                                 onChange={(e) => handleTierChange(idx, e)}
-                                 placeholder="Add unique details for this tier..."
-                                 className="w-full bg-white border border-slate-200 px-5 py-3 rounded-xl text-sm text-slate-600 outline-none focus:border-indigo-300 focus:bg-white transition-all shadow-sm resize-none" 
+                                 placeholder="100"
+                                 className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 transition-all shadow-sm" 
                               />
                            </div>
                         </div>
