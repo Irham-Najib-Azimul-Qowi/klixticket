@@ -54,6 +54,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd ~/app
+            # Kill anything on port 80 to be sure
+            fuser -k 80/tcp || true
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "XENDIT_API_KEY=${{ secrets.XENDIT_API_KEY }}" >> .env
@@ -64,6 +66,7 @@ jobs:
             echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            docker-compose down || true
             docker-compose pull
             docker-compose up -d
             docker image prune -f
