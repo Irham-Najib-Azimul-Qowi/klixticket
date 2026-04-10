@@ -57,6 +57,10 @@ jobs:
             fuser -k 80/tcp || true
             # Robust .env generation
             cat <<EOF > .env
+DB_HOST='db'
+DB_PORT='5432'
+DB_USER='postgres'
+DB_NAME='ticketing'
 DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
 JWT_SECRET='${{ secrets.JWT_SECRET }}'
 XENDIT_API_KEY='${{ secrets.XENDIT_API_KEY }}'
