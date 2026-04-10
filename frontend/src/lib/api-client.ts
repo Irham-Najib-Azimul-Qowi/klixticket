@@ -1,6 +1,15 @@
 import type { ApiError } from '../types';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  // If in browser and on production IP/Domain, use relative path or current host
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return `${window.location.protocol}//${window.location.host}/api/v1`;
+  }
+  return 'http://localhost:8080/api/v1';
+};
+
+export const API_BASE_URL = getBaseUrl();
 export const IMAGE_BASE_URL = import.meta.env.VITE_SERVER_URL || API_BASE_URL.replace('/api/v1', '');
 
 export class RequestError extends Error {

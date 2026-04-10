@@ -516,9 +516,9 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex overflow-x-auto scrollbar-hide gap-12 pb-12 snap-x snap-mandatory">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
               {!merchLoading && apiMerch.length === 0 && (
-                <div className="group cursor-pointer min-w-[300px] md:min-w-[400px] snap-start">
+                <div className="group cursor-pointer">
                   <div className="relative aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
                     <img src={tshirtImg} alt="Official Tee" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
                   </div>
@@ -528,7 +528,7 @@ const LandingPage: React.FC = () => {
               )}
 
               {apiMerch.map(item => (
-                <Link to={`/merchandise/${item.id}`} key={item.id} className="group cursor-pointer min-w-[300px] md:min-w-[400px] snap-start">
+                <Link to={`/merchandise/${item.id}`} key={item.id} className="group cursor-pointer">
                   <div className="relative aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
                     <img 
                       src={formatImageURL(item.image_url)} 
