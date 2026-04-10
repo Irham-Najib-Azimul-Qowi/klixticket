@@ -11,6 +11,8 @@ services:
       POSTGRES_DB: ticketing
     volumes:
       - ./data/db:/var/lib/postgresql/data
+    networks:
+      - ticketing_network
     mem_limit: 300m
     logging:
       driver: "json-file"
@@ -25,12 +27,14 @@ services:
     depends_on:
       - db
     env_file: .env
-    mem_limit: 256m
+    mem_limit: 350m
     ports:
       - "8080:8080"
     command: ./app start
     volumes:
       - ./uploads:/app/uploads
+    networks:
+      - ticketing_network
 
   frontend:
     image: irhamnajib/ticket-frontend:latest
@@ -38,4 +42,10 @@ services:
     restart: always
     ports:
       - "80:80"
-    mem_limit: 128m
+    mem_limit: 150m
+    networks:
+      - ticketing_network
+
+networks:
+  ticketing_network:
+    driver: bridge
