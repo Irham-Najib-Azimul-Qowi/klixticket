@@ -34,7 +34,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/ticket-frontend:latest
           build-args: |
-            VITE_API_URL=http://${{ secrets.VPS_HOST }}/api/v1
             VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
 
       - name: Copy docker-compose, env and configs to VPS
