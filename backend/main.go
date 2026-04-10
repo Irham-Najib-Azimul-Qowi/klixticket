@@ -28,7 +28,8 @@ func main() {
 	}
 
 	// MANDATORY CONFIG CHECK (Fail fast if missing)
-	if os.Getenv("JWT_SECRET") == "" && len(os.Args) == 1 {
+	isHealthCheck := *healthCheck || (len(os.Args) > 1 && os.Args[1] == "health")
+	if !isHealthCheck && os.Getenv("JWT_SECRET") == "" {
 		log.Fatal("JWT_SECRET environment variable is REQUIRED but not found. Server stopped.")
 	}
 

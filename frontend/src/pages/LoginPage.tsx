@@ -67,8 +67,8 @@ const LoginPage: React.FC = () => {
     } catch (err: any) {
       console.error("Google Login Error:", err);
       // Detailed error for common developer misconfigurations
-      if (err.message && (err.message.includes('origin') || err.message.includes('Forbidden'))) {
-        setError('Konfigurasi Google OAuth salah (Origin Not Allowed). Pastikan http://localhost:5173 terdaftar di Google Cloud Console.');
+      if (err.message && (err.message.includes('origin') || err.message.includes('Forbidden') || err.message.includes('not allow'))) {
+        setError(`Konfigurasi Google OAuth salah (Origin Not Allowed). Pastikan ${window.location.origin} terdaftar di Authorized JavaScript Origins pada Google Cloud Console.`);
       } else {
         setError(err.message || 'Failed to login via Google. Please try again.');
       }

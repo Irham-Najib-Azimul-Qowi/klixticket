@@ -11,7 +11,7 @@ import (
 // RequestTimeoutMiddleware limits each request to 5 seconds
 func RequestTimeoutMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 		defer cancel()
 
 		c.Request = c.Request.WithContext(ctx)
