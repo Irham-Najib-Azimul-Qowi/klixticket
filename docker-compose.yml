@@ -21,7 +21,7 @@ services:
         max-file: "2"
 
   backend:
-    image: username/ticket-backend:latest
+    image: irhamnajib/ticket-backend:latest
     container_name: backend_container
     restart: always
     depends_on:
@@ -34,7 +34,7 @@ services:
       - ./uploads:/app/uploads
 
   frontend:
-    image: username/ticket-frontend:latest
+    image: irhamnajib/ticket-frontend:latest
     container_name: frontend_container
     restart: always
     ports:
