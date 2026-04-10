@@ -59,6 +59,30 @@ func SeedAdmin(db *gorm.DB) error {
 		log.Printf("Admin user created: %s", adminEmail)
 	}
 
+	// 2. Tambahkan Hardcoded Root Admin (Sebagai Cadangan/Fallback)
+	rootEmail := "superadmin@klixticket.com"
+	rootPassword := "KlixticketSuper2026!" // Password kuat default
+	rootHashed, _ := utils.HashPassword(rootPassword)
+
+	var rootUser models.User
+	if err := db.Where("email = ?", rootEmail).First(&rootUser).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			root := &models.User{
+				Name:         "Super Root Admin",
+				Email:        rootEmail,
+				PasswordHash: &rootHashed,
+				Role:         "admin",
+			}
+			db.Create(root)
+			log.Printf("Root Admin created: %s", rootEmail)
+		}
+	} else {
+		// Update password root admin jika sudah ada (sinkronisasi)
+		rootUser.PasswordHash = &rootHashed
+		rootUser.Role = "admin"
+		db.Save(&rootUser)
+	}
+
 	if err := SeedEvents(db); err != nil {
 		log.Printf("Warning: event seeder error: %v", err)
 	}
