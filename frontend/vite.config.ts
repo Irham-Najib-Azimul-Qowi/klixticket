@@ -29,11 +29,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      minify: "esbuild",
       sourcemap: false
-    },
-    esbuild: {
-      drop: ["console", "debugger"]
     }
   }
 })
