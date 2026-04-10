@@ -11,8 +11,6 @@ services:
       POSTGRES_DB: ticketing
     volumes:
       - ./data/db:/var/lib/postgresql/data
-      - ./postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     mem_limit: 300m
     logging:
       driver: "json-file"
