@@ -128,6 +128,49 @@ const LandingPage: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const merchScrollRef = useRef<HTMLDivElement>(null);
+  const [isMerchHovered, setIsMerchHovered] = useState(false);
+  const merchScrollPosRef = useRef(0);
+  const isMerchDragging = useRef(false);
+  const merchStartX = useRef(0);
+  const merchScrollLeftStart = useRef(0);
+
+  useEffect(() => {
+    let animationFrameId: number;
+    const scroll = () => {
+      if (merchScrollRef.current && !isMerchHovered && !isMerchDragging.current && (apiMerch.length > 0 || true)) {
+        merchScrollPosRef.current += 1.0;
+        const maxScroll = merchScrollRef.current.scrollWidth / 2;
+        if (merchScrollPosRef.current >= maxScroll) {
+          merchScrollPosRef.current = 0;
+        }
+        merchScrollRef.current.scrollLeft = merchScrollPosRef.current;
+      }
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+    animationFrameId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isMerchHovered, apiMerch]);
+
+  const onMerchMouseDown = (e: React.MouseEvent) => {
+    if (!merchScrollRef.current) return;
+    isMerchDragging.current = true;
+    merchStartX.current = e.pageX - merchScrollRef.current.offsetLeft;
+    merchScrollLeftStart.current = merchScrollRef.current.scrollLeft;
+  };
+
+  const onMerchMouseMove = (e: React.MouseEvent) => {
+    if (!isMerchDragging.current || !merchScrollRef.current) return;
+    const x = e.pageX - merchScrollRef.current.offsetLeft;
+    const walk = (x - merchStartX.current) * 2;
+    merchScrollRef.current.scrollLeft = merchScrollLeftStart.current - walk;
+    merchScrollPosRef.current = merchScrollRef.current.scrollLeft;
+  };
+
+  const stopMerchDragging = () => {
+    isMerchDragging.current = false;
+  };
+
   const togglePlay = () => {
     if (audioRef.current) {
       if (isPlaying) {
@@ -503,9 +546,9 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        <section id="merchandise" className="bg-black py-40 border-t border-white/10 grid-background">
-          <div className="max-w-[1400px] mx-auto px-4 md:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-32 gap-8">
+        <section id="merchandise" className="bg-black py-40 border-t border-white/10 grid-background relative overflow-hidden">
+          <div className="max-w-[1400px] mx-auto px-4 md:px-8 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-24 gap-6">
               <div>
                 <h2 className="text-8xl md:text-[12rem] font-heading leading-none tracking-tighter uppercase">
                   MERCH<span className="text-outline">ANDISE</span>
@@ -515,37 +558,53 @@ const LandingPage: React.FC = () => {
                 </p>
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-              {!merchLoading && apiMerch.length === 0 && (
-                <div className="group cursor-pointer">
-                  <div className="relative aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
-                    <img src={tshirtImg} alt="Official Tee" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
+          <div
+            className="w-full relative select-none"
+            onMouseEnter={() => setIsMerchHovered(true)}
+            onMouseLeave={() => { setIsMerchHovered(false); stopMerchDragging(); }}
+          >
+            <div
+              ref={merchScrollRef}
+              onMouseDown={onMerchMouseDown}
+              onMouseMove={onMerchMouseMove}
+              onMouseUp={stopMerchDragging}
+              onMouseLeave={stopMerchDragging}
+              className="flex overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing gap-12 px-4 md:px-8 py-10"
+            >
+              {[...apiMerch, ...apiMerch, ...(apiMerch.length === 0 ? [1,2,3] : [])].map((item, index) => {
+                const isPlaceholder = typeof item === 'number';
+                return (
+                  <div key={isPlaceholder ? `p-${index}` : `${item.id}-${index}`} className="group cursor-pointer w-[350px] md:w-[450px] flex-shrink-0">
+                    <Link to={isPlaceholder ? '#' : `/merchandise/${item.id}`}>
+                      <div className="relative w-full aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
+                        <img 
+                          src={isPlaceholder ? tshirtImg : formatImageURL(item.image_url)} 
+                          alt={isPlaceholder ? "Official Tee" : item.name} 
+                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 pointer-events-none" 
+                          onError={(e) => (e.currentTarget.src = "/fallback.png")}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
+                          <span className="text-white font-bold tracking-[0.6em] text-xs flex items-center gap-3 uppercase">
+                            VIEW DETAIL <i className="fa-solid fa-arrow-right text-lg"></i>
+                          </span>
+                        </div>
+                      </div>
+                      <h3 className="text-4xl md:text-5xl font-heading tracking-tighter group-hover:text-neon-pink transition-colors line-clamp-1 uppercase">
+                        {isPlaceholder ? 'SOUNDRENALINE TEE' : item.name}
+                      </h3>
+                      <p className="text-2xl font-heading text-white/40 mt-2 tracking-tighter uppercase">
+                        {isPlaceholder ? 'RP 180.000' : formatPrice(item.price)}
+                      </p>
+                    </Link>
                   </div>
-                  <h3 className="text-4xl font-heading tracking-tighter group-hover:text-neon-pink transition-colors uppercase">Soundrenaline Tee</h3>
-                  <p className="text-2xl font-heading text-white/40 mt-2 tracking-tighter">RP 180.000</p>
-                </div>
-              )}
-
-              {apiMerch.map(item => (
-                <Link to={`/merchandise/${item.id}`} key={item.id} className="group cursor-pointer">
-                  <div className="relative aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
-                    <img 
-                      src={formatImageURL(item.image_url)} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" 
-                      onError={(e) => (e.currentTarget.src = "/fallback.png")}
-                    />
-                  </div>
-                  <h3 className="text-4xl font-heading tracking-tighter group-hover:text-neon-pink transition-colors uppercase line-clamp-1">{item.name}</h3>
-                  <p className="text-2xl font-heading text-white/40 mt-2 tracking-tighter">{formatPrice(item.price)}</p>
-                </Link>
-              ))}
+                );
+              })}
             </div>
-
-
           </div>
         </section>
+
 
         <section id="lineup" className="bg-black py-40 relative overflow-hidden border-t border-white/10">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 relative z-10">
