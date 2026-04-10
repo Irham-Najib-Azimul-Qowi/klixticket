@@ -2,9 +2,12 @@ import type { ApiError } from '../types';
 
 const getBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  // If in browser and on production IP/Domain, use relative path or current host
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return `${window.location.protocol}//${window.location.host}/api/v1`;
+  
+  if (typeof window !== 'undefined') {
+    // If we're on a domain like klixticket.com, use that domain for API
+    if (window.location.hostname !== 'localhost') {
+      return `${window.location.protocol}//${window.location.hostname}/api/v1`;
+    }
   }
   return 'http://localhost:8080/api/v1';
 };
