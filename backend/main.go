@@ -46,13 +46,7 @@ func main() {
 	sqlDB.SetConnMaxLifetime(1 * time.Hour)
 
 	if err := seeder.SeedAdmin(config.DB); err != nil {
-		log.Printf("Warning: failed to seed admin user: %v", err)
-	}
-	if err := seeder.SeedEvents(config.DB); err != nil {
-		log.Printf("Warning: failed to seed events: %v", err)
-	}
-	if err := seeder.SeedMerchandise(config.DB); err != nil {
-		log.Printf("Warning: failed to seed merchandise: %v", err)
+		log.Printf("Warning: failed to seed database: %v", err)
 	}
 
 	// 3. DEPENDENCY INJECTION
