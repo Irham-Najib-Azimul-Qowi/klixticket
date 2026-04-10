@@ -27,22 +27,23 @@ func main() {
 		log.Println("Info: .env file not found, using system environment variables")
 	}
 
-	// MANDATORY CONFIG CHECK (Fail fast if missing)
-	isHealthCheck := *healthCheck || (len(os.Args) > 1 && os.Args[1] == "health")
-	if !isHealthCheck && os.Getenv("JWT_SECRET") == "" {
-		log.Fatal("JWT_SECRET environment variable is REQUIRED but not found. Server stopped.")
-	}
-
 	// 0. HEALTHCHECK CLI & GIN MODE
 	healthCheck := flag.Bool("health", false, "Run health check")
 	flag.Parse()
 
-	if *healthCheck || (len(os.Args) > 1 && os.Args[1] == "health") {
+	isHealthCheck := *healthCheck || (len(os.Args) > 1 && os.Args[1] == "health")
+
+	if isHealthCheck {
 		resp, err := http.Get("http://localhost:8080/health")
 		if err != nil || resp.StatusCode != 200 {
 			os.Exit(1)
 		}
 		os.Exit(0)
+	}
+
+	// MANDATORY CONFIG CHECK (Fail fast if missing)
+	if os.Getenv("JWT_SECRET") == "" {
+		log.Fatal("JWT_SECRET environment variable is REQUIRED but not found. Server stopped.")
 	}
 
 	gin.SetMode(gin.ReleaseMode)
