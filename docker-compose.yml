@@ -13,7 +13,12 @@ services:
       - ./data/db:/var/lib/postgresql/data
     networks:
       - ticketing_network
-    mem_limit: 300m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ticketing"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 250m
     logging:
       driver: "json-file"
       options:
@@ -25,12 +30,13 @@ services:
     container_name: backend_container
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file: .env
-    mem_limit: 350m
+    mem_limit: 450m
     ports:
       - "8080:8080"
-    command: ./app start
+    command: ./app
     volumes:
       - ./uploads:/app/uploads
     networks:
@@ -42,7 +48,7 @@ services:
     restart: always
     ports:
       - "80:80"
-    mem_limit: 150m
+    mem_limit: 120m
     networks:
       - ticketing_network
 
