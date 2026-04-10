@@ -19,8 +19,10 @@ type Order struct {
 	CheckedInAt *time.Time     `gorm:"index" json:"checked_in_at"`
 	CheckedInBy *uint          `gorm:"index" json:"checked_in_by,omitempty"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
-	IdempotencyKey string         `gorm:"type:varchar(100);uniqueIndex" json:"idempotency_key,omitempty"`
-	OrderItems     []OrderItem    `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
+	IdempotencyKey *string     `gorm:"type:varchar(100);uniqueIndex" json:"idempotency_key,omitempty"`
+	PaidAt      *time.Time     `gorm:"index" json:"paid_at,omitempty"`
+	QRCode      string         `gorm:"type:varchar(255)" json:"qr_code,omitempty"`
+	OrderItems  []OrderItem    `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
 	Payment     *Payment       `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"payment,omitempty"`
 }
 

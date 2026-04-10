@@ -71,6 +71,8 @@ func orderSelectColumns(db *gorm.DB) *gorm.DB {
 		"expired_at",
 		"checked_in_at",
 		"checked_in_by",
+		"qr_code",
+		"paid_at",
 	)
 }
 
@@ -181,17 +183,16 @@ func (r *orderRepository) FindOrdersByUserID(ctx context.Context, userID uint, l
 
 	switch filter {
 	case "active":
-		// Tiket Aktif: sudah dibayar, belum check-in, dan belum expired
-		query = query.Where("status = ?", "paid").
+		// Tiket Aktif: sudah dibayar, ada QR code, belum expired, dan BELUM DIGUNAKAN
+		query = query.Where("UPPER(status) = ?", "PAID").
+			Where("qr_code IS NOT NULL AND qr_code != ?", "").
 			Where("checked_in_at IS NULL").
 			Where("expired_at > ?", now)
+	case "pending":
+		query = query.Where("UPPER(status) = ?", "PENDING")
 	case "history":
-		// Riwayat: sudah check-in ATAU sudah expired ATAU status bukan paid
-		query = query.Where(
-			r.db.Where("checked_in_at IS NOT NULL").
-				Or("expired_at <= ?", now).
-				Or("status <> ?", "paid"),
-		)
+		// User minta SEMUA transaksi tetap masuk ke order history tanpa filter pembatas
+		// Jadi tidak ada Where tambahan di sini, cukup bawa semua order milik user_id
 	default:
 		// Jika tidak ada filter, kembalikan semua yang terbaru
 	}
@@ -273,7 +274,7 @@ func (r *orderRepository) GetPaidRevenueSummary(ctx context.Context) (float64, e
 	err := r.db.WithContext(ctx).
 		Model(&models.Order{}).
 		Select("COALESCE(SUM(total_amount), 0) AS revenue").
-		Where("status = ?", "paid").
+		Where("UPPER(status) = ?", "PAID").
 		Scan(&result).Error
 	return result.Revenue, err
 }
@@ -287,7 +288,7 @@ func (r *orderRepository) GetPaidTicketsSoldSummary(ctx context.Context) (int64,
 		Table("order_items").
 		Select("COALESCE(SUM(order_items.quantity), 0) AS tickets_sold").
 		Joins("JOIN orders ON orders.id = order_items.order_id").
-		Where("orders.status = ?", "paid").
+		Where("UPPER(orders.status) = ?", "PAID").
 		Where("order_items.item_type = ?", "ticket").
 		Scan(&result).Error
 	return result.TicketsSold, err
@@ -300,7 +301,7 @@ func (r *orderRepository) GetDailyPaidSales(ctx context.Context, startDate, endD
 		Table("payments").
 		Select("DATE(payments.updated_at) AS date, COALESCE(SUM(orders.total_amount), 0) AS revenue").
 		Joins("JOIN orders ON orders.id = payments.order_id").
-		Where("payments.status = ?", "paid").
+		Where("UPPER(payments.status) = ?", "PAID").
 		Where("payments.updated_at >= ?", startDate).
 		Where("payments.updated_at < ?", endDate.Add(24*time.Hour)).
 		Group("DATE(payments.updated_at)").
@@ -400,7 +401,7 @@ func (r *orderRepository) FindOrderByIdempotencyKey(ctx context.Context, key str
 
 func (r *orderRepository) CountPaidOrders(ctx context.Context) (int64, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&models.Order{}).Where("status = ?", "paid").Count(&count).Error
+	err := r.db.WithContext(ctx).Model(&models.Order{}).Where("UPPER(status) = ?", "PAID").Count(&count).Error
 	return count, err
 }
 

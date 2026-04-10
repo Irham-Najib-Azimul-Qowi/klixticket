@@ -16,6 +16,7 @@ import (
 
 type XenditService interface {
 	CreateInvoice(orderID uuid.UUID, email string, amount float64, itemsDescription string, paymentMethod string) (invoiceID string, checkoutURL string, err error)
+	GetInvoiceStatus(invoiceID string) (string, error)
 }
 
 type xenditService struct {
@@ -82,7 +83,7 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 	req.Header.Set("Content-Type", "application/json")
 
 	// 4. Execute dengan Timeout (Penting untuk VPS RAM 1GB agar tidak hanging)
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", fmt.Errorf("xendit connection error: %v", err)
@@ -122,4 +123,47 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 	}/* */
 
 	return invoiceID, checkoutURL, nil
+}
+
+func (s *xenditService) GetInvoiceStatus(invoiceID string) (string, error) {
+	if s.secretKey == "" {
+		s.secretKey = strings.TrimSpace(os.Getenv("XENDIT_API_KEY"))
+	}
+
+	req, err := http.NewRequest("GET", "https://api.xendit.co/v2/invoices/"+invoiceID, nil)
+	if err != nil {
+		return "", err
+	}
+
+	auth := base64.StdEncoding.EncodeToString([]byte(s.secretKey + ":"))
+	req.Header.Set("Authorization", "Basic "+auth)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("xendit connection error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read xendit response: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("xendit api error (Status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return "", fmt.Errorf("failed to parse xendit response: %v", err)
+	}
+
+	status, ok := result["status"].(string)
+	if !ok {
+		return "", fmt.Errorf("status field not found in response")
+	}
+
+	return status, nil
 }

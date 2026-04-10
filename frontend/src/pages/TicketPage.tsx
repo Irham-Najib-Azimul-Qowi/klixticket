@@ -124,7 +124,11 @@ const TicketPage: React.FC = () => {
           {/* Header */}
           <div className="text-center md:text-left mb-12">
             <h1 className="text-5xl md:text-8xl font-heading uppercase tracking-tighter leading-none mb-4">
-              SECURE <span className="text-transparent" style={{ WebkitTextStroke: '1px white' }}>ACCESS</span> PASSPORT
+              {ticketItems.length > 0 ? (
+                <>SECURE <span className="text-transparent" style={{ WebkitTextStroke: '1px white' }}>ACCESS</span> PASSPORT</>
+              ) : (
+                <>COLLECTION <span className="text-transparent" style={{ WebkitTextStroke: '1px white' }}>MERCH</span> VOUCHER</>
+              )}
             </h1>
             <div className="w-24 h-2 bg-neon-pink" />
           </div>

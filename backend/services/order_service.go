@@ -205,54 +205,76 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 
 	// 3. Setup Order struct
 	newOrderID := uuid.New()
+	var idKeyPtr *string
+	if req.IdempotencyKey != "" {
+		idKeyPtr = &req.IdempotencyKey
+	}
+
 	order := &models.Order{
-		ID:          newOrderID,
-		UserID:      userID,
-		TotalAmount: totalAmount,
-		Status:         "pending",
+		ID:             newOrderID,
+		UserID:         userID,
+		TotalAmount:    totalAmount,
+		Status:         "PENDING",
 		ExpiredAt:      time.Now().Add(24 * time.Hour),
-		IdempotencyKey: req.IdempotencyKey,
+		IdempotencyKey: idKeyPtr,
 		OrderItems:     orderItems,
 	}
 
-	// 4. Minta Invoice Xendit
-	// Get detail user for invoice
-	user, err := s.userRepo.FindByID(userID)
-	if err != nil {
-		tx.Rollback()
-		return nil, errors.New("invalid user context")
-	}
-
-	invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(newOrderID, user.Email, totalAmount, itemDescriptions, req.PaymentMethod)
-	if err != nil {
-		tx.Rollback()
-		log.Printf("Xendit Error for Order %s: %v", newOrderID, err)
-		return nil, fmt.Errorf("gagal membuat invoice: %v", err)
-	}
-
-	// Masukkan payment details ke order
-	order.Payment = &models.Payment{
-		OrderID:         newOrderID,
-		XenditInvoiceID: invoiceID,
-		CheckoutURL:     checkoutURL,
-		Status:          "pending",
-	}
-
-	// 5. Eksekusi Full Save
+	// 4. Eksekusi Full Save Order FIRST
 	if err := s.repo.CreateOrderWithTx(tx, order); err != nil {
 		tx.Rollback()
 		return nil, errors.New("failed to save order data")
 	}
 
-	// COMMIT Transaksi dan cek hasilnya
+	// COMMIT Transaksi terlebih dahulu agar tidak nge-lock database saat manggil API Xendit (network latency)
 	if err := tx.Commit().Error; err != nil {
 		return nil, errors.New("failed to finalize transaction")
+	}
+
+	// 5. Minta Invoice Xendit
+	// Get detail user for invoice
+	user, err := s.userRepo.FindByID(userID)
+	if err == nil {
+		invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(newOrderID, user.Email, totalAmount, itemDescriptions, req.PaymentMethod)
+		if err != nil {
+			log.Printf("Xendit Error for Order %s: %v", newOrderID, err)
+			
+			// Xendit timeout / error. JANGAN RETURN 500 karena order sukses terbuat!
+			// Cukup return order dengan instruksi error halus
+			// Frontend akan mengecek checkout_url
+			order.Payment = &models.Payment{
+				OrderID:         newOrderID,
+				Status:          "FAILED_TO_GENERATE",
+			}
+		} else {
+			// Masukkan payment details ke order di database
+			payment := &models.Payment{
+				OrderID:         newOrderID,
+				XenditInvoiceID: invoiceID,
+				CheckoutURL:     checkoutURL,
+				Status:          "PENDING",
+			}
+			// Update payment via background context since tx is already committed
+			s.repo.UpdatePaymentStatus(context.Background(), payment)
+			order.Payment = payment
+		}
 	}
 
 	createdOrder, err := s.repo.FindOrderByID(ctx, order.ID.String())
 	if err != nil {
 		return nil, err
 	}
+
+	// 🧠 DEBUG WAJIB TAMBAH
+	log.Println("ORDER CREATED:", createdOrder.ID)
+	// Some cases order.Payment is empty or FAILED_TO_GENERATE so we check first
+	if createdOrder.Payment != nil {
+		log.Println("INVOICE ID:", createdOrder.Payment.XenditInvoiceID)
+	} else {
+		log.Println("INVOICE ID:", "NONE")
+	}
+	log.Println("STATUS:", createdOrder.Status)
+	log.Println("QR:", createdOrder.QRCode)
 
 	return createdOrder, nil
 }
@@ -271,11 +293,34 @@ func (s *orderService) GetMyOrders(ctx context.Context, userID uint, query dto.O
 		filter = query.Status
 	}
 
+	// PROACTIVE SYNC: Automatically check any PENDING orders against Xendit
+	// To prevent tickets getting stuck in History if user bypassed Success Page
+	var pendingOrders []models.Order
+	// Limit proactively to 3 latest pending items for instant performance
+	pendingOrders, _ = s.repo.FindOrdersByUserID(ctx, userID, 3, 0, "pending")
+	for _, po := range pendingOrders {
+		if po.Payment != nil && po.Payment.XenditInvoiceID != "" {
+			status, err := s.xenditSvc.GetInvoiceStatus(po.Payment.XenditInvoiceID)
+			if err == nil && (status == "PAID" || status == "SETTLED") {
+				payload := dto.XenditWebhookRequest{
+					ID:         po.Payment.XenditInvoiceID,
+					ExternalID: po.ID.String(),
+					Status:     status,
+				}
+				s.ProcessXenditWebhook(context.Background(), payload, `{"sync":"auto_getmyorders"}`)
+			}
+		}
+	}
+
 	orders, err := s.repo.FindOrdersByUserID(ctx, userID, query.Limit, query.Offset, filter)
 	if err == nil {
 		log.Println("USER ORDERS FETCHED:", len(orders))
 		if filter == "active" {
-			log.Println("ACTIVE TICKETS:", orders)
+			for _, o := range orders {
+				log.Println("ORDER STATUS:", o.Status)
+			}
+			log.Println("USER ID:", userID)
+			log.Println("MY ITEM RESULT:", len(orders), "items found")
 		}
 	} else {
 		log.Println("ERROR FETCHING ORDERS:", err)
@@ -299,6 +344,24 @@ func (s *orderService) GetOrderByID(ctx context.Context, orderID string, userID 
 
 	if order.UserID != userID {
 		return nil, errors.New("unauthorized: you do not own this order")
+	}
+
+	// Auto-Sync if PENDING, ensures user instantly gets the item even if webhook is delayed
+	if order.Status == "PENDING" && order.Payment != nil && order.Payment.XenditInvoiceID != "" {
+		status, err := s.xenditSvc.GetInvoiceStatus(order.Payment.XenditInvoiceID)
+		if err == nil && (status == "PAID" || status == "SETTLED") {
+			payload := dto.XenditWebhookRequest{
+				ID:         order.Payment.XenditInvoiceID,
+				ExternalID: order.ID.String(),
+				Status:     status,
+			}
+			// Simulate webhook processing synchronously
+			s.ProcessXenditWebhook(context.Background(), payload, `{"sync":"manual"}`)
+			// Refetch order to get updated status
+			if updatedOrder, err := s.repo.FindOrderByID(ctx, orderID); err == nil {
+				order = updatedOrder
+			}
+		}
 	}
 
 	return order, nil
@@ -353,7 +416,7 @@ func (s *orderService) CheckInOrder(ctx context.Context, orderID string, adminUs
 		return nil, err
 	}
 
-	if order.Status != "paid" || order.Payment == nil || order.Payment.Status != "paid" {
+	if order.Status != "PAID" && order.Status != "paid" || order.Payment == nil || (order.Payment.Status != "PAID" && order.Payment.Status != "paid") {
 		tx.Rollback()
 		return nil, ErrOrderNotPaid
 	}
@@ -488,9 +551,13 @@ func (s *orderService) ProcessXenditWebhook(ctx context.Context, payload dto.Xen
 
 	switch payload.Status {
 	case "PAID", "SETTLED":
-		order.Status = "paid"
-		order.Payment.Status = "paid"
+		order.Status = "PAID"
+		order.Payment.Status = "PAID"
 		webhookLog.Status = "processed_paid"
+		
+		now := time.Now()
+		order.PaidAt = &now
+		order.QRCode = "QR-" + order.ID.String()
 
 		// Set ExpiredAt to event end date if possible, or far future
 		// This ensures paid tickets don't 'expire' just because the payment window (24h) passed
@@ -504,9 +571,10 @@ func (s *orderService) ProcessXenditWebhook(ctx context.Context, payload dto.Xen
 			}
 		}
 		order.ExpiredAt = newExpiry
+		log.Printf("[WEBHOOK] ORDER STATUS: %s", order.Status)
 		log.Printf("[WEBHOOK] Order %s marked as PAID. New Expiry: %v", order.ID, order.ExpiredAt)
 	case "EXPIRED":
-		if order.Status == "pending" {
+		if order.Status == "pending" || order.Status == "PENDING" {
 			if err := s.restoreInventoryWithTx(tx, order); err != nil {
 				tx.Rollback()
 				return err
@@ -516,7 +584,7 @@ func (s *orderService) ProcessXenditWebhook(ctx context.Context, payload dto.Xen
 		order.Payment.Status = "expired"
 		webhookLog.Status = "processed_expired"
 	case "FAILED":
-		if order.Status == "pending" {
+		if order.Status == "pending" || order.Status == "PENDING" {
 			if err := s.restoreInventoryWithTx(tx, order); err != nil {
 				tx.Rollback()
 				return err

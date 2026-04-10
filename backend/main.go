@@ -35,6 +35,10 @@ func main() {
 
 	// 2. KONEKSI DB & OPTIMASI POOLING
 	config.ConnectDB()
+	
+	// 🧹 HOTFIX: Zero out identical empty idempotency keys to prevent Postgres UNIQUE constraint violation during updates
+	config.DB.Exec("UPDATE orders SET idempotency_key = NULL WHERE idempotency_key = ''")
+	
 	sqlDB, err := config.DB.DB()
 	if err != nil {
 		log.Fatalf("failed to get sql.DB: %v", err)

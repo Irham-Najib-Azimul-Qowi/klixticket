@@ -217,7 +217,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                       <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{myPaidItems.length} ACTIVE ASSETS</span>
                    </div>
                    
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div className="flex flex-col gap-4">
                       {myPaidItems.length === 0 ? (
                         <div className="col-span-full py-24 bg-dark-grey/20 border border-dashed border-white/5 flex flex-col items-center text-center">
                            <ShoppingBag size={48} className="mb-4 text-white/10" />
@@ -229,30 +229,35 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                           <div 
                             key={idx} 
                             onClick={() => setSelectedItem(item)}
-                            className="bg-dark-grey border border-white/5 p-6 hover:border-neon-pink transition-all cursor-pointer group flex flex-col relative overflow-hidden"
+                            className="bg-dark-grey border border-white/5 p-4 hover:border-neon-pink transition-all cursor-pointer group flex flex-row items-center gap-6 relative overflow-hidden"
                           >
                             <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
-                               {item.item_type === 'ticket' ? <Ticket size={80} /> : <ShoppingBag size={80} />}
+                               {item.item_type === 'ticket' ? <Ticket size={120} /> : <ShoppingBag size={120} />}
                             </div>
-                            <div className="flex justify-between items-start mb-10 relative z-10">
-                               <div className="w-10 h-10 bg-black border border-white/10 flex items-center justify-center text-neon-pink shadow-[0_0_15px_rgba(255,0,128,0.1)] group-hover:shadow-[0_0_15px_rgba(255,0,128,0.3)] transition-all">
-                                  {item.item_type === 'ticket' ? <Ticket size={20} /> : <ShoppingBag size={20} />}
-                               </div>
-                               <span className="text-[8px] font-black uppercase text-white px-2 py-1 bg-white/10 rounded-full tracking-widest">Ownership Confirmed</span>
+                            
+                            <div className="w-16 h-16 bg-black border border-white/10 flex-shrink-0 flex items-center justify-center text-neon-pink shadow-[0_0_15px_rgba(255,0,128,0.1)] group-hover:shadow-[0_0_15px_rgba(255,0,128,0.3)] transition-all relative z-10">
+                               {item.item_type === 'ticket' ? <Ticket size={32} /> : <ShoppingBag size={32} />}
                             </div>
-                            <h3 className="text-xl font-heading uppercase text-white mb-8 group-hover:text-neon-pink transition-colors truncate relative z-10">{item.item_name}</h3>
-                            <div className="flex items-center justify-between relative z-10">
-                               <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Ref: {item.orderId?.slice(-8).toUpperCase()}</span>
-                               <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/order/${item.orderId}/ticket`);
-                                }}
-                                className="flex items-center gap-1 text-[9px] font-black uppercase text-neon-pink tracking-widest hover:text-white transition-colors"
-                               >
-                                  VIEW TICKET <ArrowRight size={10} />
-                               </button>
+
+                            <div className="flex flex-col flex-1 relative z-10">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="text-[8px] font-black uppercase text-white px-2 py-1 bg-white/10 rounded-sm tracking-widest">Ownership Confirmed</span>
+                                  <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Ref: {item.orderId?.slice(-8).toUpperCase()}</span>
+                                </div>
+                                <h3 className="text-xl md:text-2xl font-heading uppercase text-white group-hover:text-neon-pink transition-colors truncate">{item.item_name}</h3>
+                                {item.item_type === 'ticket' && <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1">Ticket • Qty: {item.quantity}</p>}
+                                {item.item_type === 'merchandise' && <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1">Merchandise • Qty: {item.quantity}</p>}
                             </div>
+
+                            <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               navigate(`/order/${item.orderId}/ticket`);
+                             }}
+                             className="hidden md:flex flex-shrink-0 items-center gap-2 text-[10px] font-black uppercase bg-white/5 px-4 py-3 border border-white/10 text-neon-pink tracking-widest hover:bg-neon-pink hover:text-white transition-colors relative z-10"
+                            >
+                               {item.item_type === 'ticket' ? 'VIEW TICKET' : 'CLAIM VOUCHER'} <ArrowRight size={12} />
+                            </button>
                           </div>
                         ))
                       )}
@@ -439,63 +444,122 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
         </div>
       </main>
 
-      {/* Item Detail Modal (Standardized) */}
+      {/* Invoice Details Modal */}
       {selectedItem && (
-         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl p-6 flex items-center justify-center animate-in fade-in duration-300">
+         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md p-6 flex flex-col items-center overflow-y-auto">
             <div className="absolute inset-0" onClick={() => setSelectedItem(null)}></div>
-            <div className="max-w-md w-full bg-[#111] border border-white/10 p-10 relative animate-in zoom-in-95 duration-500 shadow-[0_0_100px_rgba(0,0,0,1)]">
-                <button 
-                  onClick={() => setSelectedItem(null)} 
-                  className="absolute top-6 right-6 text-white/30 hover:text-white transition-colors"
-                >
-                   <X size={24} />
-                </button>
-                
-                <div className="space-y-10 text-center">
-                   <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-neon-pink mb-4">
-                         {selectedItem.item_type === 'ticket' ? <Ticket size={32} /> : <ShoppingBag size={32} />}
-                      </div>
-                      <h2 className="text-4xl font-heading uppercase border-b-2 border-neon-pink pb-2 inline-block mb-2">{selectedItem.item_name}</h2>
-                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em]">Proprietary Digital Asset</p>
-                   </div>
-                   
-                    <div className="w-full aspect-square bg-[#050505] border border-white/5 p-8 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] scale-150">
-                         <QRCodeCanvas 
-                           value={selectedItem.orderId} 
-                           size={300}
-                           bgColor="transparent"
-                           fgColor="#FFFFFF"
-                         />
-                      </div>
-                      <div className="relative z-10 p-4 bg-white rounded-lg shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                         <QRCodeCanvas 
-                           value={selectedItem.orderId} 
-                           size={160}
-                           bgColor="#FFFFFF"
-                           fgColor="#000000"
-                           level="H"
-                         />
+            
+            <button 
+              onClick={() => setSelectedItem(null)} 
+              className="fixed top-6 right-6 z-[101] flex items-center gap-2 bg-white/5 border border-white/10 text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-neon-pink hover:border-neon-pink transition-all"
+            >
+               <X size={16} /> Close
+            </button>
+
+            <div className="w-full max-w-2xl relative z-10 animate-in zoom-in-95 duration-500 mt-16 mb-16">
+              <style>{`
+                @media print {
+                  body * { visibility: hidden; }
+                  .invoice-modal-content, .invoice-modal-content * { visibility: visible; }
+                  .invoice-modal-content {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    background: white !important;
+                    color: black !important;
+                  }
+                  .no-print { display: none !important; }
+                }
+              `}</style>
+
+              <div className="invoice-modal-content bg-dark-grey border border-white/10 overflow-hidden text-left shadow-2xl">
+                {/* Modal Invoice Header */}
+                <div className="p-8 border-b border-white/10 bg-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                    <h2 className="text-3xl font-heading text-white uppercase mb-1">Electronic <span className="text-neon-pink">Invoice</span></h2>
+                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em]">ID: {selectedItem.orderId}</p>
+                  </div>
+                  <div className="flex gap-4 no-print">
+                      <button 
+                        onClick={() => window.print()}
+                        className="flex items-center gap-2 bg-white/10 hover:bg-neon-pink text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print
+                      </button>
+                      <button 
+                        onClick={() => navigate(`/order/${selectedItem.orderId}/ticket`)}
+                        className="flex items-center gap-2 bg-neon-pink text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
+                      >
+                        <Ticket size={16} /> Open Pass
+                      </button>
+                  </div>
+                </div>
+
+                {/* Modal Invoice Body */}
+                <div className="p-8 md:p-12 bg-black/40">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 border-b border-white/5 pb-12">
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Billing Info</p>
+                      <div className="space-y-1">
+                        <p className="text-xl font-heading uppercase text-white">{user?.name}</p>
+                        <p className="text-sm font-bold text-white/40">{user?.email}</p>
                       </div>
                     </div>
-                   
-                   <div className="p-4 bg-white/5 rounded-sm border border-white/10">
-                      <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-2">Identification Code</p>
-                      <p className="font-mono text-neon-pink text-sm tracking-widest select-all">REF-{selectedItem.orderId?.toUpperCase()}</p>
-                   </div>
-                   
-                   <p className="text-white/20 text-[9px] font-bold uppercase tracking-widest leading-relaxed mb-6">
-                      Present this interface at the authorized checkpoint for validation. Ownership is non-transferable via this node.
-                   </p>
+                    <div className="space-y-4 md:text-right">
+                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
+                        {selectedItem.item_type === 'ticket' ? 'E-Ticket Entry Code' : 'Collection Voucher Code'}
+                      </p>
+                      <div className="bg-white p-2 inline-block rounded shadow-[0_0_15px_rgba(255,0,128,0.2)]">
+                         <QRCodeCanvas 
+                            value={selectedItem.item_type === 'ticket' ? `KLIX-${selectedItem.orderId}-${selectedItem.ticket_type_id}` : `MERCH-${selectedItem.orderId}`} 
+                            size={100}
+                            bgColor="#FFFFFF"
+                            fgColor="#000000"
+                            level="L"
+                         />
+                      </div>
+                      <p className="text-[8px] font-mono font-bold text-neon-pink uppercase tracking-widest mt-2 block break-all">
+                        {selectedItem.item_type === 'ticket' ? `KLIX-${selectedItem.orderId?.slice(-8)}` : `MERCH-${selectedItem.orderId?.slice(-8)}`}
+                      </p>
+                    </div>
+                  </div>
 
-                   <button 
-                     onClick={() => navigate(`/order/${selectedItem.orderId}/ticket`)}
-                     className="w-full py-4 bg-white text-black font-heading text-lg uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all transform hover:-rotate-1"
-                   >
-                     OPEN OFFICIAL TICKET
-                   </button>
+                  {/* Items List inside Modal */}
+                  <div className="space-y-6">
+                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-6">Manifest Items</p>
+                    <div className="space-y-4">
+                      {/* We find the full order from activeOrders based on selectedItem's orderId */}
+                      {activeOrders.find(o => o.id === selectedItem.orderId)?.order_items?.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
+                          <div>
+                            <p className="text-lg font-heading text-white uppercase">{item.item_name}</p>
+                            <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest">{item.item_type}</p>
+                            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mt-1">Qty: {item.quantity} x {formatPrice(item.price_per_item)}</p>
+                          </div>
+                          <p className="text-xl font-heading text-white">{formatPrice(item.price_per_item * item.quantity)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Total inside Modal */}
+                  <div className="mt-12 pt-8 border-t-2 border-neon-pink flex justify-between items-end">
+                    <div>
+                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.5em] mb-2">Total Value</p>
+                        <div className="flex items-center gap-3">
+                            <ShoppingBag className="text-neon-pink mb-1" size={24} />
+                            <p className="text-5xl font-heading text-white tracking-tighter">
+                                {formatPrice(activeOrders.find(o => o.id === selectedItem.orderId)?.total_amount || 0)}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="text-right hidden md:block">
+                        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Authorized by KLIXTICKET Payment Gateway</p>
+                    </div>
+                  </div>
                 </div>
+              </div>
             </div>
          </div>
       )}
