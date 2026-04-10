@@ -28,7 +28,7 @@ services:
     mem_limit: 256m
     ports:
       - "8080:8080"
-    command: sh -c "./app migrate && ./app seed && ./app start"
+    command: sh -c "sleep 5 && ./app migrate && ./app seed && ./app start"
     volumes:
       - ./uploads:/app/uploads
 
