@@ -55,16 +55,20 @@ jobs:
             cd ~/app
             # Kill anything on port 80 to be sure
             fuser -k 80/tcp || true
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-            echo "XENDIT_API_KEY=${{ secrets.XENDIT_API_KEY }}" >> .env
-            echo "XENDIT_CALLBACK_TOKEN=${{ secrets.XENDIT_CALLBACK_TOKEN }}" >> .env
-            echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
-            echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
-            echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env
-            echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
-            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
-            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            # Robust .env generation
+            cat <<EOF > .env
+DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
+JWT_SECRET='${{ secrets.JWT_SECRET }}'
+XENDIT_API_KEY='${{ secrets.XENDIT_API_KEY }}'
+XENDIT_CALLBACK_TOKEN='${{ secrets.XENDIT_CALLBACK_TOKEN }}'
+SMTP_HOST='${{ secrets.SMTP_HOST }}'
+SMTP_PORT='${{ secrets.SMTP_PORT }}'
+SMTP_USER='${{ secrets.SMTP_USER }}'
+SMTP_PASS='${{ secrets.SMTP_PASS }}'
+GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID }}'
+GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET }}'
+ALLOWED_ORIGINS='http://klixticket.com,https://klixticket.com,http://202.155.18.206'
+EOF
             docker-compose down || true
             docker-compose pull
             docker-compose up -d
