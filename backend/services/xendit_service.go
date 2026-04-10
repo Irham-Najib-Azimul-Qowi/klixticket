@@ -83,10 +83,26 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 	req.Header.Set("Content-Type", "application/json")
 
 	// 4. Execute dengan Timeout (Penting untuk VPS RAM 1GB agar tidak hanging)
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", "", fmt.Errorf("xendit connection error: %v", err)
+	client := &http.Client{Timeout: 3 * time.Second}
+	var resp *http.Response
+	var errDo error
+	
+	for retry := 0; retry < 2; retry++ {
+		// Buat buffer ulang setiap kali retry
+		req, _ = http.NewRequest("POST", "https://api.xendit.co/v2/invoices", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Basic "+auth)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, errDo = client.Do(req)
+		if errDo == nil {
+			break
+		}
+		fmt.Println("INFO: Xendit connection failed, retrying...", errDo)
+		time.Sleep(1 * time.Second) // wait before retry
+	}
+
+	if errDo != nil {
+		return "", "", fmt.Errorf("xendit connection error after retry: %v", errDo)
 	}
 	defer resp.Body.Close()
 

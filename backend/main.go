@@ -9,15 +9,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"flag"
 	"mastutik-api/config"
 	"mastutik-api/controllers"
 	"mastutik-api/middlewares"
-	"mastutik-api/repositories"
-	"mastutik-api/services"
 	"mastutik-api/pkg/seeder"
+	"mastutik-api/repositories"
 	"mastutik-api/routes"
+	"mastutik-api/services"
 )
 
 func main() {
@@ -26,9 +28,23 @@ func main() {
 	}
 
 	// MANDATORY CONFIG CHECK (Fail fast if missing)
-	if os.Getenv("JWT_SECRET") == "" {
+	if os.Getenv("JWT_SECRET") == "" && len(os.Args) == 1 {
 		log.Fatal("JWT_SECRET environment variable is REQUIRED but not found. Server stopped.")
 	}
+
+	// 0. HEALTHCHECK CLI & GIN MODE
+	healthCheck := flag.Bool("health", false, "Run health check")
+	flag.Parse()
+
+	if *healthCheck || (len(os.Args) > 1 && os.Args[1] == "health") {
+		resp, err := http.Get("http://localhost:8080/health")
+		if err != nil || resp.StatusCode != 200 {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	gin.SetMode(gin.ReleaseMode)
 
 	// 1. SETUP VALIDATOR & CONFIG
 	config.SetupValidator()
@@ -46,8 +62,8 @@ func main() {
 
 	// Setting untuk VPS RAM 1GB
 	sqlDB.SetMaxIdleConns(5)    // Koneksi standby sedikit saja
-	sqlDB.SetMaxOpenConns(20)   // Batasi maksimal koneksi agar tidak OOM
-	sqlDB.SetConnMaxLifetime(1 * time.Hour)
+	sqlDB.SetMaxOpenConns(10)   // Batasi maksimal koneksi agar tidak OOM
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	if err := seeder.SeedAdmin(config.DB); err != nil {
 		log.Printf("Warning: failed to seed database: %v", err)
@@ -74,15 +90,19 @@ func main() {
 	dashboardHandler := controllers.NewDashboardHandler(dashboardService)
 
 	// 4. ROUTER SETUP
-	if os.Getenv("APP_ENV") == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	r := gin.New() // Use gin.New() for cleaner control
+	r := gin.New()
+	r.Use(middlewares.CustomPanicHandler()) // Custom panic handler
+	r.Use(gin.Recovery())                   // Fallback
 	r.Use(middlewares.GlobalErrorHandler()) // Wrap everything in a standard error handler
 	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
+	r.Use(middlewares.RequestTimeoutMiddleware())
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(middlewares.CORSMiddleware())
+
+	// 🔥 HEALTHCHECK ENDPOINT
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 
 	// 5. CALL ROUTE SETUP
 	routes.SetupRoutes(

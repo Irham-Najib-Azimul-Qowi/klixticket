@@ -244,7 +244,7 @@ const PaymentSuccess: React.FC = () => {
           {/* Action Buttons */}
           <div className="no-print flex flex-col md:flex-row gap-4 pt-12 border-t border-white/10">
             <button 
-              onClick={() => navigate('/profile/tickets')}
+              onClick={() => order?.id ? navigate(`/order/${order.id}/ticket`) : navigate('/profile/tickets')}
               className="flex-1 bg-white text-black py-6 text-2xl font-heading uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all flex items-center justify-center gap-4 transform hover:-rotate-1"
             >
               ACCESS TICKETS <ArrowRight className="w-6 h-6" />

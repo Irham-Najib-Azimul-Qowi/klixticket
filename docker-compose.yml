@@ -1,24 +1,42 @@
 version: "3.9"
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: ticketing_db2
-    restart: unless-stopped
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_container
+    restart: always
     environment:
-      POSTGRES_USER: ticketing_user
-      POSTGRES_PASSWORD: ticketing_pass
-      POSTGRES_DB: ticketing_db
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ticketing
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ticketing_user -d ticketing_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./data/db:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    mem_limit: 300m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
-volumes:
-  pgdata:
-    driver: local
+  backend:
+    image: username/ticket-backend:latest
+    container_name: backend_container
+    restart: always
+    depends_on:
+      - db
+    env_file: .env
+    mem_limit: 256m
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+
+  frontend:
+    image: username/ticket-frontend:latest
+    container_name: frontend_container
+    restart: always
+    ports:
+      - "80:80"
+    mem_limit: 128m
