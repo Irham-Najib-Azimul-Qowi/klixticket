@@ -75,6 +75,7 @@ jobs:
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
             ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
             ADMIN_NAME=${{ secrets.ADMIN_NAME }}
+            FRONTEND_URL=http://klixticket.com
             ALLOWED_ORIGINS=http://klixticket.com,https://klixticket.com,http://202.155.18.206
             EOF
             # Remove leading spaces from .env created by indentation
