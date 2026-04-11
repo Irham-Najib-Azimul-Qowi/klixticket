@@ -6,6 +6,7 @@ import { User as UserIcon, Loader2, ArrowRight, Mail, Ticket, ShoppingBag, Histo
 import { QRCodeCanvas } from 'qrcode.react';
 import { authApi, orderApi } from '@/services/api';
 import type { User, Order } from '@/services/api';
+import { useCart } from '@/context/CartContext';
 import { 
   updateProfileSchema, 
   changePasswordSchema, 
@@ -20,6 +21,7 @@ interface ProfilePageProps {
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   const navigate = useNavigate();
+  const { clearCart } = useCart();
   const [user, setUser] = useState<User | null>(null);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [historyOrders, setHistoryOrders] = useState<Order[]>([]);
@@ -122,6 +124,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
 
   const handleLogout = () => {
     authApi.logout();
+    clearCart();
     navigate('/login');
   };
 

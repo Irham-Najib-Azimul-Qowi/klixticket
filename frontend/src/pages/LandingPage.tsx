@@ -2,6 +2,7 @@
 import { eventsApi, merchandiseApi, authApi, type Event, type Merchandise } from '@/services/api';
 import { formatImageURL, getPlaceholderImage } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
+import { useToast } from '@/context/ToastContext';
 import CartDrawer from '@/components/CartDrawer';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -77,6 +78,7 @@ const MarqueeBanner = ({ text, bgClass, rotateClass, reverse = false, textColor 
 const LandingPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getItemCount, isCartOpen, setIsCartOpen } = useCart();
+  const { showToast } = useToast();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const marqueeText = "GIXS DI KOTA";
 
@@ -300,7 +302,16 @@ const LandingPage: React.FC = () => {
                   TICKET
                 </a>
 
-                <button onClick={() => setIsCartOpen(true)} className="relative group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-pink transition-colors flex items-center justify-center">
+                <button 
+                  onClick={() => {
+                    if (!authApi.isLoggedIn()) {
+                      showToast('Please login to access your cart', 'warning');
+                      return;
+                    }
+                    setIsCartOpen(true);
+                  }} 
+                  className="relative group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-pink transition-colors flex items-center justify-center"
+                >
                   <i className="fa-solid fa-cart-shopping text-[18px] text-[#ddd] group-hover:text-neon-pink transition-colors"></i>
                   {getItemCount() > 0 && (
                     <span className="absolute -top-2 -right-2 bg-neon-pink text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
@@ -325,10 +336,18 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Actions & Burger */}
             <div className="flex lg:hidden items-center">
               <div className="flex items-center gap-3 mr-4 relative z-50">
-                  <button onClick={() => setIsCartOpen(true)} className={`relative w-10 h-10 flex items-center justify-center border transition-colors ${isScrolled ? 'border-black/20 text-black' : 'border-white/20 text-white'}`}>
+                  <button 
+                    onClick={() => {
+                      if (!authApi.isLoggedIn()) {
+                        showToast('Please login to access your cart', 'warning');
+                        return;
+                      }
+                      setIsCartOpen(true);
+                    }} 
+                    className={`relative w-10 h-10 flex items-center justify-center border transition-colors ${isScrolled ? 'border-black/20 text-black' : 'border-white/20 text-white'}`}
+                  >
                       <i className="fa-solid fa-cart-shopping text-sm"></i>
                       {getItemCount() > 0 && (
                           <span className="absolute -top-1 -right-1 bg-neon-pink text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -365,7 +384,7 @@ const LandingPage: React.FC = () => {
           ></div>
 
           {/* Sidebar (Solid Black) */}
-          <div className={`fixed top-0 right-0 h-full w-[80vw] max-w-[320px] bg-black z-40 border-l border-white/10 transition-transform duration-500 ease-out lg:hidden flex flex-col ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className={`fixed top-0 right-0 h-full w-[80vw] max-w-[320px] bg-black z-40 border-l border-white/10 transition-transform duration-500 ease-out lg:hidden flex flex-col text-white ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
 
             {/* Spacing untuk tombol close */}
             <div className="h-32 shrink-0"></div>
@@ -378,8 +397,18 @@ const LandingPage: React.FC = () => {
                 <a href="#merchandise" onClick={() => setIsMenuOpen(false)} className="hover:text-neon-pink transition-colors w-full border-b border-white/10 pb-4">Shop</a>
 
                 {/* Cart di Mobile */}
-                <button onClick={() => { setIsMenuOpen(false); setIsCartOpen(true); }} className="hover:text-white transition-colors w-full border-b border-white/10 pb-4 flex items-center justify-between text-left">
-                  <span>Cart</span>
+                <button 
+                  onClick={() => { 
+                    setIsMenuOpen(false); 
+                    if (!authApi.isLoggedIn()) {
+                      showToast('Please login to access your cart', 'warning');
+                      return;
+                    }
+                    setIsCartOpen(true); 
+                  }} 
+                  className="hover:text-white transition-colors w-full border-b border-white/10 pb-4 flex items-center justify-between text-left"
+                >
+                  <span>CART</span>
                   {getItemCount() > 0 && (
                     <span className="bg-neon-pink text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                       {getItemCount()}
