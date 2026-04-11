@@ -18,12 +18,12 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 # ======================
 # STAGE 2: FINAL
 # ======================
-FROM scratch
+FROM alpine:latest
 
 WORKDIR /app
 
-# SSL cert untuk HTTPS (Xendit WAJIB)
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# Install dependencies (CA Certs for HTTPS, TZData for timezones)
+RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=builder /app/app .
 
