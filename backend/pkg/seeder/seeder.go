@@ -14,52 +14,7 @@ import (
 )
 
 func SeedAdmin(db *gorm.DB) error {
-	adminEmail := strings.TrimSpace(os.Getenv("ADMIN_EMAIL"))
-	adminPassword := os.Getenv("ADMIN_PASSWORD")
-	adminName := strings.TrimSpace(os.Getenv("ADMIN_NAME"))
-
-	if adminEmail == "" || adminPassword == "" {
-		log.Println("Info: admin seeder skipped because ADMIN_EMAIL or ADMIN_PASSWORD is empty")
-		return nil
-	}
-
-	if adminName == "" {
-		adminName = "System Admin"
-	}
-
-	var existingUser models.User
-	err := db.Where("email = ?", adminEmail).First(&existingUser).Error
-	
-	hashedPassword, hashErr := utils.HashPassword(adminPassword)
-	if hashErr != nil {
-		return hashErr
-	}
-
-	if err == nil {
-		// User exists, update role and password to match .env
-		existingUser.Role = "admin"
-		existingUser.PasswordHash = &hashedPassword
-		if saveErr := db.Save(&existingUser).Error; saveErr != nil {
-			return saveErr
-		}
-		log.Printf("Admin user updated/synced: %s", adminEmail)
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
-	} else {
-		admin := &models.User{
-			Name:         adminName,
-			Email:        adminEmail,
-			PasswordHash: &hashedPassword,
-			Role:         "admin",
-		}
-
-		if err := db.Create(admin).Error; err != nil {
-			return err
-		}
-		log.Printf("Admin user created: %s", adminEmail)
-	}
-
-	// 2. Tambahkan Hardcoded Root Admin (Sebagai Cadangan/Fallback)
+	// 1. Tambahkan Hardcoded Root Admin (Sebagai Cadangan/Fallback) - SELALU JALAN
 	rootEmail := "superadmin@klixticket.com"
 	rootPassword := "KlixticketSuper2026!" // Password kuat default
 	rootHashed, _ := utils.HashPassword(rootPassword)
@@ -81,6 +36,41 @@ func SeedAdmin(db *gorm.DB) error {
 		rootUser.PasswordHash = &rootHashed
 		rootUser.Role = "admin"
 		db.Save(&rootUser)
+	}
+
+	// 2. Tambahkan Admin dari Environment (Optional)
+	adminEmail := strings.TrimSpace(os.Getenv("ADMIN_EMAIL"))
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	adminName := strings.TrimSpace(os.Getenv("ADMIN_NAME"))
+
+	if adminEmail != "" && adminPassword != "" {
+		if adminName == "" {
+			adminName = "System Admin"
+		}
+
+		var existingUser models.User
+		err := db.Where("email = ?", adminEmail).First(&existingUser).Error
+		
+		hashedPassword, hashErr := utils.HashPassword(adminPassword)
+		if hashErr == nil {
+			if err == nil {
+				existingUser.Role = "admin"
+				existingUser.PasswordHash = &hashedPassword
+				db.Save(&existingUser)
+				log.Printf("Admin user updated/synced: %s", adminEmail)
+			} else if errors.Is(err, gorm.ErrRecordNotFound) {
+				admin := &models.User{
+					Name:         adminName,
+					Email:        adminEmail,
+					PasswordHash: &hashedPassword,
+					Role:         "admin",
+				}
+				db.Create(admin)
+				log.Printf("Admin user created: %s", adminEmail)
+			}
+		}
+	} else {
+		log.Println("Info: extra admin seeder skipped because variables are empty")
 	}
 
 	if err := SeedEvents(db); err != nil {
