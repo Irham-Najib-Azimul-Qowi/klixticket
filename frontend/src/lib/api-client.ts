@@ -13,6 +13,11 @@ const getBaseUrl = () => {
 };
 
 export const API_BASE_URL = getBaseUrl();
+
+/**
+ * Centrally managed base URL for all assets/images.
+ * Priority: Env variable > Calculated backend root
+ */
 export const IMAGE_BASE_URL = import.meta.env.VITE_SERVER_URL || API_BASE_URL.replace('/api/v1', '');
 
 export class RequestError extends Error {

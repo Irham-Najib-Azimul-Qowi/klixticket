@@ -1,53 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Eye, EyeOff, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { authApi } from '@/services/api';
+import { resetPasswordSchema, type ResetPasswordInput } from '@/lib/validations/auth.schema';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get('token') || '';
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetPasswordInput>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      token: token,
+      password: '',
+      confirmPassword: '',
+    }
+  });
 
   useEffect(() => {
     if (!token) {
-      setError('Reset token is missing or invalid.');
+      setServerError('Reset token is missing or invalid.');
     }
   }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: ResetPasswordInput) => {
     if (!token) return;
-
-    setError('');
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
+    setServerError('');
     setIsLoading(true);
+
     try {
       await authApi.resetPassword({
-        token,
-        new_password: password,
-        confirm_password: confirmPassword,
+        token: token,
+        new_password: data.password,
+        confirm_password: data.confirmPassword,
       });
       setIsSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password. Please ensure your token is still valid.');
+      setServerError(err.message || 'Failed to reset password. Please ensure your token is still valid.');
     } finally {
       setIsLoading(false);
     }
@@ -70,9 +73,7 @@ const ResetPasswordPage: React.FC = () => {
         <nav className="w-full bg-black/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2 group cursor-pointer">
-              <span className="text-3xl md:text-5xl font-heading uppercase tracking-tighter text-white">
-                KLIX<span className="text-outline">TICKET</span>
-              </span>
+              <img src={logoImg} alt="KlixTicket Logo" className="h-12 w-auto object-contain transition-all duration-300" />
             </Link>
             <Link 
               to="/login" 
@@ -104,27 +105,25 @@ const ResetPasswordPage: React.FC = () => {
                     </p>
                   </div>
 
-                  {error && (
+                  {serverError && (
                     <div className="mb-8 border border-neon-pink p-4 bg-neon-pink/10 flex items-center gap-4">
                       <AlertCircle className="w-6 h-6 flex-shrink-0 text-neon-pink" />
-                      <span className="font-bold text-xs uppercase tracking-widest text-neon-pink flex-1">{error}</span>
+                      <span className="font-bold text-xs uppercase tracking-widest text-neon-pink flex-1">{serverError}</span>
                     </div>
                   )}
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div>
-                      <label htmlFor="new-password" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
+                      <label htmlFor="password" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                         NEW PASSWORD
                       </label>
                       <div className="relative">
                         <input
-                          id="new-password"
+                          {...register('password')}
+                          id="password"
                           type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                          required
                           placeholder="••••••••"
-                          className="w-full bg-black border border-white/20 p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide"
+                          className={`w-full bg-black border ${errors.password ? 'border-neon-pink' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
                         />
                         <button
                           type="button"
@@ -134,21 +133,31 @@ const ResetPasswordPage: React.FC = () => {
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
                       </div>
+                      {errors.password && (
+                        <div className="flex items-center gap-2 mt-2 text-neon-pink">
+                          <AlertCircle size={12} />
+                          <p className="text-[10px] font-bold uppercase tracking-widest">{errors.password.message}</p>
+                        </div>
+                      )}
                     </div>
 
                     <div>
-                      <label htmlFor="confirm-password" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
+                      <label htmlFor="confirmPassword" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                         CONFIRM NEW PASSWORD
                       </label>
                       <input
-                        id="confirm-password"
+                        {...register('confirmPassword')}
+                        id="confirmPassword"
                         type={showPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
-                        required
                         placeholder="••••••••"
-                        className="w-full bg-black border border-white/20 p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide"
+                        className={`w-full bg-black border ${errors.confirmPassword ? 'border-neon-pink' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
                       />
+                      {errors.confirmPassword && (
+                        <div className="flex items-center gap-2 mt-2 text-neon-pink">
+                          <AlertCircle size={12} />
+                          <p className="text-[10px] font-bold uppercase tracking-widest">{errors.confirmPassword.message}</p>
+                        </div>
+                      )}
                     </div>
 
                     <button

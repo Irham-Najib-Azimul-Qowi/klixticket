@@ -1,6 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { XCircle, RefreshCcw, HelpCircle } from 'lucide-react';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 const PaymentFailed: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +15,10 @@ const PaymentFailed: React.FC = () => {
         }
       `}</style>
       <div className="min-h-screen bg-black grid-background flex items-center justify-center p-4">
-        <div className="max-w-xl w-full text-center space-y-10">
+        <div className="max-w-xl w-full text-center space-y-10 flex flex-col items-center">
+          <Link to="/">
+            <img src={logoImg} alt="KlixTicket Logo" className="h-10 w-auto object-contain mb-8" />
+          </Link>
           <div className="relative inline-block">
             <div className="absolute inset-0 bg-neon-pink blur-3xl opacity-20 rounded-full" />
             <div className="relative w-32 h-32 border border-white/20 bg-dark-grey flex items-center justify-center">

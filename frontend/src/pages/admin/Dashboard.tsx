@@ -5,12 +5,11 @@ import {
   CreditCard, 
   Calendar, 
   Package, 
-  Clock, 
   ArrowUpRight,
-  Monitor,
   Loader2,
   Users,
-  ChevronRight
+  ChevronRight,
+  TrendingDown
 } from 'lucide-react';
 import { adminApi } from '@/services/api';
 import type { DashboardSummaryResponse, Order } from '@/types';
@@ -37,133 +36,120 @@ const Dashboard: React.FC = () => {
       title: "Total Revenue",
       value: `IDR ${(summary?.revenue || 0).toLocaleString()}`,
       icon: TrendingUp,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      trend: "+12.5%"
+      trend: "+12.5%",
+      isPositive: true
     },
     {
-      title: "Transactions",
+      title: "Total Transactions",
       value: (summary as any)?.total_orders || 0,
       icon: CreditCard,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
-      trend: "+5.2%"
+      trend: "+5.2%",
+      isPositive: true
     },
     {
       title: "Active Events",
       value: summary?.active_events || 0,
       icon: Calendar,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      trend: "Stable"
+      trend: "0%",
+      isPositive: true
     },
     {
-      title: "Stock Items",
+      title: "Inventory Units",
       value: (summary as any)?.total_merchandise || 0,
       icon: Package,
-      color: "text-rose-600",
-      bg: "bg-rose-50",
-      trend: "Alert"
+      trend: "-2.1%",
+      isPositive: false
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-10 h-10 text-slate-300 animate-spin mb-4" />
+        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Syncing Analytics...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-10 pb-20">
-      {/* Premium Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-10">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Executive Dashboard</h2>
-          <p className="text-slate-500 text-sm font-medium mt-1">Strategic overview of your event commerce ecosystem.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard Overview</h2>
+          <p className="text-sm text-slate-500 font-medium">Real-time performance metrics and system activity.</p>
         </div>
-        <div className="flex items-center gap-3">
-           <div className="bg-white px-4 py-2.5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">System Live</span>
-           </div>
-           <div className="bg-white px-4 py-2.5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 text-slate-400">
-              <Clock size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-           </div>
+        <div className="flex items-center gap-2">
+          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md hover:bg-slate-50 transition-colors uppercase tracking-widest">
+            Export Report
+          </button>
+          <button onClick={() => navigate('/admin/events/create')} className="px-4 py-2 bg-slate-900 border border-slate-900 text-white text-xs font-bold rounded-md hover:bg-slate-800 transition-colors uppercase tracking-widest">
+            New Event
+          </button>
         </div>
       </div>
       
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white border border-slate-100 p-7 rounded-[28px] shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
-             <div className="absolute -right-2 -top-2 w-24 h-24 bg-slate-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-             <div className="relative z-10 flex flex-col gap-6">
-                <div className="flex items-center justify-between">
-                   <div className={`p-3.5 rounded-2xl ${stat.bg} ${stat.color} shadow-sm`}>
-                      <stat.icon size={22} />
-                   </div>
-                   <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-lg ${
-                      stat.trend.includes('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'
-                   }`}>{stat.trend}</span>
+          <div key={idx} className="bg-white border border-slate-200 p-6 rounded-md shadow-sm">
+             <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-slate-50 rounded text-slate-600 border border-slate-100">
+                   <stat.icon size={18} />
                 </div>
-                <div>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.title}</p>
-                   {loading ? (
-                     <div className="h-8 w-32 bg-slate-50 animate-pulse rounded-lg mt-1" />
-                   ) : (
-                     <p className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
-                   )}
+                <div className={`flex items-center gap-1 text-[10px] font-bold ${stat.isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                   {stat.isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                   {stat.trend}
                 </div>
+             </div>
+             <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
              </div>
           </div>
         ))}
       </div>
 
-      {/* Main Content Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Recent Transactions List (Refactored to Cards) */}
-        <div className="lg:col-span-2 space-y-6">
-           <div className="flex items-center justify-between px-2">
-              <h3 className="text-xl font-bold text-slate-900">Recent Transactions</h3>
-              <Link to="/admin/orders" className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
-                 <ArrowUpRight size={18} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Recent Orders */}
+        <div className="lg:col-span-2 space-y-4">
+           <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Recent Transactions</h3>
+              <Link to="/admin/orders" className="text-xs font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1 uppercase tracking-widest">
+                 View All <ArrowUpRight size={14} />
               </Link>
            </div>
 
-           <div className="grid grid-cols-1 gap-4">
-              {loading ? (
-                [...Array(3)].map((_, i) => (
-                  <div key={i} className="h-28 bg-white border border-slate-100 rounded-3xl animate-pulse" />
-                ))
-              ) : (!Array.isArray(recentOrders) || recentOrders.length === 0) ? (
-                <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center">
-                   <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">No transaction data available.</p>
+           <div className="bg-white border border-slate-200 rounded-md divide-y divide-slate-100 overflow-hidden">
+              {(!Array.isArray(recentOrders) || recentOrders.length === 0) ? (
+                <div className="p-12 text-center">
+                   <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No recent transactions found</p>
                 </div>
               ) : (
                 recentOrders.map(order => (
                   <div 
                     key={order.id} 
                     onClick={() => navigate('/admin/orders')}
-                    className="bg-white border border-slate-100 p-5 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6 group hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer"
+                    className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer group"
                   >
-                     <div className="flex items-center gap-5 flex-1 w-full">
-                        <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center font-bold text-lg text-indigo-600 border border-slate-100">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-slate-950 rounded flex items-center justify-center font-bold text-white text-sm">
                            {order.user?.name?.substring(0, 1).toUpperCase() || 'G'}
                         </div>
-                        <div className="min-w-0 flex-1">
-                           <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ORD-{order.id.slice(-6).toUpperCase()}</span>
-                              <div className={`w-1.5 h-1.5 rounded-full ${
-                                 order.status === 'paid' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
-                              }`} />
-                           </div>
-                           <h4 className="font-bold text-slate-900 text-md truncate">{order.user?.name || 'Customer'}</h4>
-                           <p className="text-[10px] text-slate-400 font-medium truncate">{order.user?.email}</p>
+                        <div className="min-w-0">
+                           <p className="text-sm font-bold text-slate-900 truncate">{order.user?.name || 'Customer'}</p>
+                           <p className="text-[10px] text-slate-400 font-medium truncate uppercase tracking-tighter">ORD-{order.id.slice(-6).toUpperCase()} • {new Date(order.created_at).toLocaleDateString()}</p>
                         </div>
                      </div>
-                     <div className="flex items-center gap-8 w-full sm:w-auto border-t sm:border-t-0 pt-4 sm:pt-0">
-                        <div className="text-left sm:text-right">
-                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Payment</p>
-                           <p className="text-lg font-bold text-slate-900 leading-none">IDR {order.total_amount.toLocaleString()}</p>
+                     <div className="text-right flex items-center gap-6">
+                        <div>
+                           <p className="text-sm font-bold text-slate-900">IDR {order.total_amount.toLocaleString()}</p>
+                           <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                              <div className={`w-1.5 h-1.5 rounded-full ${order.status === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{order.status}</span>
+                           </div>
                         </div>
-                        <div className="p-2 rounded-xl bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                           <ChevronRight size={18} />
-                        </div>
+                        <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-950 transition-colors" />
                      </div>
                   </div>
                 ))
@@ -171,57 +157,40 @@ const Dashboard: React.FC = () => {
            </div>
         </div>
 
-        {/* Quick Actions & Ecosystem */}
-        <div className="space-y-8">
-           <div className="space-y-6">
-              <h3 className="text-xl font-bold text-slate-900 px-2">Launch Center</h3>
-              <div className="grid grid-cols-1 gap-4">
-                 <Link to="/admin/events/create" className="p-5 bg-indigo-600 text-white rounded-3xl shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-4 group">
-                    <div className="p-3 bg-white/20 rounded-2xl">
-                       <Calendar size={20} />
-                    </div>
-                    <div className="flex-1">
-                       <p className="font-bold text-md leading-none">Host New Event</p>
-                       <p className="text-[10px] text-white/60 font-medium mt-1 uppercase tracking-widest">Deploy manifest</p>
-                    </div>
+        {/* Sidebar Widgets */}
+        <div className="space-y-6">
+           {/* Quick Actions */}
+           <div className="bg-slate-950 rounded-md p-6 text-white shadow-xl">
+              <div className="flex items-center gap-2 mb-6">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">System Gateway</span>
+              </div>
+              <div className="space-y-3">
+                 <Link to="/admin/events/create" className="block w-full text-center py-3 bg-white text-slate-950 rounded font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors">
+                    Host New Event
                  </Link>
-                 <Link to="/admin/merch/create" className="p-5 bg-white border border-slate-100 text-slate-900 rounded-3xl shadow-sm hover:shadow-md hover:border-rose-100 transition-all flex items-center gap-4 group">
-                    <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl group-hover:scale-110 transition-transform">
-                       <Package size={20} />
-                    </div>
-                    <div>
-                       <p className="font-bold text-md leading-none">List Inventory</p>
-                       <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-widest">Update store items</p>
-                    </div>
+                 <Link to="/admin/merch/create" className="block w-full text-center py-3 bg-slate-800 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-slate-700 transition-colors">
+                    List Merchandise
                  </Link>
-                 <Link to="/" className="p-5 bg-white border border-slate-100 text-slate-900 rounded-3xl shadow-sm hover:shadow-md transition-all flex items-center gap-4 group">
-                    <div className="p-3 bg-slate-50 text-slate-600 rounded-2xl group-hover:scale-110 transition-transform">
-                       <Monitor size={20} />
-                    </div>
-                    <div>
-                       <p className="font-bold text-md leading-none">Portal View</p>
-                       <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-widest">Frontend experience</p>
-                    </div>
-                 </Link>
+              </div>
+              <div className="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between">
+                 <div className="flex items-center gap-2">
+                    <Users size={14} className="text-slate-500" />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Live Reach</span>
+                 </div>
+                 <span className="text-lg font-bold">1,204</span>
               </div>
            </div>
 
-           {/* Quick Stats Card */}
-           <div className="bg-indigo-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-900/40">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-400/10 blur-3xl -mr-16 -mt-16" />
-              <div className="relative z-10 space-y-6">
-                 <div className="flex items-center gap-3">
-                    <Users size={18} className="text-indigo-300" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Audience Pulse</span>
-                 </div>
-                 <div>
-                    <p className="text-4xl font-bold">1.2k</p>
-                    <p className="text-xs text-indigo-300/60 font-medium mt-1">Unique visitors this week</p>
-                 </div>
-                 <div className="h-px bg-white/10" />
-                 <p className="text-[10px] text-indigo-300/40 italic leading-relaxed">
-                    Traffic is up by 8% compared to the previous period. Monitor your event SEO in the analytics tab.
-                 </p>
+           {/* Market Brief */}
+           <div className="border border-slate-200 rounded-md p-6 bg-white">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Market Insight</h4>
+              <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                 Your ticket velocity has increased by 14% this period. Optimal conversion rates detected in the "Music/Festival" category. 
+              </p>
+              <div className="mt-6 flex items-center gap-2 text-emerald-600">
+                 <TrendingUp size={14} />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Optimal Performance</span>
               </div>
            </div>
         </div>

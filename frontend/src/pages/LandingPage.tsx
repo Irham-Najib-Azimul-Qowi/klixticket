@@ -1,6 +1,6 @@
 // Icons provided by FontAwesome CDN in index.html
 import { eventsApi, merchandiseApi, authApi, type Event, type Merchandise } from '@/services/api';
-import { formatImageURL } from '@/lib/utils';
+import { formatImageURL, getPlaceholderImage } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import CartDrawer from '@/components/CartDrawer';
 import { useState, useEffect, useRef } from 'react';
@@ -77,7 +77,16 @@ const MarqueeBanner = ({ text, bgClass, rotateClass, reverse = false, textColor 
 const LandingPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getItemCount, isCartOpen, setIsCartOpen } = useCart();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const marqueeText = "GIXS DI KOTA";
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const MOCK_LINEUP = [
     { id: 9991, title: 'DAVE THE PAPS', start_date: '2026-12-01T20:00:00Z', banner_url: daveImg, location: 'MAIN STAGE', description: 'Legendary Indonesian Reggae', publish_status: 'published' },
@@ -138,13 +147,16 @@ const LandingPage: React.FC = () => {
   useEffect(() => {
     let animationFrameId: number;
     const scroll = () => {
-      if (merchScrollRef.current && !isMerchHovered && !isMerchDragging.current && (apiMerch.length > 0 || true)) {
-        merchScrollPosRef.current -= 1.0;
-        const maxScroll = merchScrollRef.current.scrollWidth / 2;
-        if (merchScrollPosRef.current <= 0) {
-          merchScrollPosRef.current = maxScroll;
+      // Only scroll automatically on desktop
+      if (!isMobile && merchScrollRef.current && !isMerchHovered && !isMerchDragging.current) {
+        if (apiMerch.length > 0) {
+          merchScrollPosRef.current += 1.0;
+          const maxScroll = merchScrollRef.current.scrollWidth / 2;
+          if (merchScrollPosRef.current >= maxScroll) {
+            merchScrollPosRef.current = 0;
+          }
+          merchScrollRef.current.scrollLeft = merchScrollPosRef.current;
         }
-        merchScrollRef.current.scrollLeft = merchScrollPosRef.current;
       }
       animationFrameId = requestAnimationFrame(scroll);
     };
@@ -313,9 +325,37 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            <button className={`lg:hidden relative z-50 transition-colors duration-300 ${isScrolled && !isMenuOpen ? 'text-black' : 'text-white'}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <i className="fa-solid fa-xmark text-3xl"></i> : <i className="fa-solid fa-bars text-3xl"></i>}
-            </button>
+            {/* Mobile Actions & Burger */}
+            <div className="flex lg:hidden items-center">
+              <div className="flex items-center gap-3 mr-4 relative z-50">
+                  <button onClick={() => setIsCartOpen(true)} className={`relative w-10 h-10 flex items-center justify-center border transition-colors ${isScrolled ? 'border-black/20 text-black' : 'border-white/20 text-white'}`}>
+                      <i className="fa-solid fa-cart-shopping text-sm"></i>
+                      {getItemCount() > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-neon-pink text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                              {getItemCount()}
+                          </span>
+                      )}
+                  </button>
+
+                  {currentUser ? (
+                      <Link to="/profile" className={`w-10 h-10 border overflow-hidden flex items-center justify-center transition-colors ${isScrolled ? 'border-black/20 text-black' : 'border-white/20 text-white'}`}>
+                          {currentUser.avatar_url ? (
+                              <img src={currentUser.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                              <i className="fa-solid fa-user text-sm"></i>
+                          )}
+                      </Link>
+                  ) : (
+                      <Link to="/login" className={`w-10 h-10 border flex items-center justify-center transition-colors ${isScrolled ? 'border-black/20 text-black' : 'border-white/20 text-white'}`}>
+                          <i className="fa-solid fa-user text-sm"></i>
+                      </Link>
+                  )}
+              </div>
+
+              <button className={`relative z-50 transition-colors duration-300 ${isScrolled && !isMenuOpen ? 'text-black' : 'text-white'}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                {isMenuOpen ? <i className="fa-solid fa-xmark text-2xl"></i> : <i className="fa-solid fa-bars text-2xl"></i>}
+              </button>
+            </div>
           </div>
 
           {/* Overlay mask (Tetap dipertahankan transparan 60% agar layar utama masih terlihat samar) */}
@@ -393,7 +433,7 @@ const LandingPage: React.FC = () => {
           <div className="absolute inset-0 z-0 bg-black pointer-events-none overflow-hidden flex items-center justify-center">
             <iframe
               src="https://www.youtube.com/embed/xo8ltw1URqE?autoplay=1&mute=1&controls=0&loop=1&playlist=xo8ltw1URqE&playsinline=1&modestbranding=1&disablekb=1"
-              className="absolute w-[200vw] h-[200vh] md:w-[150vw] md:h-[150vh] xl:w-[110vw] xl:h-[150vh]"
+              className="absolute w-[300vw] h-[100vh] md:w-[150vw] md:h-[150vh] xl:w-[120vw] xl:h-[150vh]"
               allow="autoplay; fullscreen; picture-in-picture"
               style={{ border: 'none' }}
               title="Hero Background Video"
@@ -571,36 +611,63 @@ const LandingPage: React.FC = () => {
               onMouseMove={onMerchMouseMove}
               onMouseUp={stopMerchDragging}
               onMouseLeave={stopMerchDragging}
-              className="flex overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing gap-12 px-4 md:px-8 py-10"
+              className={`${isMobile ? 'grid grid-cols-1' : 'flex overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing'} gap-8 md:gap-12 px-4 md:px-8 py-10`}
             >
-              {[...apiMerch, ...apiMerch, ...(apiMerch.length === 0 ? [1,2,3] : [])].map((item, index) => {
-                const isPlaceholder = typeof item === 'number';
-                return (
-                  <div key={isPlaceholder ? `p-${index}` : `${item.id}-${index}`} className="group cursor-pointer w-[350px] md:w-[450px] flex-shrink-0">
-                    <Link to={isPlaceholder ? '#' : `/merchandise/${item.id}`}>
-                      <div className="relative w-full aspect-square bg-dark-grey border border-white/5 overflow-hidden mb-8 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
-                        <img 
-                          src={isPlaceholder ? tshirtImg : formatImageURL(item.image_url)} 
-                          alt={isPlaceholder ? "Official Tee" : item.name} 
-                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 pointer-events-none" 
-                          onError={(e) => (e.currentTarget.src = "/fallback.png")}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
-                          <span className="text-white font-bold tracking-[0.6em] text-xs flex items-center gap-3 uppercase">
-                            VIEW DETAIL <i className="fa-solid fa-arrow-right text-lg"></i>
-                          </span>
-                        </div>
+              {merchLoading ? (
+                // Skeleton Loading State
+                [...Array(5)].map((_, i) => (
+                  <div key={`skeleton-${i}`} className="w-[280px] md:w-[350px] flex-shrink-0">
+                    <div className="bg-white/5 border border-white/10 p-6 animate-pulse">
+                      <div className="w-full aspect-square bg-white/5 mb-8"></div>
+                      <div className="space-y-4">
+                        <div className="h-2 w-20 bg-white/10"></div>
+                        <div className="h-8 w-full bg-white/10"></div>
+                        <div className="h-6 w-1/2 bg-white/10"></div>
                       </div>
-                      <h3 className="text-4xl md:text-5xl font-heading tracking-tighter group-hover:text-neon-pink transition-colors line-clamp-1 uppercase">
-                        {isPlaceholder ? 'SOUNDRENALINE TEE' : item.name}
-                      </h3>
-                      <p className="text-2xl font-heading text-white/40 mt-2 tracking-tighter uppercase">
-                        {isPlaceholder ? 'RP 180.000' : formatPrice(item.price)}
-                      </p>
-                    </Link>
+                    </div>
                   </div>
-                );
-              })}
+                ))
+              ) : (
+                // Actual Data State
+                (isMobile ? (apiMerch.length > 0 ? apiMerch : [1, 2, 3]) : [...apiMerch, ...apiMerch, ...(apiMerch.length === 0 ? [1, 2, 3] : [])]).map((item, index) => {
+                  const isPlaceholder = typeof item === 'number';
+                  return (
+                    <div key={isPlaceholder ? `p-${index}` : `${item.id}-${index}`} className="group cursor-pointer w-full md:w-[350px] flex-shrink-0">
+                      <Link to={isPlaceholder ? '#' : `/merchandise/${item.id}`}>
+                        <div className="bg-white/5 border border-white/10 p-6 transition-all duration-500 group-hover:bg-white/10 group-hover:border-neon-pink group-hover:-translate-y-3 shadow-2xl overflow-hidden relative">
+                          <div className="relative w-full aspect-square bg-black border border-white/5 overflow-hidden mb-8">
+                            <img 
+                              src={isPlaceholder ? tshirtImg : formatImageURL(item.image_url)} 
+                              alt={isPlaceholder ? "Official Tee" : item.name} 
+                              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 pointer-events-none scale-95 group-hover:scale-110" 
+                              onError={(e) => { 
+                                const target = e.target as HTMLImageElement;
+                                target.src = getPlaceholderImage(); 
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-neon-pink/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                               <span className="w-1.5 h-1.5 bg-neon-pink rounded-full animate-pulse"></span>
+                               <span className="text-[9px] font-black text-white/30 tracking-[0.3em] uppercase">OFFICIAL MERCH</span>
+                            </div>
+                            <h3 className="text-3xl font-heading tracking-tighter group-hover:text-neon-pink transition-colors line-clamp-1 uppercase">
+                              {isPlaceholder ? 'SOUNDRENALINE TEE' : item.name}
+                            </h3>
+                            <div className="flex items-center justify-between pt-2">
+                               <p className="text-xl font-heading text-white/60 tracking-tighter uppercase">
+                                 {isPlaceholder ? 'RP 180.000' : formatPrice(item.price)}
+                               </p>
+                               <i className="fa-solid fa-arrow-right-long text-white/20 group-hover:text-neon-pink group-hover:translate-x-2 transition-all"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </section>

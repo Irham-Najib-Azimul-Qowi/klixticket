@@ -1,26 +1,40 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { authApi } from '@/services/api';
+import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/validations/auth.schema';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 const ForgotPasswordPage: React.FC = () => {
-  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    }
+  });
+
+  const email = watch('email');
+
+  const onSubmit = async (data: ForgotPasswordInput) => {
+    setServerError('');
     setIsLoading(true);
 
     try {
-      const res = await authApi.forgotPassword(email);
-      console.log("Forgot password API response:", res);
+      await authApi.forgotPassword(data.email);
       setIsSubmitted(true);
     } catch (err: any) {
-      console.error("Forgot password error:", err);
-      setError(err.message || 'Failed to send reset request. Please check your connection.');
+      setServerError(err.message || 'Failed to send reset request. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
@@ -43,9 +57,7 @@ const ForgotPasswordPage: React.FC = () => {
         <nav className="w-full bg-black/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2 group cursor-pointer">
-              <span className="text-3xl md:text-5xl font-heading uppercase tracking-tighter text-white">
-                KLIX<span className="text-outline">TICKET</span>
-              </span>
+              <img src={logoImg} alt="KlixTicket Logo" className="h-12 w-auto object-contain transition-all duration-300" />
             </Link>
             <Link 
               to="/login" 
@@ -77,32 +89,36 @@ const ForgotPasswordPage: React.FC = () => {
                     </p>
                   </div>
 
-                  {error && (
+                  {serverError && (
                     <div className="mb-8 border border-neon-pink p-4 bg-neon-pink/10 flex items-center gap-4">
                       <span className="text-xl text-neon-pink font-heading">ERROR</span>
-                      <p className="font-bold text-xs uppercase tracking-widest text-neon-pink flex-1">{error}</p>
+                      <p className="font-bold text-xs uppercase tracking-widest text-neon-pink flex-1">{serverError}</p>
                     </div>
                   )}
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div>
-                      <label htmlFor="forgot-email" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
+                      <label htmlFor="email" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                         EMAIL ADDRESS
                       </label>
                       <input
-                        id="forgot-email"
+                        {...register('email')}
+                        id="email"
                         type="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
                         placeholder="user@example.com"
-                        className="w-full bg-black border border-white/20 p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide"
+                        className={`w-full bg-black border ${errors.email ? 'border-neon-pink' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
                       />
+                      {errors.email && (
+                        <div className="flex items-center gap-2 mt-2 text-neon-pink">
+                          <AlertCircle size={12} />
+                          <p className="text-[10px] font-bold uppercase tracking-widest">{errors.email.message}</p>
+                        </div>
+                      )}
                     </div>
 
                     <button
                       type="submit"
-                      disabled={isLoading || !email}
+                      disabled={isLoading}
                       className="w-full bg-white text-black py-5 font-heading text-2xl uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mt-8 transform hover:scale-105"
                     >
                       {isLoading ? (

@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, MapPin, Loader2 } from 'lucide-react';
+import { Plus, Calendar, MapPin, Loader2, Search, Filter, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { adminApi } from '@/services/api';
 import type { Event } from '@/types';
-import { formatImageURL } from '@/lib/utils';
+import { formatImageURL, getPlaceholderImage } from '@/lib/utils';
+import { useToast } from '@/context/ToastContext';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 const EventsList: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -22,95 +29,134 @@ const EventsList: React.FC = () => {
       setEvents(eventData);
     } catch (error) {
       setEvents([]);
+      showToast('Failed to sync event node records.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('Delete this event? This action cannot be undone.')) {
-      adminApi.deleteEvent(id)
-        .then(() => fetchEvents())
-        .catch((err: any) => alert('Failed to delete: ' + err.message));
+  const handleDeleteClick = (id: number) => {
+    setEventToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (eventToDelete === null) return;
+    
+    try {
+      await adminApi.deleteEvent(eventToDelete);
+      showToast('Event manifest successfully terminated.', 'success');
+      fetchEvents();
+    } catch (err: any) {
+      showToast('Termination protocol failed: ' + err.message, 'error');
     }
   };
 
   return (
-    <div className="space-y-8 pb-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Events Management</h2>
-          <p className="text-slate-500 text-sm">Monitor and manage your event catalog from a single hub.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 focus:outline-none">Event Catalog</h2>
+          <p className="text-sm text-slate-500 font-medium">Manage and schedule your high-traffic event nodes.</p>
         </div>
         <button 
           onClick={() => navigate('/admin/events/create')} 
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm flex items-center gap-2 w-fit"
+          className="bg-slate-950 hover:bg-slate-800 text-white px-4 py-2 rounded-md font-bold text-xs transition-all flex items-center gap-2 w-fit uppercase tracking-widest"
         >
-          <Plus size={20} /> Add New Event
+          <Plus size={16} /> Deploy Event
         </button>
       </div>
 
-      <div className="space-y-4">
+      {/* Filters/Actions Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between py-2 border-b border-slate-100">
+        <div className="relative w-full sm:w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <input 
+            type="text" 
+            placeholder="Search manifests..." 
+            className="w-full bg-slate-50 border border-slate-200 rounded-md py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-slate-950/5 transition-all"
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 transition-colors text-xs font-bold uppercase tracking-widest">
+            <Filter size={14} /> Filter
+          </button>
+        </div>
+      </div>
+
+      {/* List Area */}
+      <div className="space-y-3">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
-            <Loader2 className="animate-spin text-indigo-600 w-10 h-10 mb-4" />
-            <p className="text-slate-400 font-medium">Synchronizing records...</p>
+          <div className="flex flex-col items-center justify-center py-32 bg-white border border-slate-100 rounded-md">
+            <Loader2 className="animate-spin text-slate-300 w-8 h-8 mb-4" />
+            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Syncing manifest logs...</p>
           </div>
         ) : !Array.isArray(events) || events.length === 0 ? (
-          <div className="p-20 bg-white rounded-2xl border border-slate-100 shadow-sm text-center">
-             <Calendar className="w-16 h-16 mx-auto mb-6 text-slate-200" />
-             <p className="text-xl font-bold text-slate-900">No events detected.</p>
-             <p className="text-slate-500 mt-2">Initialize your first event node to see it here.</p>
+          <div className="py-32 bg-white border border-slate-200 rounded-md text-center">
+             <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-200" />
+             <p className="text-sm font-bold text-slate-900">No event nodes detected</p>
+             <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Initialize a new manifest to populate the catalog.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3">
             {events.map(event => (
-              <div key={event.id} className="bg-white border border-slate-100 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 group hover:shadow-md transition-all">
-                <div className="flex items-center gap-6 flex-1 w-full">
-                  <div className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100">
+              <div key={event.id} className="bg-white border border-slate-200 p-4 rounded-md flex flex-col md:flex-row items-center justify-between gap-4 group hover:border-slate-400 transition-colors">
+                <div className="flex items-center gap-4 flex-1 w-full">
+                  <div className="w-16 h-16 bg-slate-50 rounded border border-slate-100 overflow-hidden flex-shrink-0">
                       <img 
-                        src={formatImageURL(event.banner_url) || "https://picsum.photos/seed/event/200/200"} 
+                        src={formatImageURL(event.banner_url, 'event')} 
                         alt={event.title} 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                        onError={(e) => { 
+                          const target = e.target as HTMLImageElement;
+                          target.src = getPlaceholderImage(); 
+                        }}
                       />
                   </div>
                   <div className="flex-1 min-w-0">
                      <div className="flex items-center gap-3 mb-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">#EVT-{event.id}</span>
-                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-full ${
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">EVT-{event.id.toString().padStart(4, '0')}</span>
+                        <div className={`px-2 py-0.5 text-[8px] font-black uppercase rounded border ${
                           event.publish_status === 'published' 
-                            ? 'bg-emerald-50 text-emerald-600' 
-                            : 'bg-slate-100 text-slate-500'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                            : 'bg-slate-50 text-slate-500 border-slate-200'
                         }`}>
                           {event.publish_status}
-                        </span>
-                     </div>
-                     <h3 className="text-lg font-bold text-slate-900 truncate">{event.title}</h3>
-                     <div className="flex flex-wrap items-center gap-4 mt-2">
-                        <div className="flex items-center gap-1.5 text-slate-500">
-                           <Calendar size={14} />
-                           <span className="text-xs font-medium">{new Date(event.start_date).toLocaleDateString()}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-500">
-                           <MapPin size={14} />
-                           <span className="text-xs font-medium truncate max-w-[150px]">{event.location}</span>
+                     </div>
+                     <h3 className="text-sm font-bold text-slate-900 truncate">{event.title}</h3>
+                     <div className="flex flex-wrap items-center gap-4 mt-2">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                           <Calendar size={12} />
+                           <span className="text-[10px] font-bold uppercase tracking-wider">{new Date(event.start_date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                           <MapPin size={12} />
+                           <span className="text-[10px] font-bold uppercase tracking-wider truncate max-w-[120px]">{event.location}</span>
                         </div>
                      </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-slate-50">
                    <button 
                      onClick={() => navigate(`/admin/events/edit/${event.id}`)}
-                     className="flex-1 md:flex-none px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-lg transition-colors border border-slate-200"
+                     className="flex-1 md:flex-none p-2 hover:bg-slate-50 text-slate-500 hover:text-slate-950 transition-colors rounded border border-transparent hover:border-slate-100"
+                     title="Edit Event"
                    >
-                     Manage
+                     <Edit size={16} />
                    </button>
                    <button 
-                     onClick={() => handleDelete(event.id)}
-                     className="flex-1 md:flex-none px-4 py-2.5 bg-white hover:bg-red-50 text-red-600 font-bold text-xs rounded-lg transition-colors border border-red-100"
+                     onClick={() => handleDeleteClick(event.id)}
+                     className="flex-1 md:flex-none p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors rounded border border-transparent hover:border-rose-100"
+                     title="Delete Event"
                    >
-                     Remove
+                     <Trash2 size={16} />
+                   </button>
+                   <div className="h-4 w-px bg-slate-100 mx-1 hidden md:block" />
+                   <button className="hidden md:block p-2 text-slate-400 hover:text-slate-950">
+                      <MoreVertical size={16} />
                    </button>
                 </div>
               </div>
@@ -118,6 +164,17 @@ const EventsList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Terminate Event Node"
+        message="This will permanently delete the event manifest and all associated data records. This protocol cannot be reversed."
+        confirmText="Confirm Termination"
+        type="danger"
+      />
     </div>
   );
 };

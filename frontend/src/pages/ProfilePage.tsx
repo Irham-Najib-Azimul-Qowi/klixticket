@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { User as UserIcon, Loader2, ArrowRight, Mail, Ticket, ShoppingBag, History, X, CheckCircle2, Lock, Shield, UserCircle, Key, Package } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { authApi, orderApi } from '@/services/api';
 import type { User, Order } from '@/services/api';
+import { 
+  updateProfileSchema, 
+  changePasswordSchema, 
+  type UpdateProfileInput, 
+  type ChangePasswordInput 
+} from '@/lib/validations/auth.schema';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 interface ProfilePageProps {
   tab?: 'items' | 'history' | 'account' | 'security';
@@ -12,20 +21,34 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [historyOrders, setHistoryOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeSection, setActiveSection] = useState<'items' | 'history' | 'account' | 'security'>(tab || 'items');
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // Profile Form
+  const {
+    register: registerProfile,
+    handleSubmit: handleSubmitProfile,
+    reset: resetProfile,
+    formState: { errors: profileErrors },
+  } = useForm<UpdateProfileInput>({
+    resolver: zodResolver(updateProfileSchema),
+  });
+
+  // Password Form
+  const {
+    register: registerPassword,
+    handleSubmit: handleSubmitPassword,
+    reset: resetPassword,
+    formState: { errors: passwordErrors },
+  } = useForm<ChangePasswordInput>({
+    resolver: zodResolver(changePasswordSchema),
+  });
 
   useEffect(() => {
     if (tab) {
@@ -36,7 +59,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("FETCHING PROFILE DATA");
         const [userData, activeOrdersData, historyOrdersData] = await Promise.all([
           authApi.getMe(),
           orderApi.getMyOrders({ filter: 'active' }),
@@ -44,16 +66,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
         ]);
         
         setUser(userData);
-        setName(userData.name || '');
-        setEmail(userData.email || '');
+        resetProfile({
+          name: userData.name || '',
+          email: userData.email || '',
+        });
         setActiveOrders(activeOrdersData || []);
         setHistoryOrders(historyOrdersData || []);
-        
-        console.log("USER ID:", userData.id);
-        console.log("ACTIVE TICKETS:", activeOrdersData);
-        console.log("HISTORY ORDERS:", historyOrdersData);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch profile data');
+        setServerError(err.message || 'Failed to fetch profile data');
         if (err.status === 401) {
           authApi.logout();
           navigate('/login');
@@ -64,41 +84,37 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
     };
 
     fetchData();
-  }, [navigate]);
+  }, [navigate, resetProfile]);
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const onUpdateProfile = async (data: UpdateProfileInput) => {
+    setServerError('');
     setSuccess('');
     setIsSaving(true);
     try {
-      const updatedUser = await authApi.updateProfile(name, email);
+      const updatedUser = await authApi.updateProfile(data.name, data.email);
       setUser(updatedUser);
       setSuccess('Your profile has been updated successfully.');
     } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+      setServerError(err.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setError('New password and confirmation do not match.');
-      return;
-    }
-    setError('');
+  const onChangePassword = async (data: ChangePasswordInput) => {
+    setServerError('');
     setSuccess('');
     setIsSaving(true);
     try {
-      await authApi.changePassword({ old_password: oldPassword, new_password: newPassword });
+      await authApi.changePassword({ old_password: data.oldPassword, new_password: data.newPassword });
       setSuccess('Your password has been changed successfully.');
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      resetPassword({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
     } catch (err: any) {
-      setError(err.message || 'Failed to change password');
+      setServerError(err.message || 'Failed to change password');
     } finally {
       setIsSaving(false);
     }
@@ -129,8 +145,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
       <nav className="fixed top-0 left-0 w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/10 py-4">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white text-black font-heading text-xl flex items-center justify-center">K</div>
-            <span className="text-lg font-heading uppercase tracking-tighter">KlixTicket</span>
+            <img src={logoImg} alt="KlixTicket Logo" className="h-10 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-6">
              <Link to="/" className="text-[9px] font-bold text-white/50 uppercase tracking-widest hover:text-neon-pink transition-colors">Kembali ke Landing Page</Link>
@@ -324,36 +339,40 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                       <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Registry Sync</span>
                    </div>
                    
-                   <form onSubmit={handleUpdate} className="space-y-8">
+                   <form onSubmit={handleSubmitProfile(onUpdateProfile)} className="space-y-8">
                       <div className="space-y-2 group">
                          <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Full Display Name</label>
                          <div className="relative">
                             <input 
-                              value={name} 
-                              onChange={e => setName(e.target.value)} 
-                              className="w-full bg-dark-grey border border-white/10 p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all" 
+                              {...registerProfile('name')}
+                              className={`w-full bg-dark-grey border ${profileErrors.name ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all`}
                               placeholder="Enter your name"
                             />
                             <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-pink/20 transition-colors" size={20} />
                          </div>
+                         {profileErrors.name && (
+                           <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{profileErrors.name.message}</p>
+                         )}
                       </div>
                       
                       <div className="space-y-2 group">
                          <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Primary Contact Email</label>
                          <div className="relative">
                             <input 
-                              value={email} 
-                              onChange={e => setEmail(e.target.value)} 
-                              className="w-full bg-dark-grey border border-white/10 p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all" 
+                              {...registerProfile('email')}
+                              className={`w-full bg-dark-grey border ${profileErrors.email ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all`} 
                               placeholder="Enter your email"
                             />
                             <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-pink/20 transition-colors" size={20} />
                          </div>
+                         {profileErrors.email && (
+                           <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{profileErrors.email.message}</p>
+                         )}
                       </div>
 
-                      {(error || success) && activeSection === 'account' && (
-                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${error ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/30' : 'bg-white/10 text-white border border-white/20'}`}>
-                           {error || success}
+                      {(serverError || success) && activeSection === 'account' && (
+                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${serverError ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/30' : 'bg-white/10 text-white border border-white/20'}`}>
+                           {serverError || success}
                         </div>
                       )}
 
@@ -375,47 +394,53 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                       <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Protocol Override</span>
                    </div>
                    
-                   <form onSubmit={handleChangePassword} className="space-y-8">
+                   <form onSubmit={handleSubmitPassword(onChangePassword)} className="space-y-8">
                       <div className="space-y-2 group">
                          <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Current Password</label>
                          <div className="relative">
                             <input 
+                              {...registerPassword('oldPassword')}
                               type="password"
-                              value={oldPassword} 
-                              onChange={e => setOldPassword(e.target.value)} 
-                              className="w-full bg-dark-grey border border-white/10 p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all" 
+                              className={`w-full bg-dark-grey border ${passwordErrors.oldPassword ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all`}
                               placeholder="••••••••"
                             />
                             <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-pink/20 transition-colors" size={20} />
                          </div>
+                         {passwordErrors.oldPassword && (
+                           <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{passwordErrors.oldPassword.message}</p>
+                         )}
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                          <div className="space-y-2 group">
                             <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">New Password</label>
                             <input 
+                              {...registerPassword('newPassword')}
                               type="password"
-                              value={newPassword} 
-                              onChange={e => setNewPassword(e.target.value)} 
-                              className="w-full bg-dark-grey border border-white/10 p-4 font-heading text-lg text-white outline-none focus:border-neon-pink transition-all" 
+                              className={`w-full bg-dark-grey border ${passwordErrors.newPassword ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-lg text-white outline-none focus:border-neon-pink transition-all`}
                               placeholder="Enter new"
                             />
+                            {passwordErrors.newPassword && (
+                              <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{passwordErrors.newPassword.message}</p>
+                            )}
                          </div>
                          <div className="space-y-2 group">
                             <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Confirm New</label>
                             <input 
+                              {...registerPassword('confirmPassword')}
                               type="password"
-                              value={confirmPassword} 
-                              onChange={e => setConfirmPassword(e.target.value)} 
-                              className="w-full bg-dark-grey border border-white/10 p-4 font-heading text-lg text-white outline-none focus:border-neon-pink transition-all" 
+                              className={`w-full bg-dark-grey border ${passwordErrors.confirmPassword ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-lg text-white outline-none focus:border-neon-pink transition-all`}
                               placeholder="Confirm new"
                             />
+                            {passwordErrors.confirmPassword && (
+                              <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{passwordErrors.confirmPassword.message}</p>
+                            )}
                          </div>
                       </div>
 
-                      {(error || success) && activeSection === 'security' && (
-                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${error ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/30' : 'bg-white/10 text-white border border-white/20'}`}>
-                           {error || success}
+                      {(serverError || success) && activeSection === 'security' && (
+                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${serverError ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/30' : 'bg-white/10 text-white border border-white/20'}`}>
+                           {serverError || success}
                         </div>
                       )}
 
@@ -468,7 +493,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                     width: 100%;
                     background: white !important;
                     color: black !important;
-                  }
+                    }
                   .no-print { display: none !important; }
                 }
               `}</style>

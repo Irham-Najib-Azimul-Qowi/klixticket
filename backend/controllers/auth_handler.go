@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"mastutik-api/models"
@@ -32,7 +33,7 @@ func (h *AuthHandler) sanitizeError(err error) string {
 	case "invalid email or password":
 		return "Email atau password salah"
 	case "email already structured / registered":
-		return "Email sudah terdaftar, silakan gunakan email lain"
+		return "Email sudah terdaftar. Silakan gunakan email lain atau login kembali."
 	case "invalid google token":
 		return "Sesi Google telah berakhir, silakan login kembali"
 	case "google login temporarily unavailable":
@@ -42,14 +43,19 @@ func (h *AuthHandler) sanitizeError(err error) string {
 	case "user not found":
 		return "Pengguna tidak ditemukan"
 	case "password harus minimal 8 karakter dan mengandung kombinasi huruf serta angka":
-		return "Password harus minimal 8 karakter dan mengandung kombinasi huruf serta angka"
+		return "Password minimal 8 karakter dengan kombinasi huruf dan angka."
 	case "password lama tidak sesuai":
 		return "Password lama tidak sesuai"
 	}
 
 	// Catch-all for internal/system errors to avoid leakage
-	if len(msg) > 30 || (msg != "" && (msg[0] == 'J' || msg[0] == 'e' || msg[0] == 's')) {
-		// If it looks like a system error (long, starts with JWT, environment, sql, etc)
+	// But allow key validation messages even if they are long
+	if strings.Contains(msg, "password") || strings.Contains(msg, "karakter") || strings.Contains(msg, "kombinasi") {
+		return msg
+	}
+
+	if len(msg) > 100 || (msg != "" && (strings.HasPrefix(msg, "JWT") || strings.HasPrefix(msg, "env") || strings.HasPrefix(msg, "dial tcp"))) {
+		// If it looks like a technical system error (very long, JWT issues, connection errors)
 		return "Terjadi kesalahan pada sistem, silakan coba beberapa saat lagi"
 	}
 

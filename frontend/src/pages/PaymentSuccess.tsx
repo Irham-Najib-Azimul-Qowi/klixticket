@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Ticket, QrCode, Printer, Download, Receipt } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useCart } from '@/context/CartContext';
 import { orderApi } from '@/services/api';
 import { type Order } from '@/types';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 const PaymentSuccess: React.FC = () => {
   const { clearCart } = useCart();
@@ -92,7 +93,10 @@ const PaymentSuccess: React.FC = () => {
       <div className="min-h-screen bg-black grid-background flex flex-col items-center py-20 px-4">
         <div className="max-w-4xl w-full text-center space-y-12">
           
-          <div className="no-print space-y-10">
+          <div className="no-print space-y-10 flex flex-col items-center">
+            <Link to="/">
+              <img src={logoImg} alt="KlixTicket Logo" className="h-10 w-auto object-contain mb-8" />
+            </Link>
             <div className="relative inline-block">
               <div className="absolute inset-0 bg-neon-pink blur-3xl opacity-20 rounded-full" />
               <div className="relative w-32 h-32 border border-white/20 bg-dark-grey flex items-center justify-center">
@@ -232,7 +236,8 @@ const PaymentSuccess: React.FC = () => {
                             </p>
                         </div>
                     </div>
-                    <div className="text-right hidden md:block">
+                    <div className="text-right hidden md:block flex flex-col items-end">
+                        <img src={logoImg} alt="Logo" className="h-6 w-auto object-contain opacity-20 mb-2 ml-auto" />
                         <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Authorized by KLIXTICKET Payment Gateway</p>
                     </div>
                   </div>

@@ -29,7 +29,7 @@ func (r *userRepository) CreateUser(user *models.User) error {
 
 func (r *userRepository) FindByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := r.db.Where("email = ?", email).First(&user).Error
+	err := r.db.Where("email = ?", email).Limit(1).Find(&user).Error
 	return &user, err
 }
 
@@ -45,7 +45,7 @@ func (r *userRepository) CreateOAuthAccount(oauth *models.OAuthAccount) error {
 
 func (r *userRepository) FindOAuthAccount(provider, providerUserID string) (*models.OAuthAccount, error) {
 	var oauth models.OAuthAccount
-	err := r.db.Where("provider = ? AND provider_user_id = ?", provider, providerUserID).First(&oauth).Error
+	err := r.db.Where("provider = ? AND provider_user_id = ?", provider, providerUserID).Limit(1).Find(&oauth).Error
 	return &oauth, err
 }
 func (r *userRepository) UpdateUser(user *models.User) error {
@@ -54,6 +54,6 @@ func (r *userRepository) UpdateUser(user *models.User) error {
 
 func (r *userRepository) FindByResetToken(token string) (*models.User, error) {
 	var user models.User
-	err := r.db.Where("reset_password_token = ?", token).First(&user).Error
+	err := r.db.Where("reset_password_token = ?", token).Limit(1).Find(&user).Error
 	return &user, err
 }
