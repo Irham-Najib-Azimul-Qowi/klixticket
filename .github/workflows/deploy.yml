@@ -55,29 +55,31 @@ jobs:
             cd ~/app
             # Kill anything on port 80 to be sure
             fuser -k 80/tcp || true
-            # Robust .env generation (No indentation to avoid sed issues)
+            # Robust .env generation
             cat << EOF > .env
-DB_HOST=db
-DB_PORT=5432
-DB_USER=postgres
-DB_NAME=ticketing
-DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-XENDIT_API_KEY=${{ secrets.XENDIT_API_KEY }}
-XENDIT_CALLBACK_TOKEN=${{ secrets.XENDIT_CALLBACK_TOKEN }}
-SMTP_HOST=${{ secrets.SMTP_HOST }}
-SMTP_PORT=${{ secrets.SMTP_PORT }}
-SMTP_USER=${{ secrets.SMTP_USER }}
-SMTP_PASS=${{ secrets.SMTP_PASS }}
-GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
-ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
-ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-ADMIN_NAME=${{ secrets.ADMIN_NAME }}
-FRONTEND_URL=https://klixticket.com
-ALLOWED_ORIGINS=https://klixticket.com,http://klixticket.com,https://www.klixticket.com,http://202.155.18.206
-EOF
+            DB_HOST=db
+            DB_PORT=5432
+            DB_USER=postgres
+            DB_NAME=ticketing
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            XENDIT_API_KEY=${{ secrets.XENDIT_API_KEY }}
+            XENDIT_CALLBACK_TOKEN=${{ secrets.XENDIT_CALLBACK_TOKEN }}
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASS=${{ secrets.SMTP_PASS }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+            ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+            ADMIN_NAME=${{ secrets.ADMIN_NAME }}
+            FRONTEND_URL=https://klixticket.com
+            ALLOWED_ORIGINS=https://klixticket.com,http://klixticket.com,https://www.klixticket.com,http://202.155.18.206
+            EOF
+            # Cleanup: Remove leading spaces from .env created by YAML indentation
+            sed -i 's/^[[:space:]]*//' .env
             # Sanity check: Ensure .env is not empty and has JWT_SECRET
             if [ ! -s .env ] || ! grep -q "JWT_SECRET=" .env; then
               echo "FATAL ERROR: .env file is empty or corrupted!"
