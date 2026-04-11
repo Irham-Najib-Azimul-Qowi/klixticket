@@ -41,6 +41,8 @@ func (h *AuthHandler) sanitizeError(err error) string {
 		return "Anda tidak memiliki akses admin"
 	case "user not found":
 		return "Pengguna tidak ditemukan"
+	case "password harus minimal 8 karakter dan mengandung kombinasi huruf serta angka":
+		return "Password harus minimal 8 karakter dan mengandung kombinasi huruf serta angka"
 	case "password lama tidak sesuai":
 		return "Password lama tidak sesuai"
 	}
@@ -63,7 +65,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	user, err := h.authService.RegisterUser(req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusConflict, h.sanitizeError(err), nil)
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "email already structured / registered" {
+			statusCode = http.StatusConflict
+		} else if err.Error() == "password harus minimal 8 karakter dan mengandung kombinasi huruf serta angka" {
+			statusCode = http.StatusBadRequest
+		}
+		utils.ErrorResponse(c, statusCode, h.sanitizeError(err), nil)
 		return
 	}
 

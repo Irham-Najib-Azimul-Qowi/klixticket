@@ -139,10 +139,10 @@ const LandingPage: React.FC = () => {
     let animationFrameId: number;
     const scroll = () => {
       if (merchScrollRef.current && !isMerchHovered && !isMerchDragging.current && (apiMerch.length > 0 || true)) {
-        merchScrollPosRef.current += 1.0;
+        merchScrollPosRef.current -= 1.0;
         const maxScroll = merchScrollRef.current.scrollWidth / 2;
-        if (merchScrollPosRef.current >= maxScroll) {
-          merchScrollPosRef.current = 0;
+        if (merchScrollPosRef.current <= 0) {
+          merchScrollPosRef.current = maxScroll;
         }
         merchScrollRef.current.scrollLeft = merchScrollPosRef.current;
       }
@@ -195,10 +195,10 @@ const LandingPage: React.FC = () => {
     const scroll = () => {
       const displayEvents = nearestEvent ? [nearestEvent] : MOCK_LINEUP;
       if (eventScrollRef.current && !isEventsHovered && !isDragging.current && displayEvents.length > 0) {
-        scrollPosRef.current += 1.2;
+        scrollPosRef.current -= 1.2;
         const maxScroll = eventScrollRef.current.scrollWidth / 2;
-        if (scrollPosRef.current >= maxScroll) {
-          scrollPosRef.current = 0;
+        if (scrollPosRef.current <= 0) {
+          scrollPosRef.current = maxScroll;
         }
         eventScrollRef.current.scrollLeft = scrollPosRef.current;
       }
