@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Layouts
 const AdminLayout = lazy(() => import('@/layouts/AdminLayout'));
+import { ToastProvider } from '@/context/ToastContext';
+import { ToastContainer } from '@/components/ui/Toast';
 
 // Public Pages
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
@@ -37,38 +39,41 @@ const LoadingFallback = () => (
 const App: React.FC = () => {
   return (
     <Router>
-      <Suspense fallback={<LoadingFallback />}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/event/:id" element={<EventDetailPage />} />
-          <Route path="/merchandise/:id" element={<MerchDetailPage />} />
-          <Route path="/profile" element={<ProfilePage tab="account" />} />
-          <Route path="/profile/tickets" element={<ProfilePage tab="items" />} />
-          <Route path="/profile/history" element={<ProfilePage tab="history" />} />
-          <Route path="/profile/security" element={<ProfilePage tab="security" />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/payment/success" element={<PaymentSuccess />} />
-          <Route path="/payment/failed" element={<PaymentFailed />} />
-          <Route path="/order/:id/ticket" element={<TicketPage />} />
+      <ToastProvider>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/event/:id" element={<EventDetailPage />} />
+            <Route path="/merchandise/:id" element={<MerchDetailPage />} />
+            <Route path="/profile" element={<ProfilePage tab="account" />} />
+            <Route path="/profile/tickets" element={<ProfilePage tab="items" />} />
+            <Route path="/profile/history" element={<ProfilePage tab="history" />} />
+            <Route path="/profile/security" element={<ProfilePage tab="security" />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failed" element={<PaymentFailed />} />
+            <Route path="/order/:id/ticket" element={<TicketPage />} />
 
-          {/* Admin Routes with Layout Wrapper */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="events" element={<EventsList />} />
-            <Route path="events/create" element={<CreateEvent />} />
-            <Route path="events/edit/:id" element={<UpdateEvent />} />
-            <Route path="merchandise" element={<MerchList />} />
-            <Route path="merch/create" element={<CreateMerch />} />
-            <Route path="merch/edit/:id" element={<UpdateMerch />} />
-            <Route path="orders" element={<OrdersList />} />
-          </Route>
-        </Routes>
-      </Suspense>
+            {/* Admin Routes with Layout Wrapper */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="events" element={<EventsList />} />
+              <Route path="events/create" element={<CreateEvent />} />
+              <Route path="events/edit/:id" element={<UpdateEvent />} />
+              <Route path="merchandise" element={<MerchList />} />
+              <Route path="merch/create" element={<CreateMerch />} />
+              <Route path="merch/edit/:id" element={<UpdateMerch />} />
+              <Route path="orders" element={<OrdersList />} />
+            </Route>
+          </Routes>
+        </Suspense>
+        <ToastContainer />
+      </ToastProvider>
     </Router>
   );
 };

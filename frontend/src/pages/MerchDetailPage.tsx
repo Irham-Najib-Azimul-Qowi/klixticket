@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, ShoppingCart, Loader2, AlertTriangle } from 'lucide-react';
 import { merchandiseApi, type Merchandise } from '@/services/api';
-import { formatImageURL } from '@/lib/utils';
+import { formatImageURL, getPlaceholderImage } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import CartDrawer from '@/components/CartDrawer';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('id-ID', {
@@ -67,9 +68,7 @@ const MerchDetailPage: React.FC = () => {
         <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2 group cursor-pointer relative z-10">
-              <span className="text-3xl md:text-5xl font-heading uppercase tracking-tighter text-white">
-                KLIX<span className="text-outline">TICKET</span>
-              </span>
+              <img src={logoImg} alt="KlixTicket Logo" className="h-12 w-auto object-contain transition-all duration-300" />
             </Link>
             <button
               onClick={() => navigate(-1)}
@@ -115,7 +114,10 @@ const MerchDetailPage: React.FC = () => {
                     className={`w-full h-full object-cover transition-all duration-1000 ${
                       isOutOfStock ? 'grayscale opacity-50' : 'grayscale group-hover/img:grayscale-0 group-hover/img:scale-110'
                     }`}
-                    onError={(e) => (e.currentTarget.src = "/fallback.png")}
+                    onError={(e) => { 
+                      const target = e.target as HTMLImageElement;
+                      target.src = getPlaceholderImage(); 
+                    }}
                   />
                 
                 {isOutOfStock && (

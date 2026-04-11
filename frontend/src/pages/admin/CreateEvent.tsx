@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { adminApi } from '@/services/api';
 import { 
   ArrowLeft, 
@@ -11,328 +13,259 @@ import {
   Ticket as TicketIcon, 
   Loader2, 
   Save,
-  Info,
   CheckCircle2,
-  AlertCircle,
-  Type,
-  FileText
+  FileText,
+  Activity
 } from 'lucide-react';
 import { RequestError } from '@/lib/api-client';
+import { eventSchema, type EventInput } from '@/lib/validations/event.schema';
+import { useToast } from '@/context/ToastContext';
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [generalError, setGeneralError] = useState('');
-  
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const { showToast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  
-  const [eventData, setEventData] = useState({
-    title: '',
-    description: '',
-    location: '',
-    start_date: '',
-    end_date: '',
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<EventInput>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      location: '',
+      start_date: '',
+      end_date: '',
+      publish_status: 'published',
+      ticket_types: [{ name: 'General Admission', price: 0, quota: 100 }]
+    }
   });
 
-  const [ticketTiers, setTicketTiers] = useState([
-    { name: 'General Admission', price: '', quota: '' }
-  ]);
-
-  const handleEventChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setEventData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    // Clear error for that field
-    if (fieldErrors[e.target.name]) {
-       const newErrors = { ...fieldErrors };
-       delete newErrors[e.target.name];
-       setFieldErrors(newErrors);
-    }
-  };
-
-  const handleTierChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const newTiers = [...ticketTiers];
-    const { name, value } = e.target;
-    newTiers[index] = { ...newTiers[index], [name]: value };
-    setTicketTiers(newTiers);
-  };
-
-  const addTier = () => {
-    setTicketTiers([...ticketTiers, { name: '', price: '', quota: '' }]);
-  };
-
-  const removeTier = (index: number) => {
-    if (ticketTiers.length <= 1) return;
-    setTicketTiers(ticketTiers.filter((_, i) => i !== index));
-  };
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'ticket_types'
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setBannerFile(file);
+      setValue('banner', file, { shouldValidate: true });
       setPreviewUrl(URL.createObjectURL(file));
-       if (fieldErrors['banner']) {
-          const newErrors = { ...fieldErrors };
-          delete newErrors['banner'];
-          setFieldErrors(newErrors);
-       }
     }
   };
 
-  const handleSubmit = async () => {
-    setFieldErrors({});
-    setGeneralError('');
+  const onSubmit = async (data: EventInput) => {
+    setIsLoading(true);
 
-    if (!eventData.title || !eventData.location || !eventData.start_date || !eventData.end_date) {
-      setGeneralError("Please fill in all mandatory event identification markers.");
-      return;
-    }
-    
-    setLoading(true);
     try {
-      const ticketTypes = ticketTiers.map(t => ({
-        name: t.name,
-        description: t.name || 'General Admission', // Auto-fill description
-        price: Number(t.price),
-        quota: Number(t.quota),
-        sales_start_at: new Date().toISOString(), // Auto-fill start date (now)
-        sales_end_at: eventData.end_date ? new Date(eventData.end_date).toISOString() : new Date().toISOString(), // Auto-fill end date
+      const ticketTypes = data.ticket_types.map(t => ({
+        ...t,
+        description: t.name,
+        sales_start_at: new Date().toISOString(),
+        sales_end_at: new Date(data.end_date).toISOString(),
         active_status: true,
       }));
 
       const formData = new FormData();
-      formData.append('title', eventData.title);
-      formData.append('description', eventData.description);
-      formData.append('location', eventData.location);
-      formData.append('start_date', eventData.start_date ? new Date(eventData.start_date).toISOString() : '');
-      formData.append('end_date', eventData.end_date ? new Date(eventData.end_date).toISOString() : '');
-      formData.append('publish_status', 'published');
+      formData.append('title', data.title);
+      formData.append('description', data.description || '');
+      formData.append('location', data.location);
+      formData.append('start_date', new Date(data.start_date).toISOString());
+      formData.append('end_date', new Date(data.end_date).toISOString());
+      formData.append('publish_status', data.publish_status);
       formData.append('ticket_types', JSON.stringify(ticketTypes));
       
-      if (bannerFile) {
-        formData.append('banner', bannerFile);
+      if (data.banner && data.banner instanceof File) {
+        formData.append('banner', data.banner);
       }
 
       await adminApi.createEvent(formData);
+      showToast('Event manifest successfully deployed to the catalog.', 'success');
       navigate('/admin/events');
     } catch (err: any) {
       if (err instanceof RequestError && err.errors) {
-        setFieldErrors(err.errors);
-        setGeneralError('Validation failed. Please correct the highlighted nodes.');
+        showToast('Configuration validation failed. Check your inputs.', 'error');
       } else {
-        setGeneralError(err.message || 'The system failed to initialize this event node.');
+        showToast(err.message || 'Failed to initialize event manifest.', 'error');
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8 pb-32 animate-in fade-in duration-1000">
+    <div className="space-y-6 max-w-5xl mx-auto pb-32">
       
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white border border-slate-100 p-8 rounded-3xl shadow-sm">
-         <div className="flex items-center gap-6">
-            <button 
-              onClick={() => navigate('/admin/events')}
-              className="w-12 h-12 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-2xl text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all group"
-              title="Return to Events"
-            >
-               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            </button>
-            <div>
-               <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Node Configuration</span>
-               </div>
-               <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">Deploy New Event</h2>
-            </div>
-         </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
          <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate('/admin/events')}
-              className="px-8 py-3 bg-white border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all"
+              className="p-2 bg-white border border-slate-200 rounded text-slate-400 hover:text-slate-900 transition-all"
+              title="Return to Catalog"
+            >
+               <ArrowLeft size={16} />
+            </button>
+            <div>
+               <h2 className="text-2xl font-bold tracking-tight text-slate-900">Deploy Manifest</h2>
+               <p className="text-sm text-slate-500 font-medium">Initialize a new event node in the system.</p>
+            </div>
+         </div>
+         <div className="flex items-center gap-2">
+            <button 
+              onClick={() => navigate('/admin/events')}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest rounded transition-all hover:bg-slate-50"
             >
                Discard
             </button>
             <button 
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-10 py-3 bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 disabled:opacity-50 flex items-center gap-3 active:scale-95"
+              onClick={handleSubmit(onSubmit)}
+              disabled={isLoading}
+              className="px-4 py-2 bg-slate-950 text-white font-bold text-xs uppercase tracking-widest rounded hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center gap-2"
             >
-               {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-               Save & Deploy
+               {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+               Save manifest
             </button>
          </div>
       </div>
 
-      {generalError && (
-        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 text-rose-600 animate-in slide-in-from-top-2">
-           <AlertCircle size={20} />
-           <p className="text-sm font-bold uppercase tracking-wider">{generalError}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
          
          {/* Main Content Sections */}
-         <div className="lg:col-span-8 space-y-8">
+         <div className="lg:col-span-8 space-y-6">
             
-            {/* 01. Essential Metadata */}
-            <div className={`bg-white border rounded-[32px] p-10 shadow-sm transition-all ${generalError ? 'ring-1 ring-rose-100' : ''}`}>
-               <div className="flex items-center gap-4 mb-10">
-                  <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
-                     <FileText size={20} />
-                  </div>
-                  <div>
-                     <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Essential Metadata</h3>
-                     <p className="text-slate-400 text-xs font-medium">Primary identification markers for the event node.</p>
-                  </div>
+            {/* Section 01: Metadata */}
+            <div className={`bg-white border rounded-md p-6 sm:p-8 space-y-8 ${errors.title || errors.location ? 'border-rose-200' : 'border-slate-200'}`}>
+               <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
+                  <FileText size={18} className="text-slate-400" />
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Primary Configuration</h3>
                </div>
 
-               <div className="grid grid-cols-1 gap-10">
-                  <div className="space-y-3">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Type size={14} className="text-indigo-400" /> Strategic Event Title <span className="text-rose-500">*</span>
+               <div className="space-y-6">
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        Event Identifier <span className="text-rose-500">*</span>
                      </label>
                      <input 
-                        name="title"
-                        value={eventData.title}
-                        onChange={handleEventChange}
-                        placeholder="Define the resonance..."
-                        className={`w-full bg-slate-50 border px-6 py-5 rounded-2xl font-sans text-lg font-bold text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-slate-300 ${fieldErrors.title ? 'border-rose-300 bg-rose-50' : 'border-slate-100 focus:border-indigo-200'}`} 
+                        {...register('title')}
+                        placeholder="e.g. Neon Genesis Music Festival"
+                        className={`w-full bg-slate-50 border px-4 py-2.5 rounded text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-slate-950/5 transition-all ${errors.title ? 'border-rose-300' : 'border-slate-200 focus:border-slate-300'}`} 
                      />
-                     {fieldErrors.title && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider pl-1">{fieldErrors.title}</p>}
+                     {errors.title && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">{errors.title.message}</p>}
                   </div>
                   
-                  <div className="space-y-3">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Info size={14} className="text-indigo-400" /> Narrative Overview
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Narrative Description
                      </label>
                      <textarea 
-                        name="description"
-                        rows={6}
-                        value={eventData.description}
-                        onChange={handleEventChange}
-                        placeholder="Articulate the core experience..."
-                        className={`w-full bg-slate-50 border px-6 py-5 rounded-2xl font-sans text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-slate-300 resize-none ${fieldErrors.description ? 'border-rose-300 bg-rose-50' : 'border-slate-100 focus:border-indigo-200'}`} 
+                        {...register('description')}
+                        rows={5}
+                        placeholder="Detailed manifest overview..."
+                        className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-950/5 focus:border-slate-300 transition-all resize-none" 
                      />
-                     {fieldErrors.description && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider pl-1">{fieldErrors.description}</p>}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                           <MapPin size={14} className="text-rose-400" /> Physical/Digital Vector <span className="text-rose-500">*</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                           <MapPin size={12} /> Physical Coordinates <span className="text-rose-500">*</span>
                         </label>
                         <input 
-                           name="location"
-                           value={eventData.location}
-                           onChange={handleEventChange}
-                           placeholder="Location Coordinates"
-                           className={`w-full bg-slate-50 border px-6 py-5 rounded-2xl font-sans text-slate-900 font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all ${fieldErrors.location ? 'border-rose-300 bg-rose-50' : 'border-slate-100 focus:border-indigo-200'}`} 
+                           {...register('location')}
+                           placeholder="Jakarta International Stadium"
+                           className={`w-full bg-slate-50 border px-4 py-2.5 rounded text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-slate-950/5 transition-all ${errors.location ? 'border-rose-300' : 'border-slate-200 focus:border-slate-300'}`} 
                         />
-                        {fieldErrors.location && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider pl-1">{fieldErrors.location}</p>}
+                        {errors.location && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">{errors.location.message}</p>}
                      </div>
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                           <Calendar size={14} className="text-emerald-400" /> Initial Magnitude <span className="text-rose-500">*</span>
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                           <Calendar size={12} /> Sync Start <span className="text-rose-500">*</span>
                         </label>
                         <input 
-                           name="start_date"
+                           {...register('start_date')}
                            type="datetime-local"
-                           value={eventData.start_date}
-                           onChange={handleEventChange}
-                           className={`w-full bg-slate-50 border px-6 py-5 rounded-2xl font-sans text-slate-900 font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all ${fieldErrors.start_date ? 'border-rose-300 bg-rose-50' : 'border-slate-100 focus:border-indigo-200'}`} 
+                           className={`w-full bg-slate-50 border px-4 py-2.5 rounded text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-slate-950/5 transition-all ${errors.start_date ? 'border-rose-300' : 'border-slate-200 focus:border-slate-300'}`} 
                         />
-                        {fieldErrors.start_date && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider pl-1">{fieldErrors.start_date}</p>}
+                        {errors.start_date && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">{errors.start_date.message}</p>}
                      </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                           <Calendar size={14} className="text-rose-400" /> Final Resolution <span className="text-rose-500">*</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                           <Calendar size={12} /> Terminate Sync <span className="text-rose-500">*</span>
                         </label>
                         <input 
-                           name="end_date"
+                           {...register('end_date')}
                            type="datetime-local"
-                           value={eventData.end_date}
-                           onChange={handleEventChange}
-                           className={`w-full bg-slate-50 border px-6 py-5 rounded-2xl font-sans text-slate-900 font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all ${fieldErrors.end_date ? 'border-rose-300 bg-rose-50' : 'border-slate-100 focus:border-indigo-200'}`} 
+                           className={`w-full bg-slate-50 border px-4 py-2.5 rounded text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-slate-950/5 transition-all ${errors.end_date ? 'border-rose-300' : 'border-slate-200 focus:border-slate-300'}`} 
                         />
-                        {fieldErrors.end_date && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider pl-1">{fieldErrors.end_date}</p>}
+                        {errors.end_date && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">{errors.end_date.message}</p>}
                      </div>
                   </div>
                </div>
             </div>
 
-            {/* 02. Ticket Architecture */}
-            <div className="bg-white border border-slate-100 rounded-[32px] p-10 shadow-sm">
-               <div className="flex items-center justify-between mb-12">
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
-                        <TicketIcon size={20} />
-                     </div>
-                     <div>
-                        <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Access Architecture</h3>
-                        <p className="text-slate-400 text-xs font-medium">Define ticket brackets and unit capacities.</p>
-                     </div>
+            {/* Section 02: Tickets */}
+            <div className="bg-white border border-slate-200 rounded-md p-6 sm:p-8 space-y-6">
+               <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                  <div className="flex items-center gap-3">
+                     <TicketIcon size={18} className="text-slate-400" />
+                     <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Access Tiers</h3>
                   </div>
                   <button 
-                     onClick={addTier}
-                     className="px-6 py-3 bg-indigo-50 text-indigo-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-indigo-100 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                     type="button"
+                     onClick={() => append({ name: '', price: 0, quota: 100 })}
+                     className="px-3 py-1.5 bg-slate-50 text-slate-600 font-bold text-[10px] uppercase tracking-widest rounded border border-slate-200 hover:bg-slate-100 transition-all flex items-center gap-2"
                   >
-                     <Plus size={14} /> Add Tier
+                     <Plus size={12} /> Append Tier
                   </button>
                </div>
 
-                <div className="space-y-4">
-                  {ticketTiers.map((tier, idx) => (
-                     <div key={idx} className="p-6 bg-slate-50 rounded-2xl relative border border-slate-100 group animate-in slide-in-from-right-2 duration-300 shadow-sm">
-                        <div className="absolute -top-3 -left-3 w-8 h-8 bg-indigo-600 text-white font-black flex items-center justify-center rounded-xl shadow-lg shadow-indigo-600/20 text-[10px]">
-                           {idx + 1}
+                <div className="space-y-3">
+                  {fields.map((field, idx) => (
+                     <div key={field.id} className="p-4 bg-slate-50 rounded border border-slate-200 relative group animate-in slide-in-from-bottom-1">
+                        <div className="absolute top-2 right-2 flex items-center gap-2">
+                           <span className="text-[9px] font-black text-slate-300 uppercase">TIER-{idx + 1}</span>
+                           {fields.length > 1 && (
+                              <button 
+                                 type="button"
+                                 onClick={() => remove(idx)}
+                                 className="p-1 text-slate-300 hover:text-rose-600 transition-all"
+                              >
+                                 <X size={14} />
+                              </button>
+                           )}
                         </div>
-                        {ticketTiers.length > 1 && (
-                           <button 
-                              onClick={() => removeTier(idx)}
-                              className="absolute top-2 right-2 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                              title="Remove Tier"
-                           >
-                              <X size={16} />
-                           </button>
-                        )}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                           <div className="space-y-2">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Name</label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                           <div className="space-y-1">
+                              <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Description</label>
                               <input 
-                                 name="name"
-                                 value={tier.name}
-                                 onChange={(e) => handleTierChange(idx, e)}
-                                 placeholder="e.g. Presale 1"
-                                 className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 transition-all shadow-sm" 
+                                 {...register(`ticket_types.${idx}.name`)}
+                                 placeholder="e.g. VIP Access"
+                                 className="w-full bg-white border border-slate-200 px-3 py-1.5 rounded text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
                               />
                            </div>
-                           <div className="space-y-2">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Price (IDR)</label>
+                           <div className="space-y-1">
+                              <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Rate (IDR)</label>
                               <input 
-                                 name="price"
+                                 {...register(`ticket_types.${idx}.price`)}
                                  type="number"
-                                 value={tier.price}
-                                 onChange={(e) => handleTierChange(idx, e)}
-                                 placeholder="0"
-                                 className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 transition-all shadow-sm" 
+                                 className="w-full bg-white border border-slate-200 px-3 py-1.5 rounded text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
                               />
                            </div>
-                           <div className="space-y-2">
-                              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Capacity</label>
+                           <div className="space-y-1">
+                              <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Quota</label>
                               <input 
-                                 name="quota"
+                                 {...register(`ticket_types.${idx}.quota`)}
                                  type="number"
-                                 value={tier.quota}
-                                 onChange={(e) => handleTierChange(idx, e)}
-                                 placeholder="100"
-                                 className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-indigo-300 transition-all shadow-sm" 
+                                 className="w-full bg-white border border-slate-200 px-3 py-1.5 rounded text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
                               />
                            </div>
                         </div>
@@ -342,27 +275,24 @@ const CreateEvent: React.FC = () => {
             </div>
          </div>
 
-         {/* Sidebar Controls/Asset Upload */}
-         <div className="lg:col-span-4 space-y-8">
+         {/* Sidebar Controls */}
+         <div className="lg:col-span-4 space-y-6">
             
-            {/* Visual Identity Section */}
-            <div className={`bg-white border rounded-[32px] p-8 shadow-sm transition-all ${fieldErrors.banner ? 'border-rose-300 bg-rose-50' : 'border-slate-100'}`}>
-               <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
-                     <Upload size={20} />
-                  </div>
-                  <h3 className="text-lg font-black text-slate-900 uppercase">Hero Asset</h3>
+            {/* Image Asset */}
+            <div className={`bg-white border rounded-md p-6 space-y-6 ${errors.banner ? 'border-rose-200' : 'border-slate-200'}`}>
+               <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
+                  <Upload size={18} className="text-slate-400" />
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Asset Upload</h3>
                </div>
 
-               <div className="space-y-6">
-                  <div className="relative aspect-[16/10] w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden group hover:border-indigo-400 transition-all cursor-pointer">
+               <div className="space-y-4">
+                  <div className="relative aspect-[16/10] w-full bg-slate-50 border border-dashed border-slate-300 rounded flex items-center justify-center overflow-hidden group hover:border-slate-400 transition-all cursor-pointer">
                      {previewUrl ? (
-                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
+                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                      ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                           <Upload size={48} className="text-slate-200 mb-4 group-hover:text-indigo-400 group-hover:-translate-y-2 transition-all" />
-                           <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Upload Branding</p>
-                           <p className="text-[9px] text-slate-400 leading-relaxed max-w-[140px]">High-resolution 16:10 aspect ratio expected.</p>
+                        <div className="flex flex-col items-center justify-center p-4 text-center">
+                           <Upload size={24} className="text-slate-300 mb-2 group-hover:text-slate-500 transition-all" />
+                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Upload Key Asset</p>
                         </div>
                      )}
                      <input 
@@ -373,46 +303,48 @@ const CreateEvent: React.FC = () => {
                      />
                   </div>
                   
-                  {fieldErrors.banner && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider text-center">{fieldErrors.banner}</p>}
+                  {errors.banner && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider text-center">{errors.banner.message as string}</p>}
 
-                  <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-4">
-                     <CheckCircle2 size={18} className="text-indigo-600 flex-shrink-0 mt-0.5" />
-                     <p className="text-[10px] font-medium text-slate-500 leading-relaxed">
-                        Uploaded assets are synchronized to our global CDN. Please ensure clear representation as this is the primary conversion point.
+                  <div className="p-4 bg-slate-50 rounded border border-slate-100 flex items-start gap-3">
+                     <CheckCircle2 size={14} className="text-slate-400 flex-shrink-0 mt-0.5" />
+                     <p className="text-[9px] font-medium text-slate-500 leading-relaxed">
+                        Assets are optimized upon upload. Use high-resolution markers for optimal platform visibility.
                      </p>
                   </div>
                </div>
             </div>
 
-            {/* Quick Summary / Status */}
-            <div className="bg-indigo-600 border border-indigo-500 rounded-[32px] p-8 text-white shadow-2xl shadow-indigo-600/20">
-                <div className="space-y-6">
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Current Visibility</p>
-                        <h4 className="text-xl font-black uppercase tracking-tight">Standard Release</h4>
+            {/* Status Card */}
+            <div className="bg-slate-950 rounded-md p-6 text-white space-y-6 shadow-xl shadow-slate-950/10 border border-slate-800">
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Sync Status</p>
+                        <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-400 uppercase">
+                           <Activity size={10} /> Ready
+                        </span>
                     </div>
-                    <div className="space-y-3">
-                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-80">
-                           <span>Total Tiers</span>
-                           <span>{ticketTiers.length}</span>
+                    <div className="space-y-2 pt-2 border-t border-slate-800">
+                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                           <span>Configuration</span>
+                           <span className="text-white">v0.1.0</span>
                         </div>
-                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-80">
-                           <span>Base Currency</span>
-                           <span>IDR</span>
+                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                           <span>Currency Node</span>
+                           <span className="text-white">IDR</span>
                         </div>
                     </div>
                     <button 
-                       onClick={handleSubmit}
-                       disabled={loading}
-                       className="w-full py-4 bg-white text-indigo-600 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-3 active:scale-95"
+                       type="submit"
+                       disabled={isLoading}
+                       className="w-full py-3 bg-white text-slate-950 font-black text-[10px] uppercase tracking-[0.2em] rounded hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
                     >
-                       {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                       Initialize Node
+                       {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                       Deploy manifest
                     </button>
                 </div>
             </div>
          </div>
-      </div>
+      </form>
     </div>
   );
 };

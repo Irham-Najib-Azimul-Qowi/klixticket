@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, Clock, ShieldCheck, ShoppingCart, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import { eventsApi, type Event } from '@/services/api';
-import { formatImageURL } from '@/lib/utils';
+import { formatImageURL, getPlaceholderImage } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
+import logoImg from '@/assets/images/klix-logo.webp';
 import CartDrawer from '@/components/CartDrawer';
 
 function formatDate(dateStr: string) {
@@ -40,7 +41,7 @@ const EventDetailPage: React.FC = () => {
   useEffect(() => {
     if (!id) return;
     setIsLoading(true);
-    eventsApi.getByID(Number(id))
+    eventsApi.getPublishedByID(id)
       .then(setEvent)
       .catch(err => setError(err instanceof Error ? err.message : 'Event not found'))
       .finally(() => setIsLoading(false));
@@ -78,9 +79,7 @@ const EventDetailPage: React.FC = () => {
         <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2 group cursor-pointer relative z-10">
-              <span className="text-3xl md:text-5xl font-heading uppercase tracking-tighter text-white">
-                KLIX<span className="text-outline">TICKET</span>
-              </span>
+              <img src={logoImg} alt="KlixTicket Logo" className="h-12 w-auto object-contain transition-all duration-300" />
             </Link>
             <button
               onClick={() => navigate(-1)}
@@ -122,7 +121,10 @@ const EventDetailPage: React.FC = () => {
                 src={formatImageURL(event.banner_url)}
                 alt={event.title}
                 className="w-full h-full object-cover transition-all duration-1000 grayscale group-hover/img:grayscale-0 group-hover/img:scale-105"
-                onError={(e) => (e.currentTarget.src = "/fallback.png")}
+                onError={(e) => { 
+                  const target = e.target as HTMLImageElement;
+                  target.src = getPlaceholderImage(); 
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
               

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -86,6 +87,12 @@ func SeedAdmin(db *gorm.DB) error {
 
 
 func SeedEvents(db *gorm.DB) error {
+	// Ensure uploads/images/events directory exists
+	targetDir := filepath.Join("uploads", "images", "events")
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		log.Printf("Warning: failed to create events directory: %v", err)
+	}
+
 	now := time.Now()
 	
 	events := []models.Event{
@@ -184,6 +191,12 @@ func SeedEvents(db *gorm.DB) error {
 }
 
 func SeedMerchandise(db *gorm.DB) error {
+	// Ensure uploads/images/merchandise directory exists
+	targetDir := filepath.Join("uploads", "images", "merchandise")
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		log.Printf("Warning: failed to create merchandise directory: %v", err)
+	}
+
 	merchandise := []models.Merchandise{
 		{
 			Name: "DIANGKAT PNS TEE", 

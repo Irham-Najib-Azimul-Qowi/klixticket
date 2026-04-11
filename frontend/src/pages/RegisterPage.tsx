@@ -1,43 +1,44 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { authApi } from '@/services/api';
+import { registerSchema, type RegisterInput } from '@/lib/validations/auth.schema';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+  });
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match!');
-      return;
-    }
-
+  const onSubmit = async (data: RegisterInput) => {
+    setServerError('');
     setIsLoading(true);
     try {
-      const res = await authApi.register(name, email, password);
+      const res = await authApi.register(data.name, data.email, data.password);
       if (res.token) {
         authApi.saveSession(res.token, res.user);
         navigate('/');
       } else {
-        setError('Registration successful! Please login.');
+        setServerError('Registration successful! Please login.');
         setTimeout(() => navigate('/login'), 2000);
       }
     } catch (err: any) {
       if (err.name === 'RequestError' && err.errors) {
         const allErrors = Object.values(err.errors).join(', ');
-        setError(`Error: ${allErrors}`);
+        setServerError(`Error: ${allErrors}`);
       } else {
-        setError(err.message || 'Registration failed, try again.');
+        setServerError(err.message || 'Registration failed, try again.');
       }
     } finally {
       setIsLoading(false);
@@ -62,9 +63,7 @@ const RegisterPage: React.FC = () => {
         <nav className="w-full bg-black/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2 group cursor-pointer">
-              <span className="text-3xl md:text-5xl font-heading uppercase tracking-tighter text-white">
-                KLIX<span className="text-outline">TICKET</span>
-              </span>
+              <img src={logoImg} alt="KlixTicket Logo" className="h-12 w-auto object-contain transition-all duration-300" />
             </Link>
             <Link 
               to="/login" 
@@ -93,59 +92,63 @@ const RegisterPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Error Alert */}
-              {error && (
-                <div className="mb-8 border border-neon-cyan p-4 bg-neon-cyan/10 flex items-center gap-4">
+              {/* Server Error Alert */}
+              {serverError && (
+                <div className="mb-8 border border-neon-cyan p-4 bg-neon-cyan/10 flex items-center gap-4 animate-in slide-in-from-top-2">
                   <span className="text-xl text-neon-cyan font-heading">INFO</span>
-                  <p className="font-bold text-xs uppercase tracking-widest text-neon-cyan flex-1">{error}</p>
+                  <p className="font-bold text-[10px] uppercase tracking-widest text-neon-cyan flex-1">{serverError}</p>
                 </div>
               )}
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-2">
                   <label htmlFor="register-name" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                     FULL NAME
                   </label>
                   <input
+                    {...register('name')}
                     id="register-name"
                     type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    required
                     placeholder="Enter your name"
-                    className="w-full bg-black border border-white/20 p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide"
+                    className={`w-full bg-black border ${errors.name ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
                   />
+                  {errors.name && (
+                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                      <AlertCircle size={10} /> {errors.name.message}
+                    </p>
+                  )}
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <label htmlFor="register-email" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                     EMAIL ADDRESS
                   </label>
                   <input
+                    {...register('email')}
                     id="register-email"
                     type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
                     placeholder="user@example.com"
-                    className="w-full bg-black border border-white/20 p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide"
+                    className={`w-full bg-black border ${errors.email ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
                   />
+                  {errors.email && (
+                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                      <AlertCircle size={10} /> {errors.email.message}
+                    </p>
+                  )}
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <label htmlFor="register-password" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                     PASSWORD
                   </label>
                   <div className="relative">
                     <input
+                      {...register('password')}
                       id="register-password"
                       type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
                       placeholder="Min. 8 characters"
-                      className="w-full bg-black border border-white/20 p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide"
+                      className={`w-full bg-black border ${errors.password ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
                     />
                     <button
                       type="button"
@@ -155,21 +158,29 @@ const RegisterPage: React.FC = () => {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {errors.password && (
+                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                      <AlertCircle size={10} /> {errors.password.message}
+                    </p>
+                  )}
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <label htmlFor="register-confirm-password" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                     CONFIRM PASSWORD
                   </label>
                   <input
+                    {...register('confirmPassword')}
                     id="register-confirm-password"
                     type={showPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    required
                     placeholder="Repeat password"
-                    className="w-full bg-black border border-white/20 p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide"
+                    className={`w-full bg-black border ${errors.confirmPassword ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
                   />
+                  {errors.confirmPassword && (
+                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                      <AlertCircle size={10} /> {errors.confirmPassword.message}
+                    </p>
+                  )}
                 </div>
 
                 <button

@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { authApi } from '@/services/api';
+import { loginSchema, type LoginInput } from '@/lib/validations/auth.schema';
+import logoImg from '@/assets/images/klix-logo.webp';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+  });
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -50,7 +60,7 @@ const LoginPage: React.FC = () => {
 
   const handleGoogleResponse = async (response: any) => {
     setIsLoading(true);
-    setError('');
+    setServerError('');
     try {
       if (!response.credential) {
         throw new Error("No credential received from Google");
@@ -66,24 +76,22 @@ const LoginPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Google Login Error:", err);
-      // Detailed error for common developer misconfigurations
       if (err.message && (err.message.includes('origin') || err.message.includes('Forbidden') || err.message.includes('not allow'))) {
-        setError(`Konfigurasi Google OAuth salah (Origin Not Allowed). Pastikan ${window.location.origin} terdaftar di Authorized JavaScript Origins pada Google Cloud Console.`);
+        setServerError(`Konfigurasi Google OAuth salah (Origin Not Allowed). Pastikan ${window.location.origin} terdaftar di Authorized JavaScript Origins pada Google Cloud Console.`);
       } else {
-        setError(err.message || 'Failed to login via Google. Please try again.');
+        setServerError(err.message || 'Failed to login via Google. Please try again.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const onSubmit = async (data: LoginInput) => {
+    setServerError('');
     setIsLoading(true);
  
     try {
-      const res = await authApi.login(email, password);
+      const res = await authApi.login(data.email, data.password);
       authApi.saveSession(res.token, res.user);
 
       if (res.role === 'admin' || (res.user && res.user.role === 'admin')) {
@@ -94,9 +102,9 @@ const LoginPage: React.FC = () => {
     } catch (err: any) {
       if (err.name === 'RequestError' && err.errors) {
         const allErrors = Object.values(err.errors).join(', ');
-        setError(`Error: ${allErrors}`);
+        setServerError(`Error: ${allErrors}`);
       } else {
-        setError(err.message || 'Login failed, try again.');
+        setServerError(err.message || 'Login failed, try again.');
       }
     } finally {
       setIsLoading(false);
@@ -125,9 +133,7 @@ const LoginPage: React.FC = () => {
         <nav className="w-full bg-black/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2 group cursor-pointer">
-              <span className="text-3xl md:text-5xl font-heading uppercase tracking-tighter text-white">
-                KLIX<span className="text-outline">TICKET</span>
-              </span>
+              <img src={logoImg} alt="KlixTicket Logo" className="h-12 w-auto object-contain transition-all duration-300" />
             </Link>
             <Link 
               to="/register" 
@@ -183,32 +189,35 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Error Alert */}
-              {error && (
-                <div className="mb-8 border border-neon-pink p-4 bg-neon-pink/10 flex items-center gap-4">
+              {/* Server Error Alert */}
+              {serverError && (
+                <div className="mb-8 border border-neon-pink p-4 bg-neon-pink/10 flex items-center gap-4 animate-in slide-in-from-top-2">
                   <span className="text-xl text-neon-pink font-heading">ERROR</span>
-                  <p className="font-bold text-xs uppercase tracking-widest text-neon-pink flex-1">{error}</p>
+                  <p className="font-bold text-[10px] uppercase tracking-widest text-neon-pink flex-1">{serverError}</p>
                 </div>
               )}
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-2">
                   <label htmlFor="login-email" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50 mb-2">
                     EMAIL ADDRESS
                   </label>
                   <input
+                    {...register('email')}
                     id="login-email"
                     type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
                     placeholder="user@example.com"
-                    className="w-full bg-black border border-white/20 p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide"
+                    className={`w-full bg-black border ${errors.email ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
                   />
+                  {errors.email && (
+                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                      <AlertCircle size={10} /> {errors.email.message}
+                    </p>
+                  )}
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <div className="flex justify-between items-center mb-2">
                     <label htmlFor="login-password" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50">
                       PASSWORD
@@ -219,13 +228,11 @@ const LoginPage: React.FC = () => {
                   </div>
                   <div className="relative">
                     <input
+                      {...register('password')}
                       id="login-password"
                       type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
                       placeholder="••••••••"
-                      className="w-full bg-black border border-white/20 p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide"
+                      className={`w-full bg-black border ${errors.password ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
                     />
                     <button
                       type="button"
@@ -235,6 +242,11 @@ const LoginPage: React.FC = () => {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {errors.password && (
+                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                      <AlertCircle size={10} /> {errors.password.message}
+                    </p>
+                  )}
                 </div>
 
                 <button
