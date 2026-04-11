@@ -101,9 +101,6 @@ func main() {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(middlewares.CORSMiddleware())
 	
-	// SERVE STATIC FILES (Images, uploads)
-	r.Static("/uploads", "./uploads")
-
 	// 🔥 HEALTHCHECK ENDPOINT
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
