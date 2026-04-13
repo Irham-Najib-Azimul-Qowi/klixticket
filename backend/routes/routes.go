@@ -58,7 +58,6 @@ func SetupRoutes(
 			merchandiseGroup.GET("/:id", merchHandler.GetPublicMerchandiseByID)
 		}
 
-		// Order Routes (Protected)
 		ordersGroup := api.Group("/orders")
 		ordersGroup.Use(middlewares.RequireAuth())
 		{
@@ -66,6 +65,7 @@ func SetupRoutes(
 			ordersGroup.POST("", middlewares.NewSimpleRateLimit(5, time.Minute), orderHandler.CreateOrder)
 			ordersGroup.GET("/my", orderHandler.GetMyOrders) // Changed from /me to /my
 			ordersGroup.GET("/:id", orderHandler.GetOrderByID)
+			ordersGroup.GET("/:id/resume", orderHandler.ResumeOrder)
 		}
 
 		// Webhook Routes

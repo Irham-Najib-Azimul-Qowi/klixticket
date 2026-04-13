@@ -96,6 +96,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		"token": token.Token,
 		"user": gin.H{
 			"id":    user.ID,
+			"uuid":  user.UUID,
 			"name":  user.Name,
 			"email": user.Email,
 			"role":  user.Role,
@@ -122,6 +123,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"role":  authResponse.Role,
 		"user": gin.H{
 			"id":    user.ID,
+			"uuid":  user.UUID,
 			"name":  user.Name,
 			"email": user.Email,
 			"role":  user.Role,
@@ -176,6 +178,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 
 	utils.SuccessResponse(c, http.StatusOK, "User profile retrieved", gin.H{
 		"id":    user.ID,
+		"uuid":  user.UUID,
 		"name":  user.Name,
 		"email": user.Email,
 		"role":  user.Role,

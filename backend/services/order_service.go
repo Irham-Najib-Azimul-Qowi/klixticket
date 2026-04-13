@@ -35,6 +35,7 @@ type OrderService interface {
 	GetAllOrdersAdmin(ctx context.Context, query dto.OrderListQuery) ([]models.Order, error)
 	GetOrderByIDAdmin(ctx context.Context, orderID string) (*models.Order, error)
 	CheckInOrder(ctx context.Context, orderID string, adminUserID uint) (*models.Order, error)
+	ResumeOrder(ctx context.Context, orderID string, userID uint) (*models.Order, error)
 	ProcessXenditWebhook(ctx context.Context, payload dto.XenditWebhookRequest, rawPayload string) error
 }
 
@@ -78,6 +79,42 @@ func normalizeOrderListQuery(query dto.OrderListQuery) dto.OrderListQuery {
 	return query
 }
 
+func aggregateTicketItems(items []dto.OrderItemRequest) []dto.OrderItemRequest {
+	aggregated := make(map[uint]int)
+	for _, item := range items {
+		if item.Quantity > 0 {
+			aggregated[item.TicketTypeID] += item.Quantity
+		}
+	}
+
+	var result []dto.OrderItemRequest
+	for id, qty := range aggregated {
+		result = append(result, dto.OrderItemRequest{
+			TicketTypeID: id,
+			Quantity:     qty,
+		})
+	}
+	return result
+}
+
+func aggregateMerchandiseItems(items []dto.OrderMerchandiseItemRequest) []dto.OrderMerchandiseItemRequest {
+	aggregated := make(map[uint]int)
+	for _, item := range items {
+		if item.Quantity > 0 {
+			aggregated[item.MerchandiseID] += item.Quantity
+		}
+	}
+
+	var result []dto.OrderMerchandiseItemRequest
+	for id, qty := range aggregated {
+		result = append(result, dto.OrderMerchandiseItemRequest{
+			MerchandiseID: id,
+			Quantity:      qty,
+		})
+	}
+	return result
+}
+
 func isUniqueViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23505"
@@ -118,16 +155,26 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 	var totalAmount float64
 	var orderItems []models.OrderItem
 	var itemDescriptions string
-	ticketItems := append([]dto.OrderItemRequest{}, req.Items...)
-	ticketItems = append(ticketItems, req.TicketItems...)
-	merchandiseItems := req.MerchandiseItems
+
+	// 1.5 Aggregate and Validate Items
+	ticketItemsReq := append([]dto.OrderItemRequest{}, req.Items...)
+	ticketItemsReq = append(ticketItemsReq, req.TicketItems...)
+	ticketItems := aggregateTicketItems(ticketItemsReq)
+	merchandiseItems := aggregateMerchandiseItems(req.MerchandiseItems)
 
 	if len(ticketItems) == 0 && len(merchandiseItems) == 0 {
-		return nil, fmt.Errorf("%w: order must contain at least one ticket or merchandise item", ErrOrderValidation)
+		return nil, fmt.Errorf("%w: order must contain at least one valid ticket or merchandise item with quantity > 0", ErrOrderValidation)
 	}
 
 	// 2. Loop Ticket Types yang ingin dibeli, validasi harga murni milik Backend (Bukan dari Frontend)
 	for _, item := range ticketItems {
+		if item.Quantity <= 0 {
+			continue // Should have been filtered by aggregator, but safety first
+		}
+		if item.Quantity > 10 { // Limit as suggested by user
+			return nil, fmt.Errorf("%w: quantity too large for ticket type %d (max 10)", ErrOrderValidation, item.TicketTypeID)
+		}
+
 		ticket, err := s.repo.FindTicketTypeWithLock(tx, item.TicketTypeID)
 		if err != nil {
 			tx.Rollback()
@@ -167,6 +214,13 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 	}
 
 	for _, item := range merchandiseItems {
+		if item.Quantity <= 0 {
+			continue
+		}
+		if item.Quantity > 20 { // Merch can be slightly more than tickets
+			return nil, fmt.Errorf("%w: quantity too large for merchandise %d (max 20)", ErrOrderValidation, item.MerchandiseID)
+		}
+
 		merchandise, err := s.merchRepo.FindByIDWithLock(tx, item.MerchandiseID)
 		if err != nil {
 			tx.Rollback()
@@ -201,6 +255,12 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 		})
 
 		itemDescriptions = appendItemDescription(itemDescriptions, item.Quantity, merchandise.Name)
+	}
+
+	// 2.5 Total Amount Validation
+	if totalAmount <= 0 {
+		tx.Rollback()
+		return nil, fmt.Errorf("%w: total amount must be greater than 0", ErrOrderValidation)
 	}
 
 	// 3. Setup Order struct
@@ -387,6 +447,54 @@ func (s *orderService) GetOrderByIDAdmin(ctx context.Context, orderID string) (*
 
 		return nil, err
 	}
+	return order, nil
+}
+
+func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID uint) (*models.Order, error) {
+	ctx, cancel := withOrderTimeout(ctx)
+	defer cancel()
+
+	order, err := s.repo.FindOrderByID(ctx, orderID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrOrderNotFound
+		}
+		return nil, err
+	}
+
+	if order.UserID != userID {
+		return nil, errors.New("unauthorized: you do not own this order")
+	}
+
+	if order.Status != "PENDING" {
+		return order, nil
+	}
+
+	// If no payment exists or payment failed, try to regenerate
+	if order.Payment == nil || order.Payment.Status == "FAILED_TO_GENERATE" {
+		user, err := s.userRepo.FindByID(userID)
+		if err != nil {
+			return nil, err
+		}
+
+		var descriptions string
+		for _, item := range order.OrderItems {
+			descriptions = appendItemDescription(descriptions, item.Quantity, item.ItemName)
+		}
+
+		invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(order.ID, user.Email, order.TotalAmount, descriptions, "")
+		if err == nil {
+			payment := &models.Payment{
+				OrderID:         order.ID,
+				XenditInvoiceID: invoiceID,
+				CheckoutURL:     checkoutURL,
+				Status:          "PENDING",
+			}
+			s.repo.UpdatePaymentStatus(context.Background(), payment)
+			order.Payment = payment
+		}
+	}
+
 	return order, nil
 }
 

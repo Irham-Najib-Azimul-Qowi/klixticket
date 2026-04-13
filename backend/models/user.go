@@ -8,6 +8,7 @@ import (
 
 type User struct {
 	ID           uint           `gorm:"primaryKey" json:"id"`
+	UUID         string         `gorm:"type:uuid;default:gen_random_uuid();uniqueIndex" json:"uuid"`
 	Name         string         `gorm:"type:varchar(100);not null" json:"name"`
 	Email        string         `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`
 	PasswordHash *string        `gorm:"type:varchar(255)" json:"-"`                      // Pointer agar bisa null untuk yang daftar via Google

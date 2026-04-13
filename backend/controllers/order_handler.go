@@ -62,6 +62,38 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusCreated, "Order created successfully", order)
 }
 
+func (h *OrderHandler) ResumeOrder(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		return
+	}
+
+	orderID := c.Param("id")
+	if orderID == "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Order ID is required", nil)
+		return
+	}
+
+	// Validate UUID
+	if _, err := uuid.Parse(orderID); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid Order ID format (UUID expected)", nil)
+		return
+	}
+
+	order, err := h.service.ResumeOrder(c.Request.Context(), orderID, userID.(uint))
+	if err != nil {
+		if err.Error() == "unauthorized: you do not own this order" {
+			utils.ErrorResponse(c, http.StatusForbidden, err.Error(), nil)
+			return
+		}
+		handleOrderServiceError(c, err, "Failed to resume order")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Order resumed successfully", order)
+}
+
 func (h *OrderHandler) GetMyOrders(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
