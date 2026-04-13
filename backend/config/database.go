@@ -65,7 +65,16 @@ func ConnectDB() {
 	database.Exec("ALTER TABLE ticket_types DROP CONSTRAINT IF EXISTS chk_ticket_types_remaining_quota")
 	database.Exec("ALTER TABLE ticket_types ADD CONSTRAINT chk_ticket_types_remaining_quota CHECK (remaining_quota >= 0)")
 
-	fmt.Println("Database migration completed successfully!")
+	// 🔥 NEW: Security constraints for Orders & Merch
+	database.Exec("ALTER TABLE order_items DROP CONSTRAINT IF EXISTS positive_quantity")
+	database.Exec("ALTER TABLE order_items ADD CONSTRAINT positive_quantity CHECK (quantity > 0)")
+	database.Exec("ALTER TABLE orders DROP CONSTRAINT IF EXISTS positive_amount")
+	database.Exec("ALTER TABLE orders ADD CONSTRAINT positive_amount CHECK (total_amount > 0)")
+
+	// 🛡️ Ensure UUID is filled for existing users (Data Migration)
+	database.Exec("UPDATE users SET uuid = gen_random_uuid() WHERE uuid IS NULL OR uuid = '00000000-0000-0000-0000-000000000000'")
+
+	fmt.Println("Database migration & security hardening completed successfully!")
 
 	DB = database
 }

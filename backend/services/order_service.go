@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -454,6 +455,7 @@ func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID u
 	ctx, cancel := withOrderTimeout(ctx)
 	defer cancel()
 
+	// 1. Fetch Order with items
 	order, err := s.repo.FindOrderByID(ctx, orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -462,16 +464,45 @@ func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID u
 		return nil, err
 	}
 
+	// 2. Security Check: Ownership
 	if order.UserID != userID {
 		return nil, errors.New("unauthorized: you do not own this order")
 	}
 
-	if order.Status != "PENDING" {
-		return order, nil
+	// 3. Status Validation
+	statusUpper := strings.ToUpper(order.Status)
+	
+	// Check if already paid
+	if statusUpper == "PAID" || statusUpper == "SETTLED" {
+		return nil, fmt.Errorf("%w: order is already paid", ErrOrderValidation)
 	}
 
-	// If no payment exists or payment failed, try to regenerate
-	if order.Payment == nil || order.Payment.Status == "FAILED_TO_GENERATE" {
+	// Check if already expired or cancelled
+	if statusUpper == "EXPIRED" || statusUpper == "CANCELLED" || statusUpper == "FAILED" {
+		return nil, fmt.Errorf("%w: order is already expired or cancelled", ErrOrderValidation)
+	}
+
+	// 4. Time-based Auto-Expiry Check (misal 24 jam dari created_at jika belum expired secara eksplisit)
+	// Kita gunakan field order.ExpiredAt yang sudah ada di model
+	if time.Now().After(order.ExpiredAt) {
+		// Update status to EXPIRED in database
+		order.Status = "expired"
+		if order.Payment != nil {
+			order.Payment.Status = "expired"
+			s.repo.UpdatePaymentStatus(ctx, order.Payment)
+		}
+		s.repo.UpdateOrderStatus(ctx, order)
+		return nil, fmt.Errorf("%w: order period has expired", ErrOrderValidation)
+	}
+
+	// 5. Handle Invoice Regeneration
+	// Jika payment belum ada, atau URL kosong, atau atau statusnya FAILED_TO_GENERATE
+	needsNewInvoice := order.Payment == nil || 
+                     order.Payment.CheckoutURL == "" || 
+                     order.Payment.Status == "FAILED_TO_GENERATE" ||
+                     order.Payment.Status == "EXPIRED"
+
+	if needsNewInvoice {
 		user, err := s.userRepo.FindByID(userID)
 		if err != nil {
 			return nil, err
@@ -482,17 +513,27 @@ func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID u
 			descriptions = appendItemDescription(descriptions, item.Quantity, item.ItemName)
 		}
 
+		// Generate new Xendit Invoice (Idempotency dihandle dengan ID order yang sama)
 		invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(order.ID, user.Email, order.TotalAmount, descriptions, "")
-		if err == nil {
-			payment := &models.Payment{
-				OrderID:         order.ID,
-				XenditInvoiceID: invoiceID,
-				CheckoutURL:     checkoutURL,
-				Status:          "PENDING",
-			}
-			s.repo.UpdatePaymentStatus(context.Background(), payment)
-			order.Payment = payment
+		if err != nil {
+			log.Printf("Failed to regenerate Xendit Invoice for order %s: %v", order.ID, err)
+			// Tetap kembalikan order tapi dengan status payment error agar frontend tahu
+			return order, nil 
 		}
+
+		// Save/Update Payment Entry
+		payment := &models.Payment{
+			OrderID:         order.ID,
+			XenditInvoiceID: invoiceID,
+			CheckoutURL:     checkoutURL,
+			Status:          "PENDING",
+		}
+		
+		if err := s.repo.UpdatePaymentStatus(context.Background(), payment); err != nil {
+			log.Printf("Failed to update payment status in DB for order %s: %v", order.ID, err)
+		}
+		
+		order.Payment = payment
 	}
 
 	return order, nil
