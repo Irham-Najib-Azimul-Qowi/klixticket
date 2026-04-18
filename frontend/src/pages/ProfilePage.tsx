@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { User as UserIcon, Loader2, ArrowRight, Mail, Ticket, ShoppingBag, History, X, CheckCircle2, Lock, Shield, UserCircle, Key, Package } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { authApi, orderApi } from '@/services/api';
-import type { User, Order } from '@/services/api';
+import type { User, Order, RedeemableItem } from '@/services/api';
 import { useCart } from '@/context/CartContext';
 import { 
   updateProfileSchema, 
@@ -25,6 +25,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   const [user, setUser] = useState<User | null>(null);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [historyOrders, setHistoryOrders] = useState<Order[]>([]);
+  const [digitalItems, setDigitalItems] = useState<RedeemableItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -61,10 +62,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userData, activeOrdersData, historyOrdersData] = await Promise.all([
+        const [userData, activeOrdersData, historyOrdersData, digitalItemsData] = await Promise.all([
           authApi.getMe(),
           orderApi.getMyOrders({ filter: 'active' }),
-          orderApi.getMyOrders({ filter: 'history' })
+          orderApi.getMyOrders({ filter: 'history' }),
+          orderApi.getMyItems()
         ]);
         
         setUser(userData);
@@ -74,6 +76,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
         });
         setActiveOrders(activeOrdersData || []);
         setHistoryOrders(historyOrdersData || []);
+        setDigitalItems(digitalItemsData || []);
       } catch (err: any) {
         setServerError(err.message || 'Failed to fetch profile data');
         if (err.status === 401) {
@@ -128,10 +131,41 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
     navigate('/login');
   };
 
-  const myPaidItems = activeOrders.flatMap(o => (o.order_items || []).map(item => ({ ...item, orderId: o.id })));
+  const now = new Date();
+  
+  // Filter for My Items:
+  // Tickets: Not used AND event not passed
+  // Merch: Not used
+  const filteredDigitalItems = digitalItems.filter(item => {
+    if (item.status === 'sudah_digunakan' || item.status === 'tidak_berlaku') return false;
+    
+    if (item.item_type === 'ticket' && item.event_end_date) {
+      if (new Date(item.event_end_date) < now) return false;
+    }
+    
+    return true;
+  });
+
+  const myPaidItems = filteredDigitalItems;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+  };
+
+  const getStatusLabel = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === 'paid') return 'Belum digunakan';
+    if (s === 'expired' || s === 'failed') return 'Tidak berlaku';
+    if (s === 'sudah_digunakan') return 'Sudah digunakan'; // for redeemable items
+    return status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === 'paid' || s === 'belum_digunakan') return 'text-emerald-500 border-emerald-500/20 bg-emerald-500/10';
+    if (s === 'sudah_digunakan') return 'text-white/40 border-white/10 bg-white/5';
+    if (s === 'expired' || s === 'failed' || s === 'tidak_berlaku') return 'text-rose-500 border-rose-500/20 bg-rose-500/10';
+    return 'text-white border-white/20';
   };
 
   if (isLoading) {
@@ -235,11 +269,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                       <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{myPaidItems.length} ACTIVE ASSETS</span>
                    </div>
                    
-                   <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
                       {myPaidItems.length === 0 ? (
                         <div className="col-span-full py-24 bg-dark-grey/20 border border-dashed border-white/5 flex flex-col items-center text-center">
                            <ShoppingBag size={48} className="mb-4 text-white/10" />
-                           <p className="text-white/40 text-sm italic font-medium">You haven't purchased anything yet.</p>
+                           <p className="text-white/40 text-sm italic font-medium">No active digital items found.</p>
                            <Link to="/" className="mt-8 px-8 py-3 bg-white text-black font-bold uppercase text-[10px] tracking-widest hover:bg-neon-pink hover:text-white transition-all transform hover:-rotate-1">Discover Events</Link>
                         </div>
                       ) : (
@@ -256,30 +290,26 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                             <div className="w-16 h-16 bg-black border border-white/10 flex-shrink-0 flex items-center justify-center text-neon-pink shadow-[0_0_15px_rgba(255,0,128,0.1)] group-hover:shadow-[0_0_15px_rgba(255,0,128,0.3)] transition-all relative z-10">
                                {item.item_type === 'ticket' ? <Ticket size={32} /> : <ShoppingBag size={32} />}
                             </div>
-
+ 
                             <div className="flex flex-col flex-1 relative z-10">
                                 <div className="flex items-center gap-3 mb-2">
                                   <span className="text-[8px] font-black uppercase text-white px-2 py-1 bg-white/10 rounded-sm tracking-widest">Ownership Confirmed</span>
-                                  <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Ref: {item.orderId?.slice(-8).toUpperCase()}</span>
+                                  <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Code: {item.code}</span>
                                 </div>
                                 <h3 className="text-xl md:text-2xl font-heading uppercase text-white group-hover:text-neon-pink transition-colors truncate">{item.item_name}</h3>
-                                {item.item_type === 'ticket' && <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1">Ticket • Qty: {item.quantity}</p>}
-                                {item.item_type === 'merchandise' && <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1">Merchandise • Qty: {item.quantity}</p>}
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1">{item.item_type} • ID: {item.order_id.slice(-6).toUpperCase()}</p>
                             </div>
-
+ 
                             <button 
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               navigate(`/order/${item.orderId}/ticket`);
-                             }}
                              className="hidden md:flex flex-shrink-0 items-center gap-2 text-[10px] font-black uppercase bg-white/5 px-4 py-3 border border-white/10 text-neon-pink tracking-widest hover:bg-neon-pink hover:text-white transition-colors relative z-10"
                             >
-                               {item.item_type === 'ticket' ? 'VIEW TICKET' : 'CLAIM VOUCHER'} <ArrowRight size={12} />
+                               {item.item_type === 'ticket' ? 'VIEW TICKET' : 'VIEW VOUCHER'} <ArrowRight size={12} />
                             </button>
                           </div>
                         ))
                       )}
-                   </div>
+                    </div>
+v>
                 </div>
               )}
 
@@ -313,16 +343,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                                      <td className="p-4 font-heading text-[11px] uppercase truncate max-w-[150px]">{order.order_items?.[0]?.item_name || 'Multiple Assets'}</td>
                                      <td className="p-4 font-heading text-[11px] text-white/60">{formatPrice(order.total_amount)}</td>
                                      <td className="p-4 text-right flex items-center justify-end gap-3">
-                                        <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border border-white/20 text-white`}>
-                                           {order.status}
+                                        <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border border-white/20 ${getStatusColor(order.status)}`}>
+                                           {getStatusLabel(order.status)}
                                         </span>
                                         {order.status.toLowerCase() === 'paid' && (
-                                          <Link 
-                                           to={`/order/${order.id}/ticket`}
+                                          <button 
+                                           onClick={() => setActiveSection('items')}
                                            className="text-[9px] font-bold uppercase tracking-widest text-neon-pink hover:text-white transition-colors"
                                           >
-                                            VIEW
-                                          </Link>
+                                            ASSETS
+                                          </button>
                                         )}
                                      </td>
                                   </tr>
@@ -536,49 +566,51 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                     </div>
                     <div className="space-y-4 md:text-right">
                       <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
-                        {selectedItem.item_type === 'ticket' ? 'E-Ticket Entry Code' : 'Collection Voucher Code'}
+                        {selectedItem.item_type === 'ticket' ? 'E-Ticket Identity Pattern' : 'Merchandise Identity Pattern'}
                       </p>
                       <div className="bg-white p-2 inline-block rounded shadow-[0_0_15px_rgba(255,0,128,0.2)]">
                          <QRCodeCanvas 
-                            value={selectedItem.item_type === 'ticket' ? `KLIX-${selectedItem.orderId}-${selectedItem.ticket_type_id}` : `MERCH-${selectedItem.orderId}`} 
-                            size={100}
+                            value={selectedItem.code} 
+                            size={120}
                             bgColor="#FFFFFF"
                             fgColor="#000000"
-                            level="L"
+                            level="H"
                          />
                       </div>
-                      <p className="text-[8px] font-mono font-bold text-neon-pink uppercase tracking-widest mt-2 block break-all">
-                        {selectedItem.item_type === 'ticket' ? `KLIX-${selectedItem.orderId?.slice(-8)}` : `MERCH-${selectedItem.orderId?.slice(-8)}`}
+                      <p className="text-xs font-mono font-bold text-neon-pink uppercase tracking-widest mt-2 block break-all">
+                        {selectedItem.code}
                       </p>
                     </div>
+                  </div>
+ 
+                  {/* Status Indicator */}
+                  <div className="mb-10 flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-sm">
+                     <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Status: Valid Asset</span>
+                     </div>
+                     <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Ready for Scanning</span>
                   </div>
 
                   {/* Items List inside Modal */}
                   <div className="space-y-6">
-                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-6">Manifest Items</p>
+                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-6">Linked Acquisition</p>
                     <div className="space-y-4">
-                      {/* We find the full order from activeOrders based on selectedItem's orderId */}
-                      {activeOrders.find(o => o.id === selectedItem.orderId)?.order_items?.map((item) => (
-                        <div key={item.id} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
+                        <div className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
                           <div>
-                            <p className="text-lg font-heading text-white uppercase">{item.item_name}</p>
-                            <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest">{item.item_type}</p>
-                            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mt-1">Qty: {item.quantity} x {formatPrice(item.price_per_item)}</p>
+                            <p className="text-lg font-heading text-white uppercase">{selectedItem.item_name}</p>
+                            <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest">{selectedItem.item_type}</p>
                           </div>
-                          <p className="text-xl font-heading text-white">{formatPrice(item.price_per_item * item.quantity)}</p>
                         </div>
-                      ))}
                     </div>
-                  </div>
-
-                  {/* Total inside Modal */}
+                             {/* Total inside Modal */}
                   <div className="mt-12 pt-8 border-t-2 border-neon-pink flex justify-between items-end">
                     <div>
-                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.5em] mb-2">Total Value</p>
+                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.5em] mb-2">Authenticated On</p>
                         <div className="flex items-center gap-3">
-                            <ShoppingBag className="text-neon-pink mb-1" size={24} />
-                            <p className="text-5xl font-heading text-white tracking-tighter">
-                                {formatPrice(activeOrders.find(o => o.id === selectedItem.orderId)?.total_amount || 0)}
+                            <Clock className="text-neon-pink mb-1" size={20} />
+                            <p className="text-lg font-heading text-white tracking-tighter">
+                                {new Date(selectedItem.created_at).toLocaleString()}
                             </p>
                         </div>
                     </div>
@@ -586,6 +618,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                         <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Authorized by KLIXTICKET Payment Gateway</p>
                     </div>
                   </div>
+          </div>
                 </div>
               </div>
             </div>

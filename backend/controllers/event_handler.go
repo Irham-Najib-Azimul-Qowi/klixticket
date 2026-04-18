@@ -9,8 +9,8 @@ import (
 
 	"log"
 	"mastutik-api/dto"
-	"mastutik-api/services"
 	"mastutik-api/pkg/utils"
+	"mastutik-api/services"
 )
 
 type EventHandler struct {

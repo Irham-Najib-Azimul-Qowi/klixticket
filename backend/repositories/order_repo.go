@@ -46,6 +46,13 @@ type OrderRepository interface {
 	UpdateWebhookLogWithTx(tx *gorm.DB, webhookLog *models.PaymentWebhookLog) error
 	CountPaidOrders(ctx context.Context) (int64, error)
 	CountAll(ctx context.Context) (int64, error)
+
+	// Redeemable Items
+	CreateRedeemableItemWithTx(tx *gorm.DB, item *models.RedeemableItem) error
+	FindRedeemableItemByCode(ctx context.Context, code string) (*models.RedeemableItem, error)
+	FindRedeemableItemByCodeWithTx(tx *gorm.DB, code string) (*models.RedeemableItem, error)
+	UpdateRedeemableItemWithTx(tx *gorm.DB, item *models.RedeemableItem) error
+	FindRedeemableItemsByUserID(ctx context.Context, userID uint) ([]models.RedeemableItem, error)
 }
 
 type orderRepository struct {
@@ -151,6 +158,7 @@ func orderDetailPreloads(db *gorm.DB) *gorm.DB {
 		Preload("OrderItems.TicketType", func(preloadDB *gorm.DB) *gorm.DB {
 			return ticketTypeOrderSelectColumns(preloadDB)
 		}).
+		Preload("OrderItems.TicketType.Event").
 		Preload("OrderItems.Merchandise", func(preloadDB *gorm.DB) *gorm.DB {
 			return merchandiseOrderSelectColumns(preloadDB)
 		})
@@ -188,13 +196,12 @@ func (r *orderRepository) FindOrdersByUserID(ctx context.Context, userID uint, l
 			Where("qr_code IS NOT NULL AND qr_code != ?", "").
 			Where("checked_in_at IS NULL").
 			Where("expired_at > ?", now)
-	case "pending":
-		query = query.Where("UPPER(status) = ?", "PENDING")
 	case "history":
-		// User minta SEMUA transaksi tetap masuk ke order history tanpa filter pembatas
-		// Jadi tidak ada Where tambahan di sini, cukup bawa semua order milik user_id
+		// User minta SEMUA transaksi tetap masuk ke order history, tapi kita sembunyikan yang PENDING
+		query = query.Where("UPPER(status) != ?", "PENDING")
 	default:
-		// Jika tidak ada filter, kembalikan semua yang terbaru
+		// Jika tidak ada filter, kembalikan semua yang terbaru kecuali pending
+		query = query.Where("UPPER(status) != ?", "PENDING")
 	}
 
 	err := query.
@@ -409,4 +416,35 @@ func (r *orderRepository) CountAll(ctx context.Context) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&models.Order{}).Count(&count).Error
 	return count, err
+}
+
+func (r *orderRepository) CreateRedeemableItemWithTx(tx *gorm.DB, item *models.RedeemableItem) error {
+	return tx.Create(item).Error
+}
+
+func (r *orderRepository) FindRedeemableItemByCode(ctx context.Context, code string) (*models.RedeemableItem, error) {
+	var item models.RedeemableItem
+	err := r.db.WithContext(ctx).Where("code = ?", code).First(&item).Error
+	return &item, err
+}
+
+func (r *orderRepository) FindRedeemableItemByCodeWithTx(tx *gorm.DB, code string) (*models.RedeemableItem, error) {
+	var item models.RedeemableItem
+	err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("code = ?", code).First(&item).Error
+	return &item, err
+}
+
+func (r *orderRepository) UpdateRedeemableItemWithTx(tx *gorm.DB, item *models.RedeemableItem) error {
+	return tx.Save(item).Error
+}
+
+func (r *orderRepository) FindRedeemableItemsByUserID(ctx context.Context, userID uint) ([]models.RedeemableItem, error) {
+	var items []models.RedeemableItem
+	err := r.db.WithContext(ctx).
+		Table("redeemable_items").
+		Joins("JOIN orders ON orders.id = redeemable_items.order_id").
+		Where("orders.user_id = ?", userID).
+		Order("redeemable_items.created_at DESC").
+		Find(&items).Error
+	return items, err
 }

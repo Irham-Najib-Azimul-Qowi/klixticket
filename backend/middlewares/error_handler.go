@@ -19,7 +19,7 @@ func GlobalErrorHandler() gin.HandlerFunc {
 
 				// Map technical error messages to user-friendly ones
 				message := "Terjadi kesalahan internal pada server"
-				
+
 				// Optional: In production, never leak the actual 'err' content to the client
 				utils.ErrorResponse(c, http.StatusInternalServerError, message, nil)
 				c.Abort()

@@ -24,6 +24,9 @@ var (
 	ErrWebhookAlreadyHandled = errors.New("webhook already processed")
 	ErrOrderValidation       = errors.New("invalid order request")
 	ErrOrderHasNoTicketItems = errors.New("order does not contain ticket items")
+	ErrItemNotFound          = errors.New("item not found")
+	ErrItemAlreadyUsed       = errors.New("item has already been used")
+	ErrItemExpired           = errors.New("item has expired")
 )
 
 const orderDBTimeout = 5 * time.Second
@@ -38,6 +41,9 @@ type OrderService interface {
 	CheckInOrder(ctx context.Context, orderID string, adminUserID uint) (*models.Order, error)
 	ResumeOrder(ctx context.Context, orderID string, userID uint) (*models.Order, error)
 	ProcessXenditWebhook(ctx context.Context, payload dto.XenditWebhookRequest, rawPayload string) error
+
+	ScanItem(ctx context.Context, code string, adminUserID uint) (*models.RedeemableItem, error)
+	GetMyRedeemableItems(ctx context.Context, userID uint) ([]models.RedeemableItem, error)
 }
 
 type orderService struct {
@@ -299,13 +305,13 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 		invoiceID, checkoutURL, err := s.xenditSvc.CreateInvoice(newOrderID, user.Email, totalAmount, itemDescriptions, req.PaymentMethod)
 		if err != nil {
 			log.Printf("Xendit Error for Order %s: %v", newOrderID, err)
-			
+
 			// Xendit timeout / error. JANGAN RETURN 500 karena order sukses terbuat!
 			// Cukup return order dengan instruksi error halus
 			// Frontend akan mengecek checkout_url
 			order.Payment = &models.Payment{
-				OrderID:         newOrderID,
-				Status:          "FAILED_TO_GENERATE",
+				OrderID: newOrderID,
+				Status:  "FAILED_TO_GENERATE",
 			}
 		} else {
 			// Masukkan payment details ke order di database
@@ -348,7 +354,7 @@ func (s *orderService) GetMyOrders(ctx context.Context, userID uint, query dto.O
 	log.Println("ORDER FILTER:", query.Filter)
 
 	query = normalizeOrderListQuery(query)
-	
+
 	filter := query.Filter
 	if filter == "" && query.Status != "" {
 		filter = query.Status
@@ -471,7 +477,7 @@ func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID u
 
 	// 3. Status Validation
 	statusUpper := strings.ToUpper(order.Status)
-	
+
 	// Check if already paid
 	if statusUpper == "PAID" || statusUpper == "SETTLED" {
 		return nil, fmt.Errorf("%w: order is already paid", ErrOrderValidation)
@@ -497,10 +503,10 @@ func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID u
 
 	// 5. Handle Invoice Regeneration
 	// Jika payment belum ada, atau URL kosong, atau atau statusnya FAILED_TO_GENERATE
-	needsNewInvoice := order.Payment == nil || 
-                     order.Payment.CheckoutURL == "" || 
-                     order.Payment.Status == "FAILED_TO_GENERATE" ||
-                     order.Payment.Status == "EXPIRED"
+	needsNewInvoice := order.Payment == nil ||
+		order.Payment.CheckoutURL == "" ||
+		order.Payment.Status == "FAILED_TO_GENERATE" ||
+		order.Payment.Status == "EXPIRED"
 
 	if needsNewInvoice {
 		user, err := s.userRepo.FindByID(userID)
@@ -518,7 +524,7 @@ func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID u
 		if err != nil {
 			log.Printf("Failed to regenerate Xendit Invoice for order %s: %v", order.ID, err)
 			// Tetap kembalikan order tapi dengan status payment error agar frontend tahu
-			return order, nil 
+			return order, nil
 		}
 
 		// Save/Update Payment Entry
@@ -528,11 +534,11 @@ func (s *orderService) ResumeOrder(ctx context.Context, orderID string, userID u
 			CheckoutURL:     checkoutURL,
 			Status:          "PENDING",
 		}
-		
+
 		if err := s.repo.UpdatePaymentStatus(context.Background(), payment); err != nil {
 			log.Printf("Failed to update payment status in DB for order %s: %v", order.ID, err)
 		}
-		
+
 		order.Payment = payment
 	}
 
@@ -703,25 +709,48 @@ func (s *orderService) ProcessXenditWebhook(ctx context.Context, payload dto.Xen
 		order.Status = "PAID"
 		order.Payment.Status = "PAID"
 		webhookLog.Status = "processed_paid"
-		
+
 		now := time.Now()
 		order.PaidAt = &now
 		order.QRCode = "QR-" + order.ID.String()
 
-		// Set ExpiredAt to event end date if possible, or far future
-		// This ensures paid tickets don't 'expire' just because the payment window (24h) passed
-		newExpiry := time.Now().AddDate(1, 0, 0) // Default 1 year if no event found
+		// Generate Redeemable Items for each unit
 		for _, item := range order.OrderItems {
-			if item.TicketType != nil && item.TicketType.EventID != 0 {
-				// We need event date. For now, let's use a safe far future or 
-				// if we have event date, we use it.
-				// Since we might not have it preloaded deeply here, let's use 1 year future
-				// as a safeguard so the ticket stays in "Active".
+			prefix := "TKT"
+			if item.ItemType == "merchandise" {
+				prefix = "MCH"
+			}
+
+			var eventEndDate *time.Time
+			if item.TicketType != nil && item.TicketType.Event != nil {
+				eventEndDate = &item.TicketType.Event.EndDate
+			}
+
+			for i := 0; i < item.Quantity; i++ {
+				// Generate unique short code
+				u := strings.ReplaceAll(uuid.New().String(), "-", "")
+				code := fmt.Sprintf("%s-%s", prefix, u[:10])
+
+				redeemable := &models.RedeemableItem{
+					OrderID:      order.ID,
+					OrderItemID:  item.ID,
+					ItemType:     item.ItemType,
+					ItemName:     item.ItemName,
+					Code:         strings.ToUpper(code),
+					Status:       "belum_digunakan",
+					EventEndDate: eventEndDate,
+				}
+				if err := s.repo.CreateRedeemableItemWithTx(tx, redeemable); err != nil {
+					tx.Rollback()
+					return fmt.Errorf("failed to create redeemable item: %w", err)
+				}
 			}
 		}
+
+		// Set ExpiredAt to event end date if possible, or far future
+		newExpiry := time.Now().AddDate(1, 0, 0)
 		order.ExpiredAt = newExpiry
-		log.Printf("[WEBHOOK] ORDER STATUS: %s", order.Status)
-		log.Printf("[WEBHOOK] Order %s marked as PAID. New Expiry: %v", order.ID, order.ExpiredAt)
+		log.Printf("[WEBHOOK] Order %s marked as PAID. Redeemable items generated.", order.ID)
 	case "EXPIRED":
 		if order.Status == "pending" || order.Status == "PENDING" {
 			if err := s.restoreInventoryWithTx(tx, order); err != nil {
@@ -766,4 +795,76 @@ func (s *orderService) ProcessXenditWebhook(ctx context.Context, payload dto.Xen
 	}
 
 	return nil
+}
+
+func (s *orderService) GetMyRedeemableItems(ctx context.Context, userID uint) ([]models.RedeemableItem, error) {
+	ctx, cancel := withOrderTimeout(ctx)
+	defer cancel()
+
+	items, err := s.repo.FindRedeemableItemsByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update ticket status on the fly if event passed
+	now := time.Now()
+	for i := range items {
+		if items[i].ItemType == "ticket" && items[i].Status == "belum_digunakan" && items[i].EventEndDate != nil {
+			if now.After(*items[i].EventEndDate) {
+				items[i].Status = "tidak_berlaku"
+				// We don't save to DB here for performance, but the UI will show it
+			}
+		}
+	}
+
+	return items, nil
+}
+
+func (s *orderService) ScanItem(ctx context.Context, code string, adminUserID uint) (*models.RedeemableItem, error) {
+	ctx, cancel := withOrderTimeout(ctx)
+	defer cancel()
+
+	code = strings.ToUpper(strings.TrimSpace(code))
+
+	tx := s.repo.BeginTx(ctx)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	item, err := s.repo.FindRedeemableItemByCodeWithTx(tx, code)
+	if err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrItemNotFound
+		}
+		return nil, err
+	}
+
+	if item.Status == "sudah_digunakan" {
+		tx.Rollback()
+		return nil, ErrItemAlreadyUsed
+	}
+
+	if item.ItemType == "ticket" && item.EventEndDate != nil && time.Now().After(*item.EventEndDate) {
+		tx.Rollback()
+		return nil, ErrItemExpired
+	}
+
+	now := time.Now()
+	item.Status = "sudah_digunakan"
+	item.UsedAt = &now
+	item.UsedBy = &adminUserID
+
+	if err := s.repo.UpdateRedeemableItemWithTx(tx, item); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return item, nil
 }

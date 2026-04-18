@@ -39,7 +39,7 @@ func SendEmail(req MailRequest) error {
 func SendResetPasswordEmail(to string, token string) error {
 	resetLink := fmt.Sprintf("%s/reset-password?token=%s", os.Getenv("FRONTEND_URL"), token)
 	body := fmt.Sprintf("Halo,\n\nKami menerima permintaan untuk meriset password akun Anda.\nSilakan klik link di bawah ini untuk melanjutkan:\n\n%s\n\nLink ini akan kadaluarsa dalam 1 jam.\nJika Anda tidak merasa melakukan permintaan ini, silakan abaikan email ini.", resetLink)
-	
+
 	req := MailRequest{
 		To:      to,
 		Subject: "Reset Password - Mastutik",

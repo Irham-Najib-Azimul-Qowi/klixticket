@@ -29,6 +29,7 @@ const OrdersList = lazy(() => import('@/pages/admin/OrdersList'));
 const MerchList = lazy(() => import('@/pages/admin/MerchList'));
 const CreateMerch = lazy(() => import('@/pages/admin/CreateMerch'));
 const UpdateMerch = lazy(() => import('@/pages/admin/UpdateMerch'));
+const ScanPage = lazy(() => import('@/pages/admin/ScanPage'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-black flex items-center justify-center">
@@ -69,6 +70,7 @@ const App: React.FC = () => {
               <Route path="merch/create" element={<CreateMerch />} />
               <Route path="merch/edit/:id" element={<UpdateMerch />} />
               <Route path="orders" element={<OrdersList />} />
+              <Route path="scan" element={<ScanPage />} />
             </Route>
           </Routes>
         </Suspense>

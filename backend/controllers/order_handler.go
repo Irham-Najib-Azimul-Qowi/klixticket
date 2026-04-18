@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mastutik-api/dto"
-	"mastutik-api/services"
-	"mastutik-api/pkg/utils"
 	"github.com/google/uuid"
+	"mastutik-api/dto"
+	"mastutik-api/pkg/utils"
+	"mastutik-api/services"
 )
 
 type OrderHandler struct {
@@ -31,6 +31,12 @@ func handleOrderServiceError(c *gin.Context, err error, fallbackMessage string) 
 		utils.ErrorResponse(c, http.StatusBadRequest, err.Error(), nil)
 	case errors.Is(err, services.ErrWebhookAlreadyHandled):
 		utils.SuccessResponse(c, http.StatusOK, "Webhook already processed", nil)
+	case errors.Is(err, services.ErrItemNotFound):
+		utils.ErrorResponse(c, http.StatusNotFound, "Item tidak ditemukan. Pastikan kode benar.", nil)
+	case errors.Is(err, services.ErrItemAlreadyUsed):
+		utils.ErrorResponse(c, http.StatusConflict, "Item ini sudah digunakan sebelumnya.", nil)
+	case errors.Is(err, services.ErrItemExpired):
+		utils.ErrorResponse(c, http.StatusGone, "Tiket sudah tidak berlaku (Event sudah lewat/Expired).", nil)
 	default:
 		// Sebagian error checkout atau Xendit (misal: stok habis) sekarang membawa ErrOrderValidation
 		// jadi akan tertangkap di case atas. Jika tetap kesini, berarti benar-benar 500.
@@ -148,6 +154,22 @@ func (h *OrderHandler) GetOrderByID(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Order retrieved successfully", order)
 }
 
+func (h *OrderHandler) GetMyItems(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		return
+	}
+
+	items, err := h.service.GetMyRedeemableItems(c.Request.Context(), userID.(uint))
+	if err != nil {
+		handleOrderServiceError(c, err, "Failed to retrieve items")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Digital items retrieved", items)
+}
+
 // ---- ADMIN ENDPOINTS ----
 
 func (h *OrderHandler) GetAllOrdersAdmin(c *gin.Context) {
@@ -214,4 +236,28 @@ func (h *OrderHandler) CheckInOrderAdmin(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Order checked in successfully", order)
+}
+
+func (h *OrderHandler) ScanItemAdmin(c *gin.Context) {
+	adminUserID, exists := c.Get("userID")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Unauthorized", nil)
+		return
+	}
+
+	var req struct {
+		Code string `json:"code" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Code is required", nil)
+		return
+	}
+
+	item, err := h.service.ScanItem(c.Request.Context(), req.Code, adminUserID.(uint))
+	if err != nil {
+		handleOrderServiceError(c, err, "Failed to scan item")
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Item scanned & validated successfully", item)
 }

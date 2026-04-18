@@ -46,11 +46,11 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 
 	// 1. Persiapkan Payload sesuai API Xendit V2
 	payload := map[string]interface{}{
-		"external_id":      orderID.String(),
-		"amount":           amount,
-		"payer_email":      email,
-		"description":      itemsDescription,
-		"invoice_duration": 86400, // 24 jam
+		"external_id":          orderID.String(),
+		"amount":               amount,
+		"payer_email":          email,
+		"description":          itemsDescription,
+		"invoice_duration":     86400, // 24 jam
 		"success_redirect_url": os.Getenv("FRONTEND_URL") + "/payment/success?id=" + orderID.String(),
 		"failure_redirect_url": os.Getenv("FRONTEND_URL") + "/payment/failed?id=" + orderID.String(),
 	}
@@ -86,7 +86,7 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 	client := &http.Client{Timeout: 3 * time.Second}
 	var resp *http.Response
 	var errDo error
-	
+
 	for retry := 0; retry < 2; retry++ {
 		// Buat buffer ulang setiap kali retry
 		req, _ = http.NewRequest("POST", "https://api.xendit.co/v2/invoices", bytes.NewBuffer(jsonData))
@@ -120,7 +120,7 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		// Log error buat developer liat di console
 		fmt.Printf("DEBUG: Xendit Error Response: %s\n", string(bodyBytes))
-		
+
 		msg, _ := result["message"].(string)
 		if msg == "" {
 			msg = string(bodyBytes) // fallback ke raw body kalau gak ada field message
@@ -136,7 +136,7 @@ func (s *xenditService) CreateInvoice(orderID uuid.UUID, email string, amount fl
 		// kalau xendit ngirim error, kita tangkep pesannya dhan
 		msg, _ := result["message"].(string)
 		return "", "", fmt.Errorf("xendit response ngaco: %v", msg)
-	}/* */
+	} /* */
 
 	return invoiceID, checkoutURL, nil
 }

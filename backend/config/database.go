@@ -53,6 +53,7 @@ func ConnectDB() {
 		&models.OrderItem{},
 		&models.Payment{},
 		&models.PaymentWebhookLog{},
+		&models.RedeemableItem{},
 	)
 	if err != nil {
 		log.Fatal("Failed to auto-migrate database schema:", err)

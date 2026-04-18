@@ -72,7 +72,7 @@ func TestOrderService_CreateOrder_RaceCondition(t *testing.T) {
 			// Success scenario
 			mock.ExpectExec(`UPDATE "ticket_types" SET "remaining_quota"=remaining_quota - \$1`).
 				WillReturnResult(sqlmock.NewResult(0, 1)) // 1 row affected
-			
+
 			mock.ExpectExec(`INSERT INTO "orders"`).WillReturnResult(sqlmock.NewResult(1, 1))
 			mock.ExpectExec(`INSERT INTO "order_items"`).WillReturnResult(sqlmock.NewResult(1, 1))
 			mock.ExpectCommit()
@@ -81,17 +81,17 @@ func TestOrderService_CreateOrder_RaceCondition(t *testing.T) {
 			mock.ExpectQuery(`SELECT \* FROM "users"`).
 				WithArgs(userID).
 				WillReturnRows(sqlmock.NewRows([]string{"id", "email"}).AddRow(userID, "user@test.com"))
-			
+
 			// Post-commit: Payment insertion/update
 			mock.ExpectExec(`INSERT INTO "payments"`).WillReturnResult(sqlmock.NewResult(1, 1))
-			
+
 			// Post-commit: Final Order lookup
 			mock.ExpectQuery(`SELECT \* FROM "orders"`).
 				WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow(uint(1), "PENDING"))
 		} else {
 			// Failure scenario (Oversell prevention)
 			mock.ExpectExec(`UPDATE "ticket_types" SET "remaining_quota"=remaining_quota - \$1`).
-				WillReturnResult(sqlmock.NewResult(0, 0)) 
+				WillReturnResult(sqlmock.NewResult(0, 0))
 			mock.ExpectRollback()
 		}
 	}
@@ -130,7 +130,7 @@ func TestOrderService_CreateOrder_RaceCondition(t *testing.T) {
 	if successCount != initialQuota {
 		t.Errorf("Expected exactly %d successes (quota), but got %d", initialQuota, successCount)
 	}
-	
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("Unmet expectations: %s", err)
 	}

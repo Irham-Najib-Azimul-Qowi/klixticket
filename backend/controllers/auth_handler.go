@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"mastutik-api/models"
+	"mastutik-api/pkg/utils"
 	"mastutik-api/repositories"
 	"mastutik-api/services"
-	"mastutik-api/pkg/utils"
 )
 
 type AuthHandler struct {

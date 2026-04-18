@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mastutik-api/services"
 	"mastutik-api/pkg/utils"
+	"mastutik-api/services"
 )
 
 type DashboardHandler struct {

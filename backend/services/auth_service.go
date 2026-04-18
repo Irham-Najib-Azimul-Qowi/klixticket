@@ -8,8 +8,8 @@ import (
 
 	"google.golang.org/api/idtoken"
 	"mastutik-api/models"
-	"mastutik-api/repositories"
 	"mastutik-api/pkg/utils"
+	"mastutik-api/repositories"
 )
 
 type AuthService interface {
@@ -208,7 +208,7 @@ func (s *authService) RequestPasswordReset(req models.ForgotPasswordRequest) (st
 	// Send email synchronously to ensure we catch errors
 	err = utils.SendResetPasswordEmail(user.Email, token)
 	if err != nil {
-		// Log the error but maybe don't stop the flow if you want generic response, 
+		// Log the error but maybe don't stop the flow if you want generic response,
 		// however the user asked NOT to say "success" if it fails.
 		return "", err
 	}

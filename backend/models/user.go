@@ -7,13 +7,13 @@ import (
 )
 
 type User struct {
-	ID           uint           `gorm:"primaryKey" json:"id"`
-	UUID         string         `gorm:"type:uuid;default:gen_random_uuid();uniqueIndex" json:"uuid"`
-	Name         string         `gorm:"type:varchar(100);not null" json:"name"`
-	Email        string         `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`
-	PasswordHash *string        `gorm:"type:varchar(255)" json:"-"`                      // Pointer agar bisa null untuk yang daftar via Google
-	Role         string         `gorm:"type:varchar(20);default:'customer'" json:"role"` // 'customer' atau 'admin'
-	AvatarURL    *string        `gorm:"type:varchar(255)" json:"avatar_url"`
+	ID                     uint           `gorm:"primaryKey" json:"id"`
+	UUID                   string         `gorm:"type:uuid;default:gen_random_uuid();uniqueIndex" json:"uuid"`
+	Name                   string         `gorm:"type:varchar(100);not null" json:"name"`
+	Email                  string         `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`
+	PasswordHash           *string        `gorm:"type:varchar(255)" json:"-"`                      // Pointer agar bisa null untuk yang daftar via Google
+	Role                   string         `gorm:"type:varchar(20);default:'customer'" json:"role"` // 'customer' atau 'admin'
+	AvatarURL              *string        `gorm:"type:varchar(255)" json:"avatar_url"`
 	ResetPasswordToken     *string        `gorm:"type:varchar(255);index" json:"-"`
 	ResetPasswordExpiresAt *time.Time     `json:"-"`
 	CreatedAt              time.Time      `json:"created_at"`

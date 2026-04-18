@@ -7,7 +7,8 @@ import type {
   Order, 
   CreateEventRequest,
   Merchandise,
-  MerchandiseResponse
+  MerchandiseResponse,
+  RedeemableItem
 } from '../types';
 
 export const adminService = {
@@ -148,5 +149,17 @@ export const adminService = {
       headers: { ...getAuthHeaders() },
     });
     await handleResponse<any>(res);
+  },
+
+  async scanItem(code: string): Promise<RedeemableItem> {
+    const res = await fetch(`${API_BASE_URL}/admin/scan`, {
+      method: 'POST',
+      headers: { 
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ code }),
+    });
+    return handleResponse<RedeemableItem>(res);
   }
 };

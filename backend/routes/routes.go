@@ -64,6 +64,7 @@ func SetupRoutes(
 			// Prevent double orders via spamming from the same IP (1 request per 12s on average)
 			ordersGroup.POST("", middlewares.NewSimpleRateLimit(5, time.Minute), orderHandler.CreateOrder)
 			ordersGroup.GET("/my", orderHandler.GetMyOrders) // Changed from /me to /my
+			ordersGroup.GET("/items", orderHandler.GetMyItems)
 			ordersGroup.GET("/:id", orderHandler.GetOrderByID)
 			ordersGroup.GET("/:id/resume", orderHandler.ResumeOrder)
 		}
@@ -111,6 +112,7 @@ func SetupRoutes(
 				adminProtected.GET("/orders", orderHandler.GetAllOrdersAdmin)
 				adminProtected.GET("/orders/:id", orderHandler.GetOrderByIDAdmin)
 				adminProtected.PATCH("/orders/:id/check-in", orderHandler.CheckInOrderAdmin)
+				adminProtected.POST("/scan", orderHandler.ScanItemAdmin)
 			}
 		}
 	}

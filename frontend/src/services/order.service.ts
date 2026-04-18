@@ -1,5 +1,5 @@
 import { API_BASE_URL, handleResponse, getAuthHeaders } from '../lib/api-client';
-import type { CreateOrderRequest, Order } from '../types';
+import type { CreateOrderRequest, Order, RedeemableItem } from '../types';
 
 export const orderService = {
   async createOrder(data: CreateOrderRequest): Promise<Order> {
@@ -36,5 +36,13 @@ export const orderService = {
       headers: getAuthHeaders(),
     });
     return handleResponse<Order>(res);
+  },
+
+  async getMyItems(): Promise<RedeemableItem[]> {
+    const res = await fetch(`${API_BASE_URL}/orders/items`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<RedeemableItem[]>(res);
   }
 };

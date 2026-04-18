@@ -155,3 +155,16 @@ export interface CreateOrderRequest {
   payment_method?: string;
   idempotency_key?: string;
 }
+
+export interface RedeemableItem {
+  id: number;
+  order_id: string;
+  order_item_id: number;
+  item_type: 'ticket' | 'merchandise';
+  item_name: string;
+  code: string;
+  status: 'belum_digunakan' | 'sudah_digunakan' | 'tidak_berlaku';
+  used_at?: string | null;
+  event_end_date?: string | null;
+  created_at: string;
+}

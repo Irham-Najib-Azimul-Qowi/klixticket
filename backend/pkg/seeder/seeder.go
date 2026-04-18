@@ -51,7 +51,7 @@ func SeedAdmin(db *gorm.DB) error {
 
 		var existingUser models.User
 		err := db.Where("email = ?", adminEmail).First(&existingUser).Error
-		
+
 		hashedPassword, hashErr := utils.HashPassword(adminPassword)
 		if hashErr == nil {
 			if err == nil {
@@ -84,8 +84,6 @@ func SeedAdmin(db *gorm.DB) error {
 	return nil
 }
 
-
-
 func SeedEvents(db *gorm.DB) error {
 	// Ensure uploads/images/events directory exists
 	targetDir := filepath.Join("uploads", "images", "events")
@@ -94,7 +92,7 @@ func SeedEvents(db *gorm.DB) error {
 	}
 
 	now := time.Now()
-	
+
 	events := []models.Event{
 		{
 			Title:         "GIXS DI KOTA",
@@ -107,22 +105,22 @@ func SeedEvents(db *gorm.DB) error {
 			PublishStatus: "published",
 			TicketTypes: []models.TicketType{
 				{
-					Name: "Presale 1", 
-					Price: 40000, 
-					Quota: 200, 
-					RemainingQuota: 0, 
-					SalesStartAt: now.AddDate(0, -2, 0), 
-					SalesEndAt: now.AddDate(0, -1, 0), 
-					ActiveStatus: true,
+					Name:           "Presale 1",
+					Price:          40000,
+					Quota:          200,
+					RemainingQuota: 0,
+					SalesStartAt:   now.AddDate(0, -2, 0),
+					SalesEndAt:     now.AddDate(0, -1, 0),
+					ActiveStatus:   true,
 				},
 				{
-					Name: "Presale 2", 
-					Price: 50000, 
-					Quota: 300, 
-					RemainingQuota: 250, 
-					SalesStartAt: now.AddDate(0, -1, 0), 
-					SalesEndAt: now.Add(24 * time.Hour), 
-					ActiveStatus: true,
+					Name:           "Presale 2",
+					Price:          50000,
+					Quota:          300,
+					RemainingQuota: 250,
+					SalesStartAt:   now.AddDate(0, -1, 0),
+					SalesEndAt:     now.Add(24 * time.Hour),
+					ActiveStatus:   true,
 				},
 			},
 		},
@@ -137,22 +135,22 @@ func SeedEvents(db *gorm.DB) error {
 			PublishStatus: "published",
 			TicketTypes: []models.TicketType{
 				{
-					Name: "Early Bird", 
-					Price: 150000, 
-					Quota: 100, 
-					RemainingQuota: 10, 
-					SalesStartAt: now, 
-					SalesEndAt: now.AddDate(0, 1, 0), 
-					ActiveStatus: true,
+					Name:           "Early Bird",
+					Price:          150000,
+					Quota:          100,
+					RemainingQuota: 10,
+					SalesStartAt:   now,
+					SalesEndAt:     now.AddDate(0, 1, 0),
+					ActiveStatus:   true,
 				},
 				{
-					Name: "General Admission", 
-					Price: 250000, 
-					Quota: 500, 
-					RemainingQuota: 500, 
-					SalesStartAt: now.AddDate(0, 1, 0), 
-					SalesEndAt: now.AddDate(0, 2, 0), 
-					ActiveStatus: true,
+					Name:           "General Admission",
+					Price:          250000,
+					Quota:          500,
+					RemainingQuota: 500,
+					SalesStartAt:   now.AddDate(0, 1, 0),
+					SalesEndAt:     now.AddDate(0, 2, 0),
+					ActiveStatus:   true,
 				},
 			},
 		},
@@ -199,39 +197,39 @@ func SeedMerchandise(db *gorm.DB) error {
 
 	merchandise := []models.Merchandise{
 		{
-			Name: "DIANGKAT PNS TEE", 
-			Slug: "diangkat-pns-tee", 
-			Description: "Kaos sablon eksklusif dengan tema humor lokal yang ikonik. Bahan 100% cotton combed 30s.", 
-			Price: 180000, 
-			Stock: 100, 
-			ImageURL: ptr("/uploads/images/merchandise/tee.webp"), 
+			Name:         "DIANGKAT PNS TEE",
+			Slug:         "diangkat-pns-tee",
+			Description:  "Kaos sablon eksklusif dengan tema humor lokal yang ikonik. Bahan 100% cotton combed 30s.",
+			Price:        180000,
+			Stock:        100,
+			ImageURL:     ptr("/uploads/images/merchandise/tee.webp"),
 			ActiveStatus: true,
 		},
 		{
-			Name: "TUMBLR MINOEMAN XERAS - BLACK", 
-			Slug: "tumblr-minoman-xeras-black", 
-			Description: "Tumblr stainless steel 500ml tahan panas dan dingin. Desain minimalis warna hitam pekat.", 
-			Price: 100000, 
-			Stock: 50, 
-			ImageURL: ptr("/uploads/images/merchandise/tumblr-black.jpeg"), 
+			Name:         "TUMBLR MINOEMAN XERAS - BLACK",
+			Slug:         "tumblr-minoman-xeras-black",
+			Description:  "Tumblr stainless steel 500ml tahan panas dan dingin. Desain minimalis warna hitam pekat.",
+			Price:        100000,
+			Stock:        50,
+			ImageURL:     ptr("/uploads/images/merchandise/tumblr-black.jpeg"),
 			ActiveStatus: true,
 		},
 		{
-			Name: "TUMBLR MINOEMAN XERAS - WHITE", 
-			Slug: "tumblr-minoman-xeras-white", 
-			Description: "Tumblr stainless steel 500ml tahan panas dan dingin. Desain minimalis warna putih bersih.", 
-			Price: 100000, 
-			Stock: 50, 
-			ImageURL: ptr("/uploads/images/merchandise/tumblr-white.jpeg"), 
+			Name:         "TUMBLR MINOEMAN XERAS - WHITE",
+			Slug:         "tumblr-minoman-xeras-white",
+			Description:  "Tumblr stainless steel 500ml tahan panas dan dingin. Desain minimalis warna putih bersih.",
+			Price:        100000,
+			Stock:        50,
+			ImageURL:     ptr("/uploads/images/merchandise/tumblr-white.jpeg"),
 			ActiveStatus: true,
 		},
 		{
-			Name: "TUMBLR MINOEMAN XERAS - SILVER", 
-			Slug: "tumblr-minoman-xeras-silver", 
-			Description: "Tumblr stainless steel 500ml tahan panas dan dingin. Tampilan elegan dengan finishing silver metallic.", 
-			Price: 100000, 
-			Stock: 50, 
-			ImageURL: ptr("/uploads/images/merchandise/tumblr-silver.jpeg"), 
+			Name:         "TUMBLR MINOEMAN XERAS - SILVER",
+			Slug:         "tumblr-minoman-xeras-silver",
+			Description:  "Tumblr stainless steel 500ml tahan panas dan dingin. Tampilan elegan dengan finishing silver metallic.",
+			Price:        100000,
+			Stock:        50,
+			ImageURL:     ptr("/uploads/images/merchandise/tumblr-silver.jpeg"),
 			ActiveStatus: true,
 		},
 	}

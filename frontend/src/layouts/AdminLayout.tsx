@@ -9,7 +9,8 @@ import {
   ShoppingCart, 
   Package,
   ChevronRight,
-  Bell
+  Bell,
+  QrCode
 } from 'lucide-react';
 import { authApi } from '@/services/api';
 
@@ -31,6 +32,7 @@ const AdminLayout: React.FC = () => {
 
   const navLinks = [
     { path: '/admin', name: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { path: '/admin/scan', name: 'Scan Tiket & Merchandise', icon: <QrCode size={18} /> },
     { path: '/admin/events', name: 'Events', icon: <CalendarDays size={18} /> },
     { path: '/admin/merchandise', name: 'Merchandise', icon: <Package size={18} /> },
     { path: '/admin/orders', name: 'Orders', icon: <ShoppingCart size={18} /> },

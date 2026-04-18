@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"flag"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"flag"
 	"mastutik-api/config"
 	"mastutik-api/controllers"
 	"mastutik-api/middlewares"
@@ -53,18 +53,18 @@ func main() {
 
 	// 2. KONEKSI DB & OPTIMASI POOLING
 	config.ConnectDB()
-	
+
 	// 🧹 HOTFIX: Zero out identical empty idempotency keys to prevent Postgres UNIQUE constraint violation during updates
 	config.DB.Exec("UPDATE orders SET idempotency_key = NULL WHERE idempotency_key = ''")
-	
+
 	sqlDB, err := config.DB.DB()
 	if err != nil {
 		log.Fatalf("failed to get sql.DB: %v", err)
 	}
 
 	// Setting untuk VPS RAM 1GB
-	sqlDB.SetMaxIdleConns(5)    // Koneksi standby sedikit saja
-	sqlDB.SetMaxOpenConns(10)   // Batasi maksimal koneksi agar tidak OOM
+	sqlDB.SetMaxIdleConns(5)  // Koneksi standby sedikit saja
+	sqlDB.SetMaxOpenConns(10) // Batasi maksimal koneksi agar tidak OOM
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	if err := seeder.SeedAdmin(config.DB); err != nil {
@@ -100,7 +100,7 @@ func main() {
 	r.Use(middlewares.RequestTimeoutMiddleware())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(middlewares.CORSMiddleware())
-	
+
 	// 🔥 HEALTHCHECK ENDPOINT
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})

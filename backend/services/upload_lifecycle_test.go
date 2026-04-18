@@ -167,7 +167,9 @@ func (r *eventRepoStub) DeactivateTicketsExceptWithTx(_ *gorm.DB, eventID uint, 
 	return nil
 }
 
-func (r *eventRepoStub) FindNearest(ctx context.Context, now time.Time) (*models.Event, error) { return nil, nil }
+func (r *eventRepoStub) FindNearest(ctx context.Context, now time.Time) (*models.Event, error) {
+	return nil, nil
+}
 
 type merchandiseRepoStub struct {
 	repositories.MerchandiseRepository
