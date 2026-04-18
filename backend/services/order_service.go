@@ -737,7 +737,7 @@ func (s *orderService) ProcessXenditWebhook(ctx context.Context, payload dto.Xen
 					ItemType:     item.ItemType,
 					ItemName:     item.ItemName,
 					Code:         strings.ToUpper(code),
-					Status:       "belum_digunakan",
+					Status:       models.ItemStatusUnused,
 					EventEndDate: eventEndDate,
 				}
 				if err := s.repo.CreateRedeemableItemWithTx(tx, redeemable); err != nil {
@@ -806,15 +806,10 @@ func (s *orderService) GetMyRedeemableItems(ctx context.Context, userID uint) ([
 		return nil, err
 	}
 
-	// Update ticket status on the fly if event passed
-	now := time.Now()
+	// Logic is now encapsulated in models.GetEffectiveStatus().
+	// We just ensure the returned items have the latest status reflected for the UI.
 	for i := range items {
-		if items[i].ItemType == "ticket" && items[i].Status == "belum_digunakan" && items[i].EventEndDate != nil {
-			if now.After(*items[i].EventEndDate) {
-				items[i].Status = "tidak_berlaku"
-				// We don't save to DB here for performance, but the UI will show it
-			}
-		}
+		items[i].Status = items[i].GetEffectiveStatus()
 	}
 
 	return items, nil
@@ -842,18 +837,21 @@ func (s *orderService) ScanItem(ctx context.Context, code string, adminUserID ui
 		return nil, err
 	}
 
-	if item.Status == "sudah_digunakan" {
+	// Use robust, centralized status check
+	effectiveStatus := item.GetEffectiveStatus()
+
+	if effectiveStatus == models.ItemStatusUsed {
 		tx.Rollback()
 		return nil, ErrItemAlreadyUsed
 	}
 
-	if item.ItemType == "ticket" && item.EventEndDate != nil && time.Now().After(*item.EventEndDate) {
+	if effectiveStatus == models.ItemStatusExpired {
 		tx.Rollback()
 		return nil, ErrItemExpired
 	}
 
 	now := time.Now()
-	item.Status = "sudah_digunakan"
+	item.Status = models.ItemStatusUsed
 	item.UsedAt = &now
 	item.UsedBy = &adminUserID
 

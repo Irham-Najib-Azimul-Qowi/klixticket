@@ -137,13 +137,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   // Tickets: Not used AND event not passed
   // Merch: Not used
   const filteredDigitalItems = digitalItems.filter(item => {
-    if (item.status === 'sudah_digunakan' || item.status === 'tidak_berlaku') return false;
-    
-    if (item.item_type === 'ticket' && item.event_end_date) {
-      if (new Date(item.event_end_date) < now) return false;
-    }
-    
-    return true;
+    // Logic: 
+    // Ticket: UNUSED only (Expired hidden by backend returning EXPIRED status)
+    // Merch: UNUSED only
+    // This allows synchronization between My Items and Backend rules.
+    return item.status.toUpperCase() === 'UNUSED';
   });
 
   const myPaidItems = filteredDigitalItems;
@@ -152,19 +150,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
   };
 
-  const getStatusLabel = (status: string) => {
-    const s = status.toLowerCase();
-    if (s === 'paid') return 'Belum digunakan';
-    if (s === 'expired' || s === 'failed') return 'Tidak berlaku';
-    if (s === 'sudah_digunakan') return 'Sudah digunakan'; // for redeemable items
+  const getStatusLabel = (status: string, itemType?: string) => {
+    const s = status.toUpperCase();
+    if (s === 'UNUSED') return itemType === 'merchandise' ? 'Belum diambil' : 'Belum digunakan';
+    if (s === 'USED') return itemType === 'merchandise' ? 'Sudah diambil' : 'Sudah digunakan';
+    if (s === 'EXPIRED') return 'Tidak berlaku';
+    
+    // Fallback for order status
+    if (s === 'PAID') return 'Lunas';
+    if (s === 'PENDING') return 'Menunggu Pembayaran';
+    if (s === 'FAILED') return 'Gagal';
     return status;
   };
 
   const getStatusColor = (status: string) => {
-    const s = status.toLowerCase();
-    if (s === 'paid' || s === 'belum_digunakan') return 'text-emerald-500 border-emerald-500/20 bg-emerald-500/10';
-    if (s === 'sudah_digunakan') return 'text-white/40 border-white/10 bg-white/5';
-    if (s === 'expired' || s === 'failed' || s === 'tidak_berlaku') return 'text-rose-500 border-rose-500/20 bg-rose-500/10';
+    const s = status.toUpperCase();
+    if (s === 'PAID' || s === 'UNUSED' ) return 'text-emerald-500 border-emerald-500/20 bg-emerald-500/10';
+    if (s === 'USED') return 'text-white/40 border-white/10 bg-white/5';
+    if (s === 'EXPIRED' || s === 'FAILED' ) return 'text-rose-500 border-rose-500/20 bg-rose-500/10';
     return 'text-white border-white/20';
   };
 
@@ -585,10 +588,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                   {/* Status Indicator */}
                   <div className="mb-10 flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-sm">
                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Status: Valid Asset</span>
+                        <div className={`w-2 h-2 rounded-full animate-pulse ${selectedItem.status.toUpperCase() === 'UNUSED' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                          Status: {getStatusLabel(selectedItem.status, selectedItem.item_type)}
+                        </span>
                      </div>
-                     <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Ready for Scanning</span>
+                     <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedItem.status.toUpperCase() === 'UNUSED' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                       {selectedItem.status.toUpperCase() === 'UNUSED' ? 'Ready for Scanning' : 'Invalid / Used'}
+                     </span>
                   </div>
 
                   {/* Items List inside Modal */}
