@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { User as UserIcon, Loader2, ArrowRight, Mail, Ticket, ShoppingBag, History, X, CheckCircle2, Lock, Shield, UserCircle, Key, Package } from 'lucide-react';
+import { User as UserIcon, Loader2, ArrowRight, Mail, Ticket, ShoppingBag, History, X, CheckCircle2, Lock, Shield, UserCircle, Key, Package, Clock } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { authApi, orderApi } from '@/services/api';
 import type { User, Order, RedeemableItem } from '@/services/api';
