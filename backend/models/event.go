@@ -36,4 +36,5 @@ type TicketType struct {
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
+	Event          *Event         `gorm:"foreignKey:EventID" json:"event,omitempty"`
 }
