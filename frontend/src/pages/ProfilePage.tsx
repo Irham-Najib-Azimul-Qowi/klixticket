@@ -309,7 +309,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                         ))
                       )}
                     </div>
-v>
                 </div>
               )}
 
@@ -603,7 +602,9 @@ v>
                           </div>
                         </div>
                     </div>
-                             {/* Total inside Modal */}
+                  </div>
+
+                  {/* Total inside Modal */}
                   <div className="mt-12 pt-8 border-t-2 border-neon-pink flex justify-between items-end">
                     <div>
                         <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.5em] mb-2">Authenticated On</p>
@@ -618,7 +619,6 @@ v>
                         <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Authorized by KLIXTICKET Payment Gateway</p>
                     </div>
                   </div>
-          </div>
                 </div>
               </div>
             </div>
