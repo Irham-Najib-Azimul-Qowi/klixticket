@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Minus, Plus, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
+import { X, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -75,7 +75,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                         </div>
                         <button 
                           onClick={() => removeFromCart(item.id, item.type)}
-                          className="text-white/20 hover:text-neon-pink transition-colors"
+                          className="text-white/20 hover:text-neon-lime transition-colors"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -100,7 +100,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
             
             <button 
               onClick={handleCheckout}
-              className="w-full h-12 bg-white text-black font-bold text-xs uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all flex items-center justify-center gap-2"
+              className="w-full h-12 bg-white text-black font-bold text-xs uppercase tracking-widest hover:bg-neon-lime hover:text-white transition-all flex items-center justify-center gap-2"
             >
               Checkout <ArrowRight size={14} />
             </button>

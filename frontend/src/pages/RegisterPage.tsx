@@ -67,7 +67,7 @@ const RegisterPage: React.FC = () => {
             </Link>
             <Link 
               to="/login" 
-              className="hidden md:block bg-white text-black px-8 py-3 font-heading text-xl tracking-wider hover:bg-neon-pink hover:text-white transition-all transform hover:scale-105 uppercase"
+              className="hidden md:block bg-white text-black px-8 py-3 font-heading text-xl tracking-wider hover:bg-neon-lime hover:text-white transition-all transform hover:scale-105 uppercase"
             >
               LOGIN
             </Link>
@@ -111,10 +111,10 @@ const RegisterPage: React.FC = () => {
                     id="register-name"
                     type="text"
                     placeholder="Enter your name"
-                    className={`w-full bg-black border ${errors.name ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
+                    className={`w-full bg-black border ${errors.name ? 'border-neon-lime bg-neon-lime/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-lime transition-colors font-bold tracking-wide`}
                   />
                   {errors.name && (
-                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                    <p className="text-[9px] font-black text-neon-lime uppercase tracking-widest flex items-center gap-2">
                       <AlertCircle size={10} /> {errors.name.message}
                     </p>
                   )}
@@ -129,10 +129,10 @@ const RegisterPage: React.FC = () => {
                     id="register-email"
                     type="email"
                     placeholder="user@example.com"
-                    className={`w-full bg-black border ${errors.email ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
+                    className={`w-full bg-black border ${errors.email ? 'border-neon-lime bg-neon-lime/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
                   />
                   {errors.email && (
-                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                    <p className="text-[9px] font-black text-neon-lime uppercase tracking-widest flex items-center gap-2">
                       <AlertCircle size={10} /> {errors.email.message}
                     </p>
                   )}
@@ -148,7 +148,7 @@ const RegisterPage: React.FC = () => {
                       id="register-password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Min. 8 characters"
-                      className={`w-full bg-black border ${errors.password ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
+                      className={`w-full bg-black border ${errors.password ? 'border-neon-lime bg-neon-lime/5' : 'border-white/20'} p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
                     />
                     <button
                       type="button"
@@ -159,7 +159,7 @@ const RegisterPage: React.FC = () => {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                    <p className="text-[9px] font-black text-neon-lime uppercase tracking-widest flex items-center gap-2">
                       <AlertCircle size={10} /> {errors.password.message}
                     </p>
                   )}
@@ -174,10 +174,10 @@ const RegisterPage: React.FC = () => {
                     id="register-confirm-password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Repeat password"
-                    className={`w-full bg-black border ${errors.confirmPassword ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
+                    className={`w-full bg-black border ${errors.confirmPassword ? 'border-neon-lime bg-neon-lime/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-cyan transition-colors font-bold tracking-wide`}
                   />
                   {errors.confirmPassword && (
-                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                    <p className="text-[9px] font-black text-neon-lime uppercase tracking-widest flex items-center gap-2">
                       <AlertCircle size={10} /> {errors.confirmPassword.message}
                     </p>
                   )}
@@ -186,7 +186,7 @@ const RegisterPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-white text-black py-5 font-heading text-2xl uppercase tracking-widest hover:bg-neon-pink transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mt-8 transform hover:scale-105"
+                  className="w-full bg-white text-black py-5 font-heading text-2xl uppercase tracking-widest hover:bg-neon-lime transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mt-8 transform hover:scale-105"
                 >
                   {isLoading ? (
                     <>

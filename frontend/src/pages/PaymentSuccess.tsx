@@ -57,7 +57,7 @@ const PaymentSuccess: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black grid-background flex flex-col items-center justify-center text-center px-6">
-        <div className="w-16 h-16 mb-8 border-4 border-neon-pink border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(255,0,128,0.5)]"></div>
+        <div className="w-16 h-16 mb-8 border-4 border-neon-lime border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(255,0,128,0.5)]"></div>
         <h2 className="text-2xl font-heading text-white uppercase tracking-widest animate-pulse">Synchronizing Records...</h2>
       </div>
     );
@@ -98,9 +98,9 @@ const PaymentSuccess: React.FC = () => {
               <img src={logoImg} alt="KlixTicket Logo" className="h-10 w-auto object-contain mb-8" />
             </Link>
             <div className="relative inline-block">
-              <div className="absolute inset-0 bg-neon-pink blur-3xl opacity-20 rounded-full" />
+              <div className="absolute inset-0 bg-neon-lime blur-3xl opacity-20 rounded-full" />
               <div className="relative w-32 h-32 border border-white/20 bg-dark-grey flex items-center justify-center">
-                <CheckCircle className="w-16 h-16 text-neon-pink" />
+                <CheckCircle className="w-16 h-16 text-neon-lime" />
               </div>
             </div>
 
@@ -116,10 +116,10 @@ const PaymentSuccess: React.FC = () => {
             {/* Left Column: QR Code */}
             {orderId && (
               <div className="no-print relative group animate-in zoom-in-95 duration-700 delay-300">
-                 <div className="absolute inset-0 bg-neon-pink blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                 <div className="absolute inset-0 bg-neon-lime blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
                  <div className="relative bg-dark-grey border border-white/10 p-10 flex flex-col items-center h-full justify-center">
                     <div className="mb-6 flex items-center gap-3">
-                       <QrCode className="text-neon-pink w-4 h-4" />
+                       <QrCode className="text-neon-lime w-4 h-4" />
                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Official E-Ticket Code</span>
                     </div>
                     
@@ -134,7 +134,7 @@ const PaymentSuccess: React.FC = () => {
                     </div>
                     
                     <div className="mt-8 text-center">
-                       <p className="text-neon-pink font-mono text-xs tracking-widest uppercase mb-1">{orderId}</p>
+                       <p className="text-neon-lime font-mono text-xs tracking-widest uppercase mb-1">{orderId}</p>
                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Your unique entry key</p>
                     </div>
                  </div>
@@ -142,22 +142,22 @@ const PaymentSuccess: React.FC = () => {
             )}
 
             {/* Right Column: Mini Stats or Next Steps */}
-            <div className="no-print bg-dark-grey border border-white/10 p-10 text-left space-y-8 transform hover:border-neon-pink transition-colors h-full flex flex-col justify-center">
+            <div className="no-print bg-dark-grey border border-white/10 p-10 text-left space-y-8 transform hover:border-neon-lime transition-colors h-full flex flex-col justify-center">
                 <div className="flex items-center gap-4">
-                    <Ticket className="w-10 h-10 text-neon-pink" />
+                    <Ticket className="w-10 h-10 text-neon-lime" />
                     <span className="font-heading uppercase text-3xl tracking-widest text-white">NEXT STEPS</span>
                 </div>
                 <ul className="space-y-5 text-sm font-bold uppercase tracking-[0.2em] text-white/60">
                     <li className="flex items-start gap-4">
-                        <span className="text-neon-pink text-xl">/</span>
+                        <span className="text-neon-lime text-xl">/</span>
                         <span>CHECK YOUR PROFILE TO ACCESS YOUR E-TICKET.</span>
                     </li>
                     <li className="flex items-start gap-4">
-                        <span className="text-neon-pink text-xl">/</span>
+                        <span className="text-neon-lime text-xl">/</span>
                         <span>YOUR TICKET QR CODE IS UNIQUE AND SECURE.</span>
                     </li>
                     <li className="flex items-start gap-4">
-                        <span className="text-neon-pink text-xl">/</span>
+                        <span className="text-neon-lime text-xl">/</span>
                         <span>SHOW THE QR CODE AT THE GATE FOR ENTRY.</span>
                     </li>
                 </ul>
@@ -171,19 +171,19 @@ const PaymentSuccess: React.FC = () => {
                 {/* Invoice Header */}
                 <div className="p-8 border-b border-white/10 bg-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                   <div>
-                    <h2 className="text-3xl font-heading text-white uppercase mb-1">Electronic <span className="text-neon-pink">Invoice</span></h2>
+                    <h2 className="text-3xl font-heading text-white uppercase mb-1">Electronic <span className="text-neon-lime">Invoice</span></h2>
                     <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em]">ID: {order.id}</p>
                   </div>
                   <div className="flex gap-4 no-print">
                       <button 
                         onClick={handlePrint}
-                        className="flex items-center gap-2 bg-white/10 hover:bg-neon-pink text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all"
+                        className="flex items-center gap-2 bg-white/10 hover:bg-neon-lime text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all"
                       >
                         <Printer size={16} /> Print
                       </button>
                       <button 
                         onClick={handlePrint}
-                        className="flex items-center gap-2 bg-neon-pink text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
+                        className="flex items-center gap-2 bg-neon-lime text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
                       >
                         <Download size={16} /> Save PDF
                       </button>
@@ -204,7 +204,7 @@ const PaymentSuccess: React.FC = () => {
                       <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Transaction Details</p>
                       <div className="space-y-1">
                         <p className="text-sm text-white/60 font-bold uppercase">Date: {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                        <p className="text-sm text-white/60 font-bold uppercase">Status: <span className="text-neon-pink">PAID</span></p>
+                        <p className="text-sm text-white/60 font-bold uppercase">Status: <span className="text-neon-lime">PAID</span></p>
                       </div>
                     </div>
                   </div>
@@ -226,11 +226,11 @@ const PaymentSuccess: React.FC = () => {
                   </div>
 
                   {/* Total */}
-                  <div className="mt-12 pt-8 border-t-2 border-neon-pink flex justify-between items-end">
+                  <div className="mt-12 pt-8 border-t-2 border-neon-lime flex justify-between items-end">
                     <div>
                         <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.5em] mb-2">Total Value</p>
                         <div className="flex items-center gap-3">
-                            <Receipt className="text-neon-pink mb-1" size={24} />
+                            <Receipt className="text-neon-lime mb-1" size={24} />
                             <p className="text-5xl font-heading text-white tracking-tighter">
                                 {formatPrice(order.total_amount)}
                             </p>
@@ -250,7 +250,7 @@ const PaymentSuccess: React.FC = () => {
           <div className="no-print flex flex-col md:flex-row gap-4 pt-12 border-t border-white/10">
             <button 
               onClick={() => order?.id ? navigate(`/order/${order.id}/ticket`) : navigate('/profile/tickets')}
-              className="flex-1 bg-white text-black py-6 text-2xl font-heading uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all flex items-center justify-center gap-4 transform hover:-rotate-1"
+              className="flex-1 bg-white text-black py-6 text-2xl font-heading uppercase tracking-widest hover:bg-neon-lime hover:text-white transition-all flex items-center justify-center gap-4 transform hover:-rotate-1"
             >
               ACCESS TICKETS <ArrowRight className="w-6 h-6" />
             </button>

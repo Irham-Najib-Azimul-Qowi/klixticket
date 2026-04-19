@@ -49,9 +49,10 @@ func TestOrderService_CreateOrder_RaceCondition(t *testing.T) {
 	eventRepo := repositories.NewEventRepository(db)
 	merchRepo := repositories.NewMerchandiseRepository(db)
 	orderRepo := repositories.NewOrderRepository(db)
+	taxRepo := repositories.NewTaxRepository(db)
 	xendit := &mockXenditRace{}
 
-	service := NewOrderService(orderRepo, eventRepo, merchRepo, userRepo, xendit)
+	service := NewOrderService(orderRepo, eventRepo, merchRepo, userRepo, xendit, taxRepo)
 
 	// 3. Test Data
 	userID := uint(1)
@@ -68,6 +69,11 @@ func TestOrderService_CreateOrder_RaceCondition(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"id", "remaining_quota", "price", "active_status", "sales_start_at", "sales_end_at"}).
 				AddRow(ticketID, initialQuota, 50000.0, true, time.Now().Add(-1*time.Hour), time.Now().Add(1*time.Hour)))
 
+		// Mock Tax Check inside CreateOrder
+		mock.ExpectQuery(`SELECT \* FROM "taxes"`).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "percentage", "active_status"}).
+				AddRow(1, "PPN", 11.0, true))
+
 		if i < initialQuota {
 			// Success scenario
 			mock.ExpectExec(`UPDATE "ticket_types" SET "remaining_quota"=remaining_quota - \$1`).
@@ -75,6 +81,7 @@ func TestOrderService_CreateOrder_RaceCondition(t *testing.T) {
 
 			mock.ExpectExec(`INSERT INTO "orders"`).WillReturnResult(sqlmock.NewResult(1, 1))
 			mock.ExpectExec(`INSERT INTO "order_items"`).WillReturnResult(sqlmock.NewResult(1, 1))
+			mock.ExpectExec(`INSERT INTO "order_taxes"`).WillReturnResult(sqlmock.NewResult(1, 1))
 			mock.ExpectCommit()
 
 			// Post-commit: User lookup for Xendit

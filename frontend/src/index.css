@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&family=Space+Grotesk:wght@700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,11 +8,12 @@
 @theme inline {
   --color-black: #000000;
   --color-white: #FFFFFF;
-  --color-neon-pink: #FF0080;
+  --color-neon-lime: #A8FF3C;
   --color-dark-grey: #1A1A1A;
   
   --font-heading: 'Bebas Neue', sans-serif;
   --font-sans: 'Inter', sans-serif;
+  --font-marquee: 'Space Grotesk', sans-serif;
   
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -158,8 +159,8 @@
   padding: 0 4px;
 }
 
-.neon-glow-pink {
-  text-shadow: 0 0 10px rgba(255, 0, 128, 0.5), 0 0 20px rgba(255, 0, 128, 0.3);
+.neon-glow-lime {
+  text-shadow: 0 0 10px rgba(168, 255, 60, 0.5), 0 0 20px rgba(168, 255, 60, 0.3);
 }
 
 @keyframes float {
