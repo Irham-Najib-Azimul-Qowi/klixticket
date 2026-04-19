@@ -16,6 +16,7 @@ func SetupRoutes(
 	orderHandler *controllers.OrderHandler,
 	webhookHandler *controllers.WebhookHandler,
 	dashboardHandler *controllers.DashboardHandler,
+	taxHandler *controllers.TaxHandler,
 ) {
 	// Root and static
 	r.Static("/uploads", "./uploads")
@@ -57,6 +58,13 @@ func SetupRoutes(
 			merchandiseGroup.GET("", merchHandler.GetPublicMerchandise)
 			merchandiseGroup.GET("/:id", merchHandler.GetPublicMerchandiseByID)
 		}
+
+		// Tax Routes (Public)
+		taxesGroup := api.Group("/taxes")
+		{
+			taxesGroup.GET("", taxHandler.GetActiveTaxes)
+		}
+
 
 		ordersGroup := api.Group("/orders")
 		ordersGroup.Use(middlewares.RequireAuth())
@@ -113,7 +121,14 @@ func SetupRoutes(
 				adminProtected.GET("/orders/:id", orderHandler.GetOrderByIDAdmin)
 				adminProtected.PATCH("/orders/:id/check-in", orderHandler.CheckInOrderAdmin)
 				adminProtected.POST("/scan", orderHandler.ScanItemAdmin)
+
+				// Admin Tax Management
+				adminProtected.GET("/taxes", taxHandler.GetAllTaxes)
+				adminProtected.POST("/taxes", taxHandler.CreateTax)
+				adminProtected.PUT("/taxes/:id", taxHandler.UpdateTax)
+				adminProtected.DELETE("/taxes/:id", taxHandler.DeleteTax)
 			}
+
 		}
 	}
 }

@@ -187,7 +187,7 @@ const EventDetailPage: React.FC = () => {
           scroll-behavior: smooth;
         }
       `}</style>
-      <div className="min-h-screen bg-black grid-background font-sans text-white selection:bg-neon-pink selection:text-white overflow-x-hidden">
+      <div className="min-h-screen bg-black grid-background font-sans text-white selection:bg-neon-lime selection:text-white overflow-x-hidden">
         {/* Navbar */}
         <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
@@ -196,14 +196,14 @@ const EventDetailPage: React.FC = () => {
             </Link>
 
             <div className="hidden md:flex items-center space-x-12 text-sm font-bold uppercase tracking-[0.2em]">
-              <a href="#tickets" className="hover:text-neon-pink transition-colors">Tickets</a>
-              <a href="#merchandise" className="hover:text-neon-pink transition-colors">Merch</a>
-              <a href="#lineup" className="hover:text-neon-pink transition-colors">Line-up</a>
+              <a href="#tickets" className="hover:text-neon-lime transition-colors">Tickets</a>
+              <a href="#merchandise" className="hover:text-neon-lime transition-colors">Merch</a>
+              <a href="#lineup" className="hover:text-neon-lime transition-colors">Line-up</a>
             </div>
 
             <button
               onClick={() => navigate('/')}
-              className="group flex items-center gap-3 text-white/50 hover:text-neon-pink transition-colors font-bold uppercase tracking-[0.2em] text-sm"
+              className="group flex items-center gap-3 text-white/50 hover:text-neon-lime transition-colors font-bold uppercase tracking-[0.2em] text-sm"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-2 transition-transform" /> BACK TO SITE
             </button>
@@ -212,7 +212,7 @@ const EventDetailPage: React.FC = () => {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 text-neon-pink">
+          <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 text-neon-lime">
             <Loader2 className="w-16 h-16 animate-spin" />
             <p className="font-heading text-3xl uppercase tracking-widest animate-pulse">LOADING STAGE...</p>
           </div>
@@ -221,11 +221,11 @@ const EventDetailPage: React.FC = () => {
         {/* Error State */}
         {!isLoading && error && (
           <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
-            <AlertTriangle className="w-24 h-24 text-neon-pink mb-8" />
+            <AlertTriangle className="w-24 h-24 text-neon-lime mb-8" />
             <h2 className="text-6xl md:text-8xl font-heading uppercase tracking-tighter text-white mb-6">EVENT <span className="text-outline">NOT FOUND</span></h2>
             <p className="text-2xl font-bold text-white/50 mb-12 uppercase tracking-[0.2em]">{error}</p>
             <Link to="/">
-              <button className="bg-white text-black px-12 py-6 font-heading text-3xl tracking-widest hover:bg-neon-pink hover:text-white transition-all transform hover:-rotate-2 uppercase">
+              <button className="bg-white text-black px-12 py-6 font-heading text-3xl tracking-widest hover:bg-neon-lime hover:text-white transition-all transform hover:-rotate-2 uppercase">
                 RETURN TO LIST
               </button>
             </Link>
@@ -251,7 +251,7 @@ const EventDetailPage: React.FC = () => {
               <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16">
                 <div className="max-w-[1400px] mx-auto">
                   <div className="flex items-center gap-6 mb-6">
-                    <span className="text-neon-pink font-bold tracking-[0.3em] text-sm block uppercase">
+                    <span className="text-neon-lime font-bold tracking-[0.3em] text-sm block uppercase">
                       OFFICIAL EVENT
                     </span>
                     <div className="w-12 h-[1px] bg-white/20"></div>
@@ -265,15 +265,15 @@ const EventDetailPage: React.FC = () => {
                   </h1>
                   
                   <div className="flex flex-wrap items-center gap-10 md:gap-16">
-                    <div className="flex items-center gap-4 text-white/70 hover:text-neon-pink transition-colors">
+                    <div className="flex items-center gap-4 text-white/70 hover:text-neon-lime transition-colors">
                       <Calendar className="w-6 h-6 md:w-8 md:h-8" />
                       <span className="text-xl md:text-2xl font-bold uppercase tracking-[0.1em]">{formatDate(event.start_date)}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-white/70 hover:text-neon-pink transition-colors">
+                    <div className="flex items-center gap-4 text-white/70 hover:text-neon-lime transition-colors">
                       <Clock className="w-6 h-6 md:w-8 md:h-8" />
                       <span className="text-xl md:text-2xl font-bold uppercase tracking-[0.1em]">{formatTime(event.start_date)} – {formatTime(event.end_date)}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-white/70 hover:text-neon-pink transition-colors">
+                    <div className="flex items-center gap-4 text-white/70 hover:text-neon-lime transition-colors">
                       <MapPin className="w-6 h-6 md:w-8 md:h-8" />
                       <span className="text-xl md:text-2xl font-bold uppercase tracking-[0.1em]">{event.location}</span>
                     </div>
@@ -292,7 +292,7 @@ const EventDetailPage: React.FC = () => {
                     <h2 className="text-5xl md:text-7xl font-heading uppercase tracking-tighter text-white mb-8">
                        EVENT <span className="text-outline">DETAILS</span>
                     </h2>
-                    <div className="w-32 h-1 bg-neon-pink mb-12"></div>
+                    <div className="w-32 h-1 bg-neon-lime mb-12"></div>
                     
                     <div className="text-xl md:text-2xl text-white/60 font-bold leading-relaxed whitespace-pre-line tracking-wide">
                       {event.description}
@@ -300,10 +300,10 @@ const EventDetailPage: React.FC = () => {
                   </div>
 
                   {/* Secure Payment Note */}
-                  <div className="p-10 border border-white/10 flex items-center justify-between group hover:border-neon-pink transition-colors">
+                  <div className="p-10 border border-white/10 flex items-center justify-between group hover:border-neon-lime transition-colors">
                     <div className="flex items-center gap-8">
-                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-neon-pink/10 transition-all">
-                        <ShieldCheck className="w-8 h-8 text-neon-pink" />
+                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-neon-lime/10 transition-all">
+                        <ShieldCheck className="w-8 h-8 text-neon-lime" />
                       </div>
                       <div>
                         <p className="font-heading uppercase tracking-widest text-3xl mb-2">SECURE CHECKOUT</p>
@@ -318,7 +318,7 @@ const EventDetailPage: React.FC = () => {
                   <div className="bg-black border border-white/10 p-10 md:p-14">
                     <h2 className="text-5xl md:text-6xl font-heading uppercase tracking-tighter text-white mb-12 flex items-center justify-between">
                        TICKETS
-                       <span className="w-3 h-3 bg-neon-pink rounded-full animate-pulse"></span>
+                       <span className="w-3 h-3 bg-neon-lime rounded-full animate-pulse"></span>
                     </h2>
 
                     {event.ticket_types && event.ticket_types.length > 0 ? (
@@ -332,17 +332,17 @@ const EventDetailPage: React.FC = () => {
                             <div
                               key={ticket.id}
                               className={`group relative bg-dark-grey border border-white/5 p-8 transition-all ${
-                                isAvailable ? 'hover:border-neon-pink cursor-pointer' : 'opacity-40 grayscale'
+                                isAvailable ? 'hover:border-neon-lime cursor-pointer' : 'opacity-40 grayscale'
                               }`}
                             >
                               {isSoldOut && (
-                                <div className="absolute top-0 right-0 bg-neon-pink text-white px-8 py-2 font-heading text-xl uppercase tracking-widest">
+                                <div className="absolute top-0 right-0 bg-neon-lime text-white px-8 py-2 font-heading text-xl uppercase tracking-widest">
                                   SOLD OUT
                                 </div>
                               )}
 
                               {isPresale && isAvailable && (
-                                <div className="absolute top-0 left-0 bg-neon-pink text-white px-4 py-1 flex items-center gap-2 font-heading text-sm uppercase tracking-widest">
+                                <div className="absolute top-0 left-0 bg-neon-lime text-white px-4 py-1 flex items-center gap-2 font-heading text-sm uppercase tracking-widest">
                                   <Sparkles className="w-3 h-3" /> HOT DEAL
                                 </div>
                               )}
@@ -367,7 +367,7 @@ const EventDetailPage: React.FC = () => {
                                 </div>
 
                                 <div className="border-t border-white/10 pt-8 mt-auto">
-                                  <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-neon-pink mb-8">
+                                  <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-neon-lime mb-8">
                                     <ShoppingCart className="w-4 h-4" />
                                     <span>AVAILABLE: {ticket.remaining_quota}</span>
                                   </div>
@@ -384,7 +384,7 @@ const EventDetailPage: React.FC = () => {
                                       }}
                                       className={`w-full py-5 font-heading text-2xl uppercase tracking-widest transition-all ${
                                         isAvailable
-                                          ? 'bg-white text-black hover:bg-neon-pink hover:text-white'
+                                          ? 'bg-white text-black hover:bg-neon-lime hover:text-white'
                                           : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
                                       }`}
                                     >
@@ -471,7 +471,7 @@ const EventDetailPage: React.FC = () => {
                       return (
                         <div key={isPlaceholder ? `p-${index}` : `${item.id}-${index}`} className="group cursor-pointer w-[250px] md:w-[300px] flex-shrink-0">
                           <Link to={isPlaceholder ? '#' : `/merchandise/${item.id}`}>
-                            <div className="bg-white/5 border border-white/10 p-6 transition-all duration-500 group-hover:bg-white/10 group-hover:border-neon-pink group-hover:-translate-y-2 shadow-xl overflow-hidden relative">
+                            <div className="bg-white/5 border border-white/10 p-6 transition-all duration-500 group-hover:bg-white/10 group-hover:border-neon-lime group-hover:-translate-y-2 shadow-xl overflow-hidden relative">
                               <div className="relative w-full aspect-square bg-black border border-white/5 overflow-hidden mb-6">
                                 <img 
                                   src={isPlaceholder ? tshirtImg : formatImageURL(item.image_url)} 
@@ -482,17 +482,17 @@ const EventDetailPage: React.FC = () => {
                                     target.src = getPlaceholderImage(); 
                                   }}
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-neon-pink/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-neon-lime/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                               <div className="space-y-2">
-                                <h3 className="text-2xl font-heading tracking-tighter group-hover:text-neon-pink transition-colors line-clamp-1 uppercase">
+                                <h3 className="text-2xl font-heading tracking-tighter group-hover:text-neon-lime transition-colors line-clamp-1 uppercase">
                                   {isPlaceholder ? 'SOUNDRENALINE TEE' : item.name}
                                 </h3>
                                 <div className="flex items-center justify-between pt-1">
                                    <p className="text-lg font-heading text-white/60 tracking-tighter uppercase">
                                      {isPlaceholder ? 'RP 180.000' : formatPrice(item.price)}
                                    </p>
-                                   <i className="fa-solid fa-arrow-right-long text-white/20 group-hover:text-neon-pink group-hover:translate-x-2 transition-all"></i>
+                                   <i className="fa-solid fa-arrow-right-long text-white/20 group-hover:text-neon-lime group-hover:translate-x-2 transition-all"></i>
                                 </div>
                               </div>
                             </div>
@@ -535,7 +535,7 @@ const EventDetailPage: React.FC = () => {
                 >
                   {[...MOCK_LINEUP, ...MOCK_LINEUP].map((item, index) => (
                     <div key={`${item.id}-${index}`} className="group cursor-pointer w-[300px] md:w-[450px] flex-shrink-0">
-                      <div className="relative w-full aspect-[16/9] bg-dark-grey border border-white/5 overflow-hidden mb-4 transition-all group-hover:border-neon-pink group-hover:-translate-y-2">
+                      <div className="relative w-full aspect-[16/9] bg-dark-grey border border-white/5 overflow-hidden mb-4 transition-all group-hover:border-neon-lime group-hover:-translate-y-2">
                          <img src={item.banner_url} alt={item.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 pointer-events-none" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
                           <span className="text-white font-bold tracking-[0.4em] text-xs flex items-center gap-2 uppercase">
@@ -543,13 +543,13 @@ const EventDetailPage: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <h3 className="text-3xl md:text-5xl font-heading tracking-tighter group-hover:text-neon-pink transition-colors line-clamp-1 uppercase">{item.title}</h3>
+                      <h3 className="text-3xl md:text-5xl font-heading tracking-tighter group-hover:text-neon-lime transition-colors line-clamp-1 uppercase">{item.title}</h3>
                       <div className="flex items-center gap-4 mt-2">
                         <span className="text-sm font-heading text-white/30 uppercase tracking-tighter">
                           {item.description}
                         </span>
                         <div className="h-3 w-[1px] bg-white/10"></div>
-                        <span className="text-[10px] font-bold text-neon-pink uppercase tracking-[0.2em] leading-none">
+                        <span className="text-[10px] font-bold text-neon-lime uppercase tracking-[0.2em] leading-none">
                           {item.location}
                         </span>
                       </div>

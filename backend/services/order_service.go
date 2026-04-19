@@ -51,15 +51,17 @@ type orderService struct {
 	eventRepo repositories.EventRepository
 	merchRepo repositories.MerchandiseRepository
 	userRepo  repositories.UserRepository
+	taxRepo   repositories.TaxRepository
 	xenditSvc XenditService
 }
 
-func NewOrderService(repo repositories.OrderRepository, eventRepo repositories.EventRepository, merchRepo repositories.MerchandiseRepository, userRepo repositories.UserRepository, xenditSvc XenditService) OrderService {
+func NewOrderService(repo repositories.OrderRepository, eventRepo repositories.EventRepository, merchRepo repositories.MerchandiseRepository, userRepo repositories.UserRepository, xenditSvc XenditService, taxRepo repositories.TaxRepository) OrderService {
 	return &orderService{
 		repo:      repo,
 		eventRepo: eventRepo,
 		merchRepo: merchRepo,
 		userRepo:  userRepo,
+		taxRepo:   taxRepo,
 		xenditSvc: xenditSvc,
 	}
 }
@@ -159,8 +161,10 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 		}
 	}()
 
-	var totalAmount float64
+	var subtotal float64
+	var totalTax float64
 	var orderItems []models.OrderItem
+	var orderTaxes []models.OrderTax
 	var itemDescriptions string
 
 	// 1.5 Aggregate and Validate Items
@@ -205,7 +209,7 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 		}
 
 		// Hitung Total (Harga * Qty)
-		totalAmount += ticket.Price * float64(item.Quantity)
+		subtotal += ticket.Price * float64(item.Quantity)
 
 		// Catat ke slice items
 		ticketID := ticket.ID
@@ -250,7 +254,7 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 			return nil, fmt.Errorf("%w: stok merchandise %s sudah habis", ErrOrderValidation, merchandise.Name)
 		}
 
-		totalAmount += merchandise.Price * float64(item.Quantity)
+		subtotal += merchandise.Price * float64(item.Quantity)
 
 		merchandiseID := merchandise.ID
 		orderItems = append(orderItems, models.OrderItem{
@@ -265,10 +269,27 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 	}
 
 	// 2.5 Total Amount Validation
-	if totalAmount <= 0 {
+	if subtotal <= 0 {
 		tx.Rollback()
-		return nil, fmt.Errorf("%w: total amount must be greater than 0", ErrOrderValidation)
+		return nil, fmt.Errorf("%w: subtotal must be greater than 0", ErrOrderValidation)
 	}
+
+	// 2.6 Calculate Taxes
+	activeTaxes, err := s.taxRepo.FindActive(ctx)
+	if err == nil && len(activeTaxes) > 0 {
+		for _, tax := range activeTaxes {
+			taxAmount := (tax.Percentage / 100) * subtotal
+			// Optional: Round to nearest IDR if needed. For now let's keep it decimal as per model.
+			totalTax += taxAmount
+			orderTaxes = append(orderTaxes, models.OrderTax{
+				TaxID:         tax.ID,
+				TaxName:       tax.Name,
+				TaxPercentage: tax.Percentage,
+				Amount:        taxAmount,
+			})
+		}
+	}
+	totalAmount := subtotal + totalTax
 
 	// 3. Setup Order struct
 	newOrderID := uuid.New()
@@ -280,11 +301,14 @@ func (s *orderService) CreateOrder(ctx context.Context, userID uint, req dto.Cre
 	order := &models.Order{
 		ID:             newOrderID,
 		UserID:         userID,
+		Subtotal:       subtotal,
+		TotalTax:       totalTax,
 		TotalAmount:    totalAmount,
 		Status:         "PENDING",
 		ExpiredAt:      time.Now().Add(24 * time.Hour),
 		IdempotencyKey: idKeyPtr,
 		OrderItems:     orderItems,
+		OrderTaxes:     orderTaxes,
 	}
 
 	// 4. Eksekusi Full Save Order FIRST

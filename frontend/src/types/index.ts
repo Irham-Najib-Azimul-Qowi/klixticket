@@ -39,6 +39,16 @@ export interface Merchandise {
   updated_at: string;
 }
 
+export interface Tax {
+  id: number;
+  name: string;
+  percentage: number;
+  active_status: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+
 export interface User {
   id: number;
   name: string;
@@ -85,18 +95,32 @@ export interface OrderItem {
   created_at: string;
 }
 
+export interface OrderTax {
+  id: number;
+  order_id: string;
+  tax_id: number;
+  tax_name: string;
+  tax_percentage: number;
+  amount: number;
+  created_at: string;
+}
+
+
 export interface Order {
   id: string;
   user_id: number;
   user?: User;
   status: string;
   total_amount: number;
+  subtotal: number;
+  total_tax: number;
   created_at: string;
   updated_at: string;
   expired_at: string;
   checked_in_at?: string | null;
   checked_in_by?: number | null;
   order_items?: OrderItem[];
+  order_taxes?: OrderTax[];
   payment?: {
     checkout_url: string;
     status: string;

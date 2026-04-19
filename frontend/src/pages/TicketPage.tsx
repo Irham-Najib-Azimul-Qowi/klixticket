@@ -37,7 +37,7 @@ const TicketPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-neon-pink animate-spin" />
+        <Loader2 className="w-12 h-12 text-neon-lime animate-spin" />
       </div>
     );
   }
@@ -46,10 +46,10 @@ const TicketPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-black grid-background flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-4xl font-heading text-white mb-4 uppercase tracking-widest">SYSTEM ERROR</h1>
-        <p className="text-neon-pink font-bold mb-8 uppercase tracking-widest">{error || 'ORDER NOT FOUND'}</p>
+        <p className="text-neon-lime font-bold mb-8 uppercase tracking-widest">{error || 'ORDER NOT FOUND'}</p>
         <button 
           onClick={() => navigate('/profile')}
-          className="bg-white text-black px-8 py-3 font-heading text-xl uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all"
+          className="bg-white text-black px-8 py-3 font-heading text-xl uppercase tracking-widest hover:bg-neon-lime hover:text-white transition-all"
         >
           BACK TO PROFILE
         </button>
@@ -73,7 +73,7 @@ const TicketPage: React.FC = () => {
           .text-white\/50 { color: #666 !important; }
           .bg-dark-grey { background: #f5f5f5 !important; }
           .grid-background { background-image: none !important; }
-          .text-neon-pink { color: black !important; }
+          .text-neon-lime { color: black !important; }
           .border-white\/10 { border-color: #000 !important; }
         }
         .ticket-cut-edge {
@@ -113,7 +113,7 @@ const TicketPage: React.FC = () => {
           <div className="flex gap-4">
             <button 
               onClick={handlePrint}
-              className="bg-white text-black px-6 py-2 flex items-center gap-2 font-heading text-lg hover:bg-neon-pink hover:text-white transition-all"
+              className="bg-white text-black px-6 py-2 flex items-center gap-2 font-heading text-lg hover:bg-neon-lime hover:text-white transition-all"
             >
               <Printer size={18} /> PRINT TICKET
             </button>
@@ -130,7 +130,7 @@ const TicketPage: React.FC = () => {
                 <>COLLECTION <span className="text-transparent" style={{ WebkitTextStroke: '1px white' }}>MERCH</span> VOUCHER</>
               )}
             </h1>
-            <div className="w-24 h-2 bg-neon-pink" />
+            <div className="w-24 h-2 bg-neon-lime" />
           </div>
 
           {/* MAIN TICKET SECTION (IF HAS TICKETS) */}
@@ -145,7 +145,7 @@ const TicketPage: React.FC = () => {
                 <div className="flex-1 p-8 md:p-12 border-b md:border-b-0 md:border-r border-white/10 relative">
                   <div className="mb-10 flex justify-between items-start">
                     <div>
-                      <p className="text-neon-pink font-bold text-xs uppercase tracking-[0.3em] mb-2">EVENT NAME</p>
+                      <p className="text-neon-lime font-bold text-xs uppercase tracking-[0.3em] mb-2">EVENT NAME</p>
                       <h2 className="text-4xl md:text-6xl font-heading uppercase tracking-tighter leading-none">{item.item_name}</h2>
                     </div>
                   </div>
@@ -155,14 +155,14 @@ const TicketPage: React.FC = () => {
                       <div>
                         <p className="text-white/30 font-bold text-[10px] uppercase tracking-[0.3em] mb-1">DATE & TIME</p>
                         <div className="flex items-center gap-2 font-bold text-sm">
-                          <Calendar size={14} className="text-neon-pink" />
+                          <Calendar size={14} className="text-neon-lime" />
                           <span>VALID FOR DATE OF EVENT</span>
                         </div>
                       </div>
                       <div>
                         <p className="text-white/30 font-bold text-[10px] uppercase tracking-[0.3em] mb-1">LOCATION</p>
                         <div className="flex items-center gap-2 font-bold text-sm">
-                          <MapPin size={14} className="text-neon-pink" />
+                          <MapPin size={14} className="text-neon-lime" />
                           <span>OFFICIAL VENUE</span>
                         </div>
                       </div>
@@ -172,14 +172,14 @@ const TicketPage: React.FC = () => {
                       <div>
                         <p className="text-white/30 font-bold text-[10px] uppercase tracking-[0.3em] mb-1">HOLDER</p>
                         <div className="flex items-center gap-2 font-bold text-sm uppercase">
-                          <User size={14} className="text-neon-pink" />
+                          <User size={14} className="text-neon-lime" />
                           <span>CUSTOMER #{order.user_id}</span>
                         </div>
                       </div>
                       <div>
                         <p className="text-white/30 font-bold text-[10px] uppercase tracking-[0.3em] mb-1">QUANTITY</p>
                         <div className="flex items-center gap-2 font-bold text-sm">
-                          <Hash size={14} className="text-neon-pink" />
+                          <Hash size={14} className="text-neon-lime" />
                           <span>{item.quantity} PERSON(S)</span>
                         </div>
                       </div>
@@ -211,7 +211,7 @@ const TicketPage: React.FC = () => {
               {/* Bottom Decoration Strip */}
               <div className="h-2 w-full flex">
                 {[...Array(20)].map((_, i) => (
-                  <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-neon-pink' : 'bg-white'}`}></div>
+                  <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-neon-lime' : 'bg-white'}`}></div>
                 ))}
               </div>
             </div>
@@ -233,7 +233,7 @@ const TicketPage: React.FC = () => {
                       <p className="text-white font-bold text-lg uppercase tracking-wide">{item.item_name}</p>
                       <p className="text-white/40 text-xs font-bold uppercase tracking-[0.2em]">QTY: {item.quantity} UNIT(S)</p>
                     </div>
-                    <div className="text-neon-pink font-bold font-mono tracking-tighter">
+                    <div className="text-neon-lime font-bold font-mono tracking-tighter">
                       ID: {order.id.substring(0, 8).toUpperCase()}-{idx}
                     </div>
                   </div>

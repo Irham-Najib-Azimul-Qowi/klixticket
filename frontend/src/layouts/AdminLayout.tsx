@@ -10,7 +10,8 @@ import {
   Package,
   ChevronRight,
   Bell,
-  QrCode
+  QrCode,
+  Percent
 } from 'lucide-react';
 import { authApi } from '@/services/api';
 
@@ -36,7 +37,9 @@ const AdminLayout: React.FC = () => {
     { path: '/admin/events', name: 'Events', icon: <CalendarDays size={18} /> },
     { path: '/admin/merchandise', name: 'Merchandise', icon: <Package size={18} /> },
     { path: '/admin/orders', name: 'Orders', icon: <ShoppingCart size={18} /> },
+    { path: '/admin/taxes', name: 'Tax Config', icon: <Percent size={18} /> },
   ];
+
 
   const handleLogout = () => {
     authApi.logout();

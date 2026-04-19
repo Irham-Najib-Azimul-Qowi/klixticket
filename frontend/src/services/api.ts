@@ -5,3 +5,4 @@ export { eventService as eventsApi } from './event.service';
 export { merchandiseService as merchandiseApi } from './merchandise.service';
 export { adminService as adminApi } from './admin.service';
 export { orderService as orderApi } from './order.service';
+export { taxService as taxApi } from './tax.service';

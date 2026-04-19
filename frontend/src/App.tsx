@@ -30,10 +30,11 @@ const MerchList = lazy(() => import('@/pages/admin/MerchList'));
 const CreateMerch = lazy(() => import('@/pages/admin/CreateMerch'));
 const UpdateMerch = lazy(() => import('@/pages/admin/UpdateMerch'));
 const ScanPage = lazy(() => import('@/pages/admin/ScanPage'));
+const TaxesList = lazy(() => import('@/pages/admin/TaxesList'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-black flex items-center justify-center">
-    <div className="w-12 h-12 border-4 border-neon-pink border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-12 h-12 border-4 border-neon-lime border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
@@ -71,7 +72,9 @@ const App: React.FC = () => {
               <Route path="merch/edit/:id" element={<UpdateMerch />} />
               <Route path="orders" element={<OrdersList />} />
               <Route path="scan" element={<ScanPage />} />
+              <Route path="taxes" element={<TaxesList />} />
             </Route>
+
           </Routes>
         </Suspense>
         <ToastContainer />

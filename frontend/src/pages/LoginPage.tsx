@@ -123,11 +123,11 @@ const LoginPage: React.FC = () => {
           background-size: 32px 32px;
         }
       `}</style>
-      <div className="min-h-screen bg-black grid-background font-sans text-white selection:bg-neon-pink selection:text-white flex flex-col overflow-x-hidden relative">
+      <div className="min-h-screen bg-black grid-background font-sans text-white selection:bg-neon-lime selection:text-white flex flex-col overflow-x-hidden relative">
         
         {/* Background glow effects */}
-        <div className="absolute top-[20%] left-[10%] w-[40%] h-[40%] bg-neon-pink/10 rounded-full blur-[120px] pointer-events-none"></div>
-        <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-neon-pink/5 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute top-[20%] left-[10%] w-[40%] h-[40%] bg-neon-lime/10 rounded-full blur-[120px] pointer-events-none"></div>
+        <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-neon-lime/5 rounded-full blur-[100px] pointer-events-none"></div>
 
         {/* Navbar */}
         <nav className="w-full bg-black/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
@@ -137,7 +137,7 @@ const LoginPage: React.FC = () => {
             </Link>
             <Link 
               to="/register" 
-              className="hidden md:block bg-white text-black px-8 py-3 font-heading text-xl tracking-wider hover:bg-neon-pink hover:text-white transition-all transform hover:scale-105 uppercase"
+              className="hidden md:block bg-white text-black px-8 py-3 font-heading text-xl tracking-wider hover:bg-neon-lime hover:text-white transition-all transform hover:scale-105 uppercase"
             >
               REGISTER
             </Link>
@@ -149,14 +149,14 @@ const LoginPage: React.FC = () => {
           <div className="w-full max-w-lg">
             
             <div className="bg-dark-grey border border-white/10 p-10 md:p-14 relative overflow-hidden backdrop-blur-xl">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-neon-pink/5 blur-3xl pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-neon-lime/5 blur-3xl pointer-events-none"></div>
 
               {/* Header */}
               <div className="mb-10">
                 <h1 className="text-5xl md:text-7xl font-heading uppercase tracking-tighter text-white mb-4">
                   LOGIN
                 </h1>
-                <div className="w-24 h-1 bg-neon-pink mb-6" />
+                <div className="w-24 h-1 bg-neon-lime mb-6" />
                 <p className="text-white/40 font-bold uppercase tracking-[0.2em] text-xs">
                   AUTHORIZE ACCESS TO TICKETS AND MERCH
                 </p>
@@ -191,9 +191,9 @@ const LoginPage: React.FC = () => {
 
               {/* Server Error Alert */}
               {serverError && (
-                <div className="mb-8 border border-neon-pink p-4 bg-neon-pink/10 flex items-center gap-4 animate-in slide-in-from-top-2">
-                  <span className="text-xl text-neon-pink font-heading">ERROR</span>
-                  <p className="font-bold text-[10px] uppercase tracking-widest text-neon-pink flex-1">{serverError}</p>
+                <div className="mb-8 border border-neon-lime p-4 bg-neon-lime/10 flex items-center gap-4 animate-in slide-in-from-top-2">
+                  <span className="text-xl text-neon-lime font-heading">ERROR</span>
+                  <p className="font-bold text-[10px] uppercase tracking-widest text-neon-lime flex-1">{serverError}</p>
                 </div>
               )}
 
@@ -208,10 +208,10 @@ const LoginPage: React.FC = () => {
                     id="login-email"
                     type="email"
                     placeholder="user@example.com"
-                    className={`w-full bg-black border ${errors.email ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
+                    className={`w-full bg-black border ${errors.email ? 'border-neon-lime bg-neon-lime/5' : 'border-white/20'} p-4 text-white placeholder-white/20 focus:outline-none focus:border-neon-lime transition-colors font-bold tracking-wide`}
                   />
                   {errors.email && (
-                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                    <p className="text-[9px] font-black text-neon-lime uppercase tracking-widest flex items-center gap-2">
                       <AlertCircle size={10} /> {errors.email.message}
                     </p>
                   )}
@@ -222,7 +222,7 @@ const LoginPage: React.FC = () => {
                     <label htmlFor="login-password" className="block text-xs font-bold uppercase tracking-[0.2em] text-white/50">
                       PASSWORD
                     </label>
-                    <Link to="/forgot-password" hidden={isLoading} className="text-xs font-bold uppercase text-neon-pink hover:text-white transition-colors tracking-widest">
+                    <Link to="/forgot-password" hidden={isLoading} className="text-xs font-bold uppercase text-neon-lime hover:text-white transition-colors tracking-widest">
                       FORGOT?
                     </Link>
                   </div>
@@ -232,7 +232,7 @@ const LoginPage: React.FC = () => {
                       id="login-password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      className={`w-full bg-black border ${errors.password ? 'border-neon-pink bg-neon-pink/5' : 'border-white/20'} p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-pink transition-colors font-bold tracking-wide`}
+                      className={`w-full bg-black border ${errors.password ? 'border-neon-lime bg-neon-lime/5' : 'border-white/20'} p-4 pr-16 text-white placeholder-white/20 focus:outline-none focus:border-neon-lime transition-colors font-bold tracking-wide`}
                     />
                     <button
                       type="button"
@@ -243,7 +243,7 @@ const LoginPage: React.FC = () => {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-[9px] font-black text-neon-pink uppercase tracking-widest flex items-center gap-2">
+                    <p className="text-[9px] font-black text-neon-lime uppercase tracking-widest flex items-center gap-2">
                       <AlertCircle size={10} /> {errors.password.message}
                     </p>
                   )}
@@ -252,7 +252,7 @@ const LoginPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-white text-black py-5 font-heading text-2xl uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mt-8 transform hover:-rotate-1"
+                  className="w-full bg-white text-black py-5 font-heading text-2xl uppercase tracking-widest hover:bg-neon-lime hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mt-8 transform hover:-rotate-1"
                 >
                   {isLoading ? (
                     <>

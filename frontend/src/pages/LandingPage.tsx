@@ -58,12 +58,12 @@ const MarqueeBanner = ({ text, bgClass, rotateClass, reverse = false, textColor 
   }, [reverse]);
 
   return (
-    <div className={`w-full ${bgClass} ${textColor} border-y border-white/10 py-3 md:py-5 flex overflow-hidden transform ${rotateClass}`}>
+    <div className={`w-full ${bgClass} ${textColor} border-y border-white/10 py-2 md:py-3 flex overflow-hidden transform ${rotateClass}`}>
       <div ref={marqueeRef} className="flex items-center will-change-transform">
         {[...Array(40)].map((_, i) => (
           <span 
             key={i} 
-            className={`text-2xl md:text-5xl font-heading uppercase tracking-tighter whitespace-nowrap px-4 flex items-center ${
+            className={`text-lg md:text-3xl font-marquee tracking-tighter whitespace-nowrap px-4 flex items-center ${
               i % 2 === 1 ? 'text-outline' : ''
             }`}
           >
@@ -152,7 +152,7 @@ const LandingPage: React.FC = () => {
         }
       `}</style>
 
-      <div className="min-h-screen bg-black grid-background font-sans text-white selection:bg-neon-pink selection:text-white overflow-x-hidden">
+      <div className="min-h-screen bg-black grid-background font-sans text-white selection:bg-neon-lime selection:text-white overflow-x-hidden">
 
         {/* Floating Audio Player */}
         <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[100] group">
@@ -161,13 +161,13 @@ const LandingPage: React.FC = () => {
             onClick={togglePlay}
           >
             {/* Tooltip */}
-            <div className="absolute right-full mr-4 px-4 py-2 bg-neon-pink text-white text-[10px] font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none skew-x-[-10deg]">
+            <div className="absolute right-full mr-4 px-4 py-2 bg-neon-lime text-white text-[10px] font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none skew-x-[-10deg]">
                NOW PLAYING: PERLAHAN TENANG - DAVE THE PAPS
             </div>
 
             {/* Graphic Badge */}
             <div className="relative w-12 h-12 flex items-center justify-center">
-              <i className={`fa-solid fa-compact-disc text-[50px] text-neon-pink z-0 ${isPlaying ? 'animate-[spin_2s_linear_infinite]' : ''}`}></i>
+              <i className={`fa-solid fa-compact-disc text-[50px] text-neon-lime z-0 ${isPlaying ? 'animate-[spin_2s_linear_infinite]' : ''}`}></i>
               
               {/* Notification Bubble */}
               <div className="absolute -top-1 -right-1 z-20 w-6 h-6 bg-white rounded-full flex items-center justify-center border-2 border-black">
@@ -188,34 +188,34 @@ const LandingPage: React.FC = () => {
             </a>
 
             <div className="hidden lg:flex items-center space-x-8 xl:space-x-12 text-sm xl:text-sm font-bold uppercase tracking-[0.2em] whitespace-nowrap">
-              <a href="#events" className="hover:text-neon-pink transition-colors">UPCOMING EVENTS</a>
-              <a href="#about" className="hover:text-neon-pink transition-colors">About Us</a>
+              <a href="#events" className="hover:text-neon-lime transition-colors">UPCOMING EVENTS</a>
+              <a href="#about" className="hover:text-neon-lime transition-colors">About Us</a>
 
               <div className="flex items-center gap-4 ml-4">
                 <a href="#events" className="h-[46px] px-8 bg-[#1a1a1a] border border-white/20 hover:bg-white hover:text-black transition-all flex items-center justify-center tracking-widest text-[#ddd] font-heading text-lg">
                   TICKET
                 </a>
 
-                <button onClick={() => setIsCartOpen(true)} className="relative group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-pink transition-colors flex items-center justify-center">
-                  <i className="fa-solid fa-cart-shopping text-[18px] text-[#ddd] group-hover:text-neon-pink transition-colors"></i>
+                <button onClick={() => setIsCartOpen(true)} className="relative group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-lime transition-colors flex items-center justify-center">
+                  <i className="fa-solid fa-cart-shopping text-[18px] text-[#ddd] group-hover:text-neon-lime transition-colors"></i>
                   {getItemCount() > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-neon-pink text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-neon-lime text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                       {getItemCount()}
                     </span>
                   )}
                 </button>
 
                 {currentUser ? (
-                  <Link to="/profile" className="group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-pink transition-colors flex items-center justify-center overflow-hidden">
+                  <Link to="/profile" className="group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-lime transition-colors flex items-center justify-center overflow-hidden">
                     {currentUser.avatar_url ? (
                       <img src={currentUser.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      <i className="fa-solid fa-user text-[18px] text-[#ddd] group-hover:text-neon-pink transition-colors"></i>
+                      <i className="fa-solid fa-user text-[18px] text-[#ddd] group-hover:text-neon-lime transition-colors"></i>
                     )}
                   </Link>
                 ) : (
-                  <Link to="/login" className="group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-pink transition-colors flex items-center justify-center">
-                    <i className="fa-solid fa-user text-[18px] text-[#ddd] group-hover:text-neon-pink transition-colors"></i>
+                  <Link to="/login" className="group w-[46px] h-[46px] bg-black border border-white/20 hover:border-neon-lime transition-colors flex items-center justify-center">
+                    <i className="fa-solid fa-user text-[18px] text-[#ddd] group-hover:text-neon-lime transition-colors"></i>
                   </Link>
                 )}
               </div>
@@ -236,13 +236,13 @@ const LandingPage: React.FC = () => {
 
             <div className="flex-1 flex flex-col px-10 overflow-y-auto pb-10 scrollbar-hide">
               <div className="flex flex-col items-start space-y-6 text-2xl font-bold uppercase tracking-[0.2em] w-full">
-                <a href="#" onClick={() => setIsMenuOpen(false)} className="hover:text-neon-pink transition-colors w-full border-b border-white/10 pb-4">Home</a>
+                <a href="#" onClick={() => setIsMenuOpen(false)} className="hover:text-neon-lime transition-colors w-full border-b border-white/10 pb-4">Home</a>
                 <a href="#events" onClick={() => setIsMenuOpen(false)} className="hover:text-white transition-colors w-full border-b border-white/10 pb-4">Events</a>
                 
                 <button onClick={() => { setIsMenuOpen(false); setIsCartOpen(true); }} className="hover:text-white transition-colors w-full border-b border-white/10 pb-4 flex items-center justify-between text-left">
                   <span>Cart</span>
                   {getItemCount() > 0 && (
-                    <span className="bg-neon-pink text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                    <span className="bg-neon-lime text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                       {getItemCount()}
                     </span>
                   )}
@@ -251,8 +251,8 @@ const LandingPage: React.FC = () => {
 
               <div className="mt-8 pt-4 w-full">
                 {currentUser ? (
-                  <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 group/profile hover:text-neon-pink transition-colors w-full">
-                    <div className="w-12 h-12 rounded-full border border-white/20 overflow-hidden bg-dark-grey transition-all group-hover/profile:border-neon-pink shrink-0">
+                  <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 group/profile hover:text-neon-lime transition-colors w-full">
+                    <div className="w-12 h-12 rounded-full border border-white/20 overflow-hidden bg-dark-grey transition-all group-hover/profile:border-neon-lime shrink-0">
                       {currentUser.avatar_url ? (
                         <img src={currentUser.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
@@ -266,7 +266,7 @@ const LandingPage: React.FC = () => {
                     </span>
                   </Link>
                 ) : (
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)} className="hover:text-neon-pink transition-colors text-xl font-bold uppercase tracking-[0.2em]">
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)} className="hover:text-neon-lime transition-colors text-xl font-bold uppercase tracking-[0.2em]">
                     Login
                   </Link>
                 )}
@@ -274,7 +274,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="mt-auto p-10 border-t border-white/10 shrink-0 bg-black">
-              <a href="#" className="flex justify-center items-center text-2xl hover:text-neon-pink transition-colors focus:outline-none">
+              <a href="#" className="flex justify-center items-center text-2xl hover:text-neon-lime transition-colors focus:outline-none">
                 <i className="fa-brands fa-instagram mt-[2px]"></i>
                 <span className="text-sm pl-3 font-bold tracking-[0.2em] uppercase leading-none">
                   @SOUNDSAJANG
@@ -296,42 +296,18 @@ const LandingPage: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10"></div>
           </div>
 
-          <div className="absolute top-[10%] left-[-10%] w-[60%] h-[60%] bg-neon-pink/20 rounded-full blur-[120px] animate-pulse z-0 mix-blend-overlay"></div>
-          <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-neon-pink/10 rounded-full blur-[120px] animate-pulse z-0 mix-blend-overlay" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute top-[10%] left-[-10%] w-[60%] h-[60%] bg-neon-lime/20 rounded-full blur-[120px] animate-pulse z-0 mix-blend-overlay"></div>
+          <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-neon-lime/10 rounded-full blur-[120px] animate-pulse z-0 mix-blend-overlay" style={{ animationDelay: '2s' }}></div>
         </section>
 
         <div className="relative z-20 w-full">
           <MarqueeBanner
             text={marqueeText}
-            bgClass="bg-neon-pink"
+            bgClass="bg-neon-lime"
             rotateClass=""
             reverse={false}
           />
         </div>
-
-        <section className="bg-black py-40 relative overflow-hidden grid-background border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center relative z-10">
-            <div className="flex items-center gap-4 text-white/40 font-bold uppercase tracking-[0.4em] text-[10px] mb-12">
-              <span className="text-neon-pink">»</span> ABOUT KLIXTICKET <span className="text-neon-pink">«</span>
-            </div>
-            
-            <div className="bg-white text-black px-8 md:px-12 py-4 md:py-6 mb-16 rotate-[-1deg] inline-block shadow-[10px_10px_0px_0px_rgba(255,255,255,0.1)]">
-              <h2 className="text-6xl md:text-[10rem] font-heading leading-none uppercase tracking-tighter">
-                KLIXTICKET
-              </h2>
-            </div>
-            
-            <p className="max-w-3xl text-2xl md:text-5xl font-heading text-white/90 leading-tight mb-8 uppercase tracking-tight">
-              A NEW ERA OF TICKETING.<br className="hidden md:block" />
-              WHERE EVERY TICKET IS A MEMORY.
-            </p>
-          </div>
-          
-          <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-            <div className="absolute top-1/4 -left-20 w-64 h-64 border border-neon-pink rounded-full blur-3xl"></div>
-            <div className="absolute bottom-1/4 -right-20 w-64 h-64 border border-white/20 rounded-full blur-3xl"></div>
-          </div>
-        </section>
 
         <section id="events" className="bg-black py-40 relative overflow-hidden border-t border-white/10">
           <div className="max-w-[1400px] mx-auto px-4 md:px-8 relative z-10">
@@ -347,7 +323,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {eventsLoading ? (
-               <div className="flex flex-col items-center justify-center py-20 text-neon-pink">
+               <div className="flex flex-col items-center justify-center py-20 text-neon-lime">
                  <Loader2 className="w-16 h-16 animate-spin mb-4" />
                  <p className="font-heading text-2xl tracking-widest animate-pulse uppercase">Syncing Events...</p>
                </div>
@@ -363,7 +339,7 @@ const LandingPage: React.FC = () => {
                    <div 
                      key={event.id}
                      onClick={() => navigate(`/event/${event.id}`)} 
-                     className="group cursor-pointer bg-dark-grey border border-white/5 transition-all hover:border-neon-pink hover:-translate-y-2 flex flex-col"
+                     className="group cursor-pointer bg-dark-grey border border-white/5 transition-all hover:border-neon-lime hover:-translate-y-2 flex flex-col"
                    >
                      <div className="relative w-full aspect-[16/9] overflow-hidden">
                        <img 
@@ -377,7 +353,7 @@ const LandingPage: React.FC = () => {
                        />
                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                         <div className="bg-neon-pink text-white px-4 py-2 font-heading text-sm uppercase tracking-widest">
+                         <div className="bg-neon-lime text-white px-4 py-2 font-heading text-sm uppercase tracking-widest">
                            {event.publish_status}
                          </div>
                        </div>
@@ -385,26 +361,26 @@ const LandingPage: React.FC = () => {
                      <div className="p-8 md:p-10 flex-1 flex flex-col">
                        <div className="flex items-center gap-6 mb-6 text-white/50 text-xs font-bold uppercase tracking-[0.2em]">
                          <div className="flex items-center gap-2">
-                           <Calendar className="w-4 h-4 text-neon-pink" />
+                           <Calendar className="w-4 h-4 text-neon-lime" />
                            {formatDate(event.start_date)}
                          </div>
                          <div className="flex items-center gap-2">
-                           <MapPin className="w-4 h-4 text-neon-pink" />
+                           <MapPin className="w-4 h-4 text-neon-lime" />
                            {event.location}
                          </div>
                        </div>
                        
-                       <h3 className="text-5xl md:text-6xl font-heading tracking-tighter text-white uppercase group-hover:text-neon-pink transition-colors mb-4 truncate">
+                       <h3 className="text-5xl md:text-6xl font-heading tracking-tighter text-white uppercase group-hover:text-neon-lime transition-colors mb-4 truncate">
                          {event.title}
                        </h3>
                        
-                       <p className="text-white/40 font-bold uppercase tracking-[0.1em] text-sm line-clamp-2 leading-relaxed mb-10 border-l border-neon-pink/50 pl-4">
+                       <p className="text-white/40 font-bold uppercase tracking-[0.1em] text-sm line-clamp-2 leading-relaxed mb-10 border-l border-neon-lime/50 pl-4">
                          {event.description}
                        </p>
                        
                        <div className="mt-auto pt-6 border-t border-white/10 flex items-center justify-between">
                          <span className="font-heading text-2xl uppercase tracking-widest text-white">GET TICKETS</span>
-                         <i className="fa-solid fa-arrow-right-long text-neon-pink text-2xl group-hover:translate-x-2 transition-transform"></i>
+                         <i className="fa-solid fa-arrow-right-long text-neon-lime text-2xl group-hover:translate-x-2 transition-transform"></i>
                        </div>
                      </div>
                    </div>
@@ -414,10 +390,10 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        <MarqueeBanner text={marqueeText} bgClass="bg-neon-pink" rotateClass="" reverse={true} />
+        <MarqueeBanner text={marqueeText} bgClass="bg-neon-lime" rotateClass="" reverse={true} />
 
         <footer id="about" className="bg-black text-white pt-40 pb-20 border-t border-white/5 relative overflow-hidden">
-          <div className="absolute top-1/4 left-0 w-96 h-96 bg-neon-pink/5 rounded-full blur-[120px] pointer-events-none"></div>
+          <div className="absolute top-1/4 left-0 w-96 h-96 bg-neon-lime/5 rounded-full blur-[120px] pointer-events-none"></div>
           <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-[150px] pointer-events-none"></div>
 
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full overflow-hidden pointer-events-none select-none flex items-center justify-center z-0">
@@ -434,7 +410,7 @@ const LandingPage: React.FC = () => {
             <div className="w-full flex items-center justify-center mb-24 opacity-60">
               <div className="flex-1 h-[1px] bg-white/20"></div>
               <div className="flex justify-center">
-                <a href="https://www.instagram.com/soundsajang" target="_blank" className="flex items-center text-3xl hover:text-neon-pink transition-colors focus:outline-none">
+                <a href="https://www.instagram.com/soundsajang" target="_blank" className="flex items-center text-3xl hover:text-neon-lime transition-colors focus:outline-none">
                   <i className="fa-brands fa-instagram"></i>
                   <span className="text-xl pl-2 font-bold tracking-[0.2em] uppercase">
                     @SOUNDSAJANG

@@ -23,7 +23,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   const navigate = useNavigate();
   const { clearCart } = useCart();
   const [user, setUser] = useState<User | null>(null);
-  const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [historyOrders, setHistoryOrders] = useState<Order[]>([]);
   const [digitalItems, setDigitalItems] = useState<RedeemableItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,9 +61,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userData, activeOrdersData, historyOrdersData, digitalItemsData] = await Promise.all([
+        const [userData, historyOrdersData, digitalItemsData] = await Promise.all([
           authApi.getMe(),
-          orderApi.getMyOrders({ filter: 'active' }),
           orderApi.getMyOrders({ filter: 'history' }),
           orderApi.getMyItems()
         ]);
@@ -74,7 +72,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
           name: userData.name || '',
           email: userData.email || '',
         });
-        setActiveOrders(activeOrdersData || []);
         setHistoryOrders(historyOrdersData || []);
         setDigitalItems(digitalItemsData || []);
       } catch (err: any) {
@@ -131,7 +128,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
     navigate('/login');
   };
 
-  const now = new Date();
+  // const now = new Date();
   
   // Filter for My Items:
   // Tickets: Not used AND event not passed
@@ -174,7 +171,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center px-6">
-        <div className="w-12 h-12 mb-8 border-2 border-neon-pink border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(255,0,128,0.4)]"></div>
+        <div className="w-12 h-12 mb-8 border-2 border-neon-lime border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(255,0,128,0.4)]"></div>
         <p className="font-heading uppercase text-sm text-white tracking-widest animate-pulse">Syncing Session...</p>
       </div>
     );
@@ -188,9 +185,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
             <img src={logoImg} alt="KlixTicket Logo" className="h-10 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-6">
-             <Link to="/" className="text-[9px] font-bold text-white/50 uppercase tracking-widest hover:text-neon-pink transition-colors">Kembali ke Landing Page</Link>
+             <Link to="/" className="text-[9px] font-bold text-white/50 uppercase tracking-widest hover:text-neon-lime transition-colors">Kembali ke Landing Page</Link>
              {user?.role === 'admin' && (
-              <Link to="/admin" className="px-4 py-1.5 bg-neon-pink/10 text-neon-pink border border-neon-pink/20 rounded-sm font-bold text-[9px] uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all">Go to Admin</Link>
+              <Link to="/admin" className="px-4 py-1.5 bg-neon-lime/10 text-neon-lime border border-neon-lime/20 rounded-sm font-bold text-[9px] uppercase tracking-widest hover:bg-neon-lime hover:text-white transition-all">Go to Admin</Link>
             )}
              <button onClick={handleLogout} className="text-[9px] font-bold text-white/50 uppercase tracking-widest hover:text-red-500 transition-colors">Sign Out</button>
           </div>
@@ -205,12 +202,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
               <div className="w-24 h-24 bg-dark-grey border border-white/10 flex items-center justify-center rounded-sm">
                  <UserCircle className="w-16 h-16 text-white/10" />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-neon-pink rounded-full border-2 border-black flex items-center justify-center text-black">
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-neon-lime rounded-full border-2 border-black flex items-center justify-center text-black">
                  <CheckCircle2 size={12} />
               </div>
            </div>
            <div className="text-center md:text-left flex-1">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-neon-pink mb-2">Authenticated Account</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-neon-lime mb-2">Authenticated Account</p>
               <h1 className="text-4xl md:text-5xl font-heading uppercase leading-none tracking-tighter mb-2">{user?.name}</h1>
               <p className="text-white/40 text-sm">{user?.email}</p>
            </div>
@@ -221,7 +218,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
               </div>
               <div className="px-4 py-2 bg-dark-grey border border-white/5 rounded-sm text-center">
                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-1">Active Items</p>
-                 <p className="font-heading text-xl text-neon-pink">{myPaidItems.length}</p>
+                 <p className="font-heading text-xl text-neon-lime">{myPaidItems.length}</p>
               </div>
            </div>
         </div>
@@ -277,20 +274,20 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                         <div className="col-span-full py-24 bg-dark-grey/20 border border-dashed border-white/5 flex flex-col items-center text-center">
                            <ShoppingBag size={48} className="mb-4 text-white/10" />
                            <p className="text-white/40 text-sm italic font-medium">No active digital items found.</p>
-                           <Link to="/" className="mt-8 px-8 py-3 bg-white text-black font-bold uppercase text-[10px] tracking-widest hover:bg-neon-pink hover:text-white transition-all transform hover:-rotate-1">Discover Events</Link>
+                           <Link to="/" className="mt-8 px-8 py-3 bg-white text-black font-bold uppercase text-[10px] tracking-widest hover:bg-neon-lime hover:text-white transition-all transform hover:-rotate-1">Discover Events</Link>
                         </div>
                       ) : (
                         myPaidItems.map((item, idx) => (
                           <div 
                             key={idx} 
                             onClick={() => setSelectedItem(item)}
-                            className="bg-dark-grey border border-white/5 p-4 hover:border-neon-pink transition-all cursor-pointer group flex flex-row items-center gap-6 relative overflow-hidden"
+                            className="bg-dark-grey border border-white/5 p-4 hover:border-neon-lime transition-all cursor-pointer group flex flex-row items-center gap-6 relative overflow-hidden"
                           >
                             <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
                                {item.item_type === 'ticket' ? <Ticket size={120} /> : <ShoppingBag size={120} />}
                             </div>
                             
-                            <div className="w-16 h-16 bg-black border border-white/10 flex-shrink-0 flex items-center justify-center text-neon-pink shadow-[0_0_15px_rgba(255,0,128,0.1)] group-hover:shadow-[0_0_15px_rgba(255,0,128,0.3)] transition-all relative z-10">
+                            <div className="w-16 h-16 bg-black border border-white/10 flex-shrink-0 flex items-center justify-center text-neon-lime shadow-[0_0_15px_rgba(255,0,128,0.1)] group-hover:shadow-[0_0_15px_rgba(255,0,128,0.3)] transition-all relative z-10">
                                {item.item_type === 'ticket' ? <Ticket size={32} /> : <ShoppingBag size={32} />}
                             </div>
  
@@ -299,12 +296,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                                   <span className="text-[8px] font-black uppercase text-white px-2 py-1 bg-white/10 rounded-sm tracking-widest">Ownership Confirmed</span>
                                   <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Code: {item.code}</span>
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-heading uppercase text-white group-hover:text-neon-pink transition-colors truncate">{item.item_name}</h3>
+                                <h3 className="text-xl md:text-2xl font-heading uppercase text-white group-hover:text-neon-lime transition-colors truncate">{item.item_name}</h3>
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1">{item.item_type} • ID: {item.order_id.slice(-6).toUpperCase()}</p>
                             </div>
  
                             <button 
-                             className="hidden md:flex flex-shrink-0 items-center gap-2 text-[10px] font-black uppercase bg-white/5 px-4 py-3 border border-white/10 text-neon-pink tracking-widest hover:bg-neon-pink hover:text-white transition-colors relative z-10"
+                             className="hidden md:flex flex-shrink-0 items-center gap-2 text-[10px] font-black uppercase bg-white/5 px-4 py-3 border border-white/10 text-neon-lime tracking-widest hover:bg-neon-lime hover:text-white transition-colors relative z-10"
                             >
                                {item.item_type === 'ticket' ? 'VIEW TICKET' : 'VIEW VOUCHER'} <ArrowRight size={12} />
                             </button>
@@ -351,7 +348,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                                         {order.status.toLowerCase() === 'paid' && (
                                           <button 
                                            onClick={() => setActiveSection('items')}
-                                           className="text-[9px] font-bold uppercase tracking-widest text-neon-pink hover:text-white transition-colors"
+                                           className="text-[9px] font-bold uppercase tracking-widest text-neon-lime hover:text-white transition-colors"
                                           >
                                             ASSETS
                                           </button>
@@ -376,37 +373,37 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                    
                    <form onSubmit={handleSubmitProfile(onUpdateProfile)} className="space-y-8">
                       <div className="space-y-2 group">
-                         <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Full Display Name</label>
+                         <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-lime transition-colors">Full Display Name</label>
                          <div className="relative">
                             <input 
                               {...registerProfile('name')}
-                              className={`w-full bg-dark-grey border ${profileErrors.name ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all`}
+                              className={`w-full bg-dark-grey border ${profileErrors.name ? 'border-neon-lime' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-lime transition-all`}
                               placeholder="Enter your name"
                             />
-                            <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-pink/20 transition-colors" size={20} />
+                            <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-lime/20 transition-colors" size={20} />
                          </div>
                          {profileErrors.name && (
-                           <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{profileErrors.name.message}</p>
+                           <p className="text-[10px] font-bold text-neon-lime uppercase tracking-widest mt-1">{profileErrors.name.message}</p>
                          )}
                       </div>
                       
                       <div className="space-y-2 group">
-                         <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Primary Contact Email</label>
+                         <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-lime transition-colors">Primary Contact Email</label>
                          <div className="relative">
                             <input 
                               {...registerProfile('email')}
-                              className={`w-full bg-dark-grey border ${profileErrors.email ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all`} 
+                              className={`w-full bg-dark-grey border ${profileErrors.email ? 'border-neon-lime' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-lime transition-all`} 
                               placeholder="Enter your email"
                             />
-                            <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-pink/20 transition-colors" size={20} />
+                            <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-lime/20 transition-colors" size={20} />
                          </div>
                          {profileErrors.email && (
-                           <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{profileErrors.email.message}</p>
+                           <p className="text-[10px] font-bold text-neon-lime uppercase tracking-widest mt-1">{profileErrors.email.message}</p>
                          )}
                       </div>
 
                       {(serverError || success) && activeSection === 'account' && (
-                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${serverError ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/30' : 'bg-white/10 text-white border border-white/20'}`}>
+                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${serverError ? 'bg-neon-lime/20 text-neon-lime border border-neon-lime/30' : 'bg-white/10 text-white border border-white/20'}`}>
                            {serverError || success}
                         </div>
                       )}
@@ -414,7 +411,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                       <button 
                         type="submit" 
                         disabled={isSaving}
-                        className="w-full py-5 bg-white text-black font-heading text-xl uppercase tracking-[0.2em] hover:bg-neon-pink transition-all disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98]"
+                        className="w-full py-5 bg-white text-black font-heading text-xl uppercase tracking-[0.2em] hover:bg-neon-lime transition-all disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98]"
                       >
                          {isSaving ? <Loader2 className="animate-spin" size={24} /> : 'Save Profile Changes'}
                       </button>
@@ -431,50 +428,50 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                    
                    <form onSubmit={handleSubmitPassword(onChangePassword)} className="space-y-8">
                       <div className="space-y-2 group">
-                         <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Current Password</label>
+                         <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-lime transition-colors">Current Password</label>
                          <div className="relative">
                             <input 
                               {...registerPassword('oldPassword')}
                               type="password"
-                              className={`w-full bg-dark-grey border ${passwordErrors.oldPassword ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-pink transition-all`}
+                              className={`w-full bg-dark-grey border ${passwordErrors.oldPassword ? 'border-neon-lime' : 'border-white/10'} p-4 font-heading text-xl text-white outline-none focus:border-neon-lime transition-all`}
                               placeholder="••••••••"
                             />
-                            <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-pink/20 transition-colors" size={20} />
+                            <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-neon-lime/20 transition-colors" size={20} />
                          </div>
                          {passwordErrors.oldPassword && (
-                           <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{passwordErrors.oldPassword.message}</p>
+                           <p className="text-[10px] font-bold text-neon-lime uppercase tracking-widest mt-1">{passwordErrors.oldPassword.message}</p>
                          )}
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                          <div className="space-y-2 group">
-                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">New Password</label>
+                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-lime transition-colors">New Password</label>
                             <input 
                               {...registerPassword('newPassword')}
                               type="password"
-                              className={`w-full bg-dark-grey border ${passwordErrors.newPassword ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-lg text-white outline-none focus:border-neon-pink transition-all`}
+                              className={`w-full bg-dark-grey border ${passwordErrors.newPassword ? 'border-neon-lime' : 'border-white/10'} p-4 font-heading text-lg text-white outline-none focus:border-neon-lime transition-all`}
                               placeholder="Enter new"
                             />
                             {passwordErrors.newPassword && (
-                              <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{passwordErrors.newPassword.message}</p>
+                              <p className="text-[10px] font-bold text-neon-lime uppercase tracking-widest mt-1">{passwordErrors.newPassword.message}</p>
                             )}
                          </div>
                          <div className="space-y-2 group">
-                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-pink transition-colors">Confirm New</label>
+                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] group-focus-within:text-neon-lime transition-colors">Confirm New</label>
                             <input 
                               {...registerPassword('confirmPassword')}
                               type="password"
-                              className={`w-full bg-dark-grey border ${passwordErrors.confirmPassword ? 'border-neon-pink' : 'border-white/10'} p-4 font-heading text-lg text-white outline-none focus:border-neon-pink transition-all`}
+                              className={`w-full bg-dark-grey border ${passwordErrors.confirmPassword ? 'border-neon-lime' : 'border-white/10'} p-4 font-heading text-lg text-white outline-none focus:border-neon-lime transition-all`}
                               placeholder="Confirm new"
                             />
                             {passwordErrors.confirmPassword && (
-                              <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest mt-1">{passwordErrors.confirmPassword.message}</p>
+                              <p className="text-[10px] font-bold text-neon-lime uppercase tracking-widest mt-1">{passwordErrors.confirmPassword.message}</p>
                             )}
                          </div>
                       </div>
 
                       {(serverError || success) && activeSection === 'security' && (
-                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${serverError ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/30' : 'bg-white/10 text-white border border-white/20'}`}>
+                        <div className={`p-4 text-center font-bold text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-2 ${serverError ? 'bg-neon-lime/20 text-neon-lime border border-neon-lime/30' : 'bg-white/10 text-white border border-white/20'}`}>
                            {serverError || success}
                         </div>
                       )}
@@ -482,7 +479,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                       <button 
                         type="submit" 
                         disabled={isSaving}
-                        className="w-full py-5 bg-white text-black font-heading text-xl uppercase tracking-[0.2em] hover:bg-neon-pink transition-all disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98]"
+                        className="w-full py-5 bg-white text-black font-heading text-xl uppercase tracking-[0.2em] hover:bg-neon-lime transition-all disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98]"
                       >
                          {isSaving ? <Loader2 className="animate-spin" size={24} /> : 'Update Secure Password'}
                       </button>
@@ -490,7 +487,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
 
                    <div className="mt-12 p-6 border border-white/5 bg-white/[0.02]">
                       <div className="flex gap-4">
-                         <Shield className="text-neon-pink flex-shrink-0" size={24} />
+                         <Shield className="text-neon-lime flex-shrink-0" size={24} />
                          <div>
                             <h4 className="text-sm font-bold uppercase tracking-widest mb-1">Account Protection Enabled</h4>
                             <p className="text-white/40 text-xs leading-relaxed">Your account is secured with standard encryption protocols. To maintain safety, avoid using reused passwords and regularly update your credentials.</p>
@@ -511,7 +508,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
             
             <button 
               onClick={() => setSelectedItem(null)} 
-              className="fixed top-6 right-6 z-[101] flex items-center gap-2 bg-white/5 border border-white/10 text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-neon-pink hover:border-neon-pink transition-all"
+              className="fixed top-6 right-6 z-[101] flex items-center gap-2 bg-white/5 border border-white/10 text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-neon-lime hover:border-neon-lime transition-all"
             >
                <X size={16} /> Close
             </button>
@@ -537,19 +534,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                 {/* Modal Invoice Header */}
                 <div className="p-8 border-b border-white/10 bg-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                   <div>
-                    <h2 className="text-3xl font-heading text-white uppercase mb-1">Electronic <span className="text-neon-pink">Invoice</span></h2>
+                    <h2 className="text-3xl font-heading text-white uppercase mb-1">Electronic <span className="text-neon-lime">Invoice</span></h2>
                     <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em]">ID: {selectedItem.orderId}</p>
                   </div>
                   <div className="flex gap-4 no-print">
                       <button 
                         onClick={() => window.print()}
-                        className="flex items-center gap-2 bg-white/10 hover:bg-neon-pink text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all"
+                        className="flex items-center gap-2 bg-white/10 hover:bg-neon-lime text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all"
                       >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print
                       </button>
                       <button 
                         onClick={() => navigate(`/order/${selectedItem.orderId}/ticket`)}
-                        className="flex items-center gap-2 bg-neon-pink text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
+                        className="flex items-center gap-2 bg-neon-lime text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
                       >
                         <Ticket size={16} /> Open Pass
                       </button>
@@ -579,7 +576,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                             level="H"
                          />
                       </div>
-                      <p className="text-xs font-mono font-bold text-neon-pink uppercase tracking-widest mt-2 block break-all">
+                      <p className="text-xs font-mono font-bold text-neon-lime uppercase tracking-widest mt-2 block break-all">
                         {selectedItem.code}
                       </p>
                     </div>
@@ -605,18 +602,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ tab }) => {
                         <div className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
                           <div>
                             <p className="text-lg font-heading text-white uppercase">{selectedItem.item_name}</p>
-                            <p className="text-[10px] font-bold text-neon-pink uppercase tracking-widest">{selectedItem.item_type}</p>
+                            <p className="text-[10px] font-bold text-neon-lime uppercase tracking-widest">{selectedItem.item_type}</p>
                           </div>
                         </div>
                     </div>
                   </div>
 
                   {/* Total inside Modal */}
-                  <div className="mt-12 pt-8 border-t-2 border-neon-pink flex justify-between items-end">
+                  <div className="mt-12 pt-8 border-t-2 border-neon-lime flex justify-between items-end">
                     <div>
                         <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.5em] mb-2">Authenticated On</p>
                         <div className="flex items-center gap-3">
-                            <Clock className="text-neon-pink mb-1" size={20} />
+                            <Clock className="text-neon-lime mb-1" size={20} />
                             <p className="text-lg font-heading text-white tracking-tighter">
                                 {new Date(selectedItem.created_at).toLocaleString()}
                             </p>

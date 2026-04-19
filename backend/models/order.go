@@ -13,6 +13,8 @@ type Order struct {
 	User           User           `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"user,omitempty"`
 	Status         string         `gorm:"type:varchar(20);default:'pending';index" json:"status"` // 'pending', 'paid', 'failed', 'expired', 'cancelled'
 	TotalAmount    float64        `gorm:"type:decimal(12,2);not null" json:"total_amount"`
+	Subtotal       float64        `gorm:"type:decimal(12,2);not null;default:0" json:"subtotal"`
+	TotalTax       float64        `gorm:"type:decimal(12,2);not null;default:0" json:"total_tax"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	ExpiredAt      time.Time      `gorm:"not null" json:"expired_at"` // order akan kadaluarsa misal dalam 24 jam
@@ -24,6 +26,7 @@ type Order struct {
 	QRCode         string         `gorm:"type:varchar(255)" json:"qr_code,omitempty"`
 	OrderItems     []OrderItem    `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_items,omitempty"`
 	Payment        *Payment       `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"payment,omitempty"`
+	OrderTaxes     []OrderTax     `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"order_taxes,omitempty"`
 }
 
 type OrderItem struct {

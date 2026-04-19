@@ -76,12 +76,14 @@ func main() {
 	eventRepo := repositories.NewEventRepository(config.DB)
 	merchRepo := repositories.NewMerchandiseRepository(config.DB)
 	orderRepo := repositories.NewOrderRepository(config.DB)
+	taxRepo := repositories.NewTaxRepository(config.DB)
 
 	authService := services.NewAuthService(userRepo)
 	eventService := services.NewEventService(eventRepo)
 	merchService := services.NewMerchandiseService(merchRepo)
 	xenditService := services.NewXenditService()
-	orderService := services.NewOrderService(orderRepo, eventRepo, merchRepo, userRepo, xenditService)
+	taxService := services.NewTaxService(taxRepo)
+	orderService := services.NewOrderService(orderRepo, eventRepo, merchRepo, userRepo, xenditService, taxRepo)
 	dashboardService := services.NewDashboardService(orderRepo, eventRepo, merchRepo)
 
 	authHandler := controllers.NewAuthHandler(authService, userRepo)
@@ -90,6 +92,8 @@ func main() {
 	orderHandler := controllers.NewOrderHandler(orderService)
 	webhookHandler := controllers.NewWebhookHandler(orderService)
 	dashboardHandler := controllers.NewDashboardHandler(dashboardService)
+	taxHandler := controllers.NewTaxHandler(taxService)
+
 
 	// 4. ROUTER SETUP
 	r := gin.New()
@@ -115,6 +119,7 @@ func main() {
 		orderHandler,
 		webhookHandler,
 		dashboardHandler,
+		taxHandler,
 	)
 
 	port := os.Getenv("PORT")
