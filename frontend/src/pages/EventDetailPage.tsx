@@ -6,9 +6,6 @@ import { formatImageURL, getPlaceholderImage } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import logoImg from '@/assets/images/klix-logo.webp';
 import CartDrawer from '@/components/CartDrawer';
-import daveImg from '@/assets/images/lineup/paps.webp';
-import g6gImg from '@/assets/images/lineup/g6g.webp';
-import hakiImg from '@/assets/images/lineup/hq.webp';
 import tshirtImg from '@/assets/tshirt.webp';
 
 function formatDate(dateStr: string) {
@@ -34,11 +31,6 @@ function formatPrice(price: number) {
   }).format(price);
 }
 
-const MOCK_LINEUP = [
-  { id: 9991, title: 'DAVE THE PAPS', start_date: '2026-12-01T20:00:00Z', banner_url: daveImg, location: 'MAIN STAGE', description: 'Legendary Indonesian Reggae', publish_status: 'published' },
-  { id: 9992, title: 'G6G', start_date: '2026-12-02T20:00:00Z', banner_url: g6gImg, location: 'URBAN STAGE', description: 'Modern Rock Explosion', publish_status: 'published' },
-  { id: 9993, title: 'HAKI', start_date: '2026-12-03T20:00:00Z', banner_url: hakiImg, location: 'INDIE STAGE', description: 'Alternative Vibes', publish_status: 'published' },
-];
 
 const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -104,7 +96,7 @@ const EventDetailPage: React.FC = () => {
   useEffect(() => {
     let animationFrameId: number;
     const scroll = () => {
-      const displayEvents = MOCK_LINEUP;
+      const displayEvents = event?.lineup || [];
       if (eventScrollRef.current && !isEventsHovered && !isDragging.current && displayEvents.length > 0) {
         scrollPosRef.current -= 1.2;
         const maxScroll = eventScrollRef.current.scrollWidth / 2;
@@ -513,50 +505,66 @@ const EventDetailPage: React.FC = () => {
                     <h2 className="text-6xl md:text-8xl font-heading leading-none tracking-tighter uppercase">
                       LINE-<span className="text-outline">UP</span>
                     </h2>
-                    <p className="text-white/40 font-bold uppercase tracking-[0.4em] text-xs mt-4">
-                      THE ARTISTS DEFINING THE SOUND OF THIS EVENT
-                    </p>
+                    {event.lineup && event.lineup.length > 0 ? (
+                      <p className="text-white/40 font-bold uppercase tracking-[0.4em] text-xs mt-4">
+                        THE ARTISTS DEFINING THE SOUND OF THIS EVENT
+                      </p>
+                    ) : (
+                      <p className="text-white/40 font-bold uppercase tracking-[0.4em] text-xs mt-4">
+                        MANIFEST PENDING. FULL ROSTER TBA.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div
-                className="w-full relative select-none"
-                onMouseEnter={() => setIsEventsHovered(true)}
-                onMouseLeave={() => { setIsEventsHovered(false); stopDragging(); }}
-              >
+              {event.lineup && event.lineup.length > 0 ? (
                 <div
-                  ref={eventScrollRef}
-                  onMouseDown={onMouseDown}
-                  onMouseMove={onMouseMove}
-                  onMouseUp={stopDragging}
-                  onMouseLeave={stopDragging}
-                  className="flex overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing gap-8 px-4 md:px-8 py-4"
+                  className="w-full relative select-none"
+                  onMouseEnter={() => setIsEventsHovered(true)}
+                  onMouseLeave={() => { setIsEventsHovered(false); stopDragging(); }}
                 >
-                  {[...MOCK_LINEUP, ...MOCK_LINEUP].map((item, index) => (
-                    <div key={`${item.id}-${index}`} className="group cursor-pointer w-[300px] md:w-[450px] flex-shrink-0">
-                      <div className="relative w-full aspect-[16/9] bg-dark-grey border border-white/5 overflow-hidden mb-4 transition-all group-hover:border-neon-lime group-hover:-translate-y-2">
-                         <img src={item.banner_url} alt={item.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 pointer-events-none" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                          <span className="text-white font-bold tracking-[0.4em] text-xs flex items-center gap-2 uppercase">
-                            WATCH PREVIEW <i className="fa-solid fa-arrow-right text-lg"></i>
-                          </span>
+                  <div
+                    ref={eventScrollRef}
+                    onMouseDown={onMouseDown}
+                    onMouseMove={onMouseMove}
+                    onMouseUp={stopDragging}
+                    onMouseLeave={stopDragging}
+                    className="flex overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing gap-8 px-4 md:px-8 py-4"
+                  >
+                    {[...event.lineup, ...event.lineup].map((item, index) => (
+                      <div key={`${item.id}-${index}`} className="group cursor-pointer w-[300px] md:w-[450px] flex-shrink-0">
+                        <div className="relative w-full aspect-[16/9] bg-dark-grey border border-white/5 overflow-hidden mb-4 transition-all group-hover:border-neon-lime group-hover:-translate-y-2">
+                           <img 
+                            src={formatImageURL(item.image_url)} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 pointer-events-none" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = getPlaceholderImage(); 
+                            }}
+                           />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                            <span className="text-white font-bold tracking-[0.4em] text-xs flex items-center gap-2 uppercase">
+                              ARTIST PROFILE <i className="fa-solid fa-arrow-right text-lg"></i>
+                            </span>
+                          </div>
                         </div>
+                        <h3 className="text-3xl md:text-5xl font-heading tracking-tighter group-hover:text-neon-lime transition-colors line-clamp-1 uppercase">{item.name}</h3>
                       </div>
-                      <h3 className="text-3xl md:text-5xl font-heading tracking-tighter group-hover:text-neon-lime transition-colors line-clamp-1 uppercase">{item.title}</h3>
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="text-sm font-heading text-white/30 uppercase tracking-tighter">
-                          {item.description}
-                        </span>
-                        <div className="h-3 w-[1px] bg-white/10"></div>
-                        <span className="text-[10px] font-bold text-neon-lime uppercase tracking-[0.2em] leading-none">
-                          {item.location}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="max-w-[1400px] mx-auto px-4 md:px-8">
+                   <div className="py-24 border border-dashed border-white/10 flex flex-col items-center justify-center gap-6">
+                      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center border border-white/5">
+                        <Sparkles className="w-10 h-10 text-white/20" />
+                      </div>
+                      <p className="font-heading text-2xl uppercase tracking-[0.2em] text-white/20">Awaiting Manifest Transmission</p>
+                   </div>
+                </div>
+              )}
             </section>
 
           </main>

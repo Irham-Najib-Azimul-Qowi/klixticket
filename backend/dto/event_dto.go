@@ -18,6 +18,7 @@ type CreateEventRequest struct {
 	BannerURL     *string               `json:"banner_url"`
 	PublishStatus string                `json:"publish_status" binding:"required,oneof=draft published"`
 	TicketTypes   []CreateTicketRequest `json:"ticket_types" binding:"required,min=1,dive"`
+	Lineup        []LineupItemRequest   `json:"lineup" binding:"dive"`
 }
 
 type UpdateEventRequest struct {
@@ -29,6 +30,7 @@ type UpdateEventRequest struct {
 	BannerURL     *string                `json:"banner_url"`
 	PublishStatus string                 `json:"publish_status" binding:"required,oneof=draft published"`
 	TicketTypes   *[]UpsertTicketRequest `json:"ticket_types"`
+	Lineup        *[]UpsertLineupRequest `json:"lineup"`
 }
 
 type CreateTicketRequest struct {
@@ -54,4 +56,15 @@ type UpsertTicketRequest struct {
 	SalesStartAt time.Time `json:"sales_start_at" binding:"required"`
 	SalesEndAt   time.Time `json:"sales_end_at" binding:"required"`
 	ActiveStatus *bool     `json:"active_status"`
+}
+
+type LineupItemRequest struct {
+	Name     string  `json:"name" binding:"required"`
+	ImageURL *string `json:"image_url"`
+}
+
+type UpsertLineupRequest struct {
+	ID       uint    `json:"id"`
+	Name     string  `json:"name" binding:"required"`
+	ImageURL *string `json:"image_url"`
 }

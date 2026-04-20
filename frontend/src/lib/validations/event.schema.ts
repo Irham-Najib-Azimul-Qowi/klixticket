@@ -7,6 +7,16 @@ const ticketTierSchema = z.object({
   quota: z.any().transform((val) => Number(val)).pipe(z.number().int().min(1, 'Kuota minimal 1.')),
 });
 
+const lineupItemSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(1, 'Nama artis harus diisi.'),
+  image: z.any().optional().refine((file) => {
+    if (!file || typeof file === 'string') return true;
+    return file instanceof File;
+  }, 'Foto harus berupa file gambar.'),
+  image_url: z.string().optional()
+});
+
 export const eventSchema = z.object({
   title: z.string().min(3, 'Judul minimal 3 karakter.'),
   description: z.string().optional(),
@@ -15,9 +25,10 @@ export const eventSchema = z.object({
   end_date: z.string().min(1, 'Tanggal selesai harus diisi.'),
   publish_status: z.enum(['draft', 'published']),
   ticket_types: z.array(ticketTierSchema).min(1, 'Minimal satu tipe tiket harus ada.'),
+  lineup: z.array(lineupItemSchema).optional(),
   // File is validated as an instance of File or null
   banner: z.any().optional().refine((file) => {
-    if (!file) return true;
+    if (!file || typeof file === 'string') return true;
     return file instanceof File;
   }, 'Banner harus berupa file gambar.')
 }).refine((data) => {

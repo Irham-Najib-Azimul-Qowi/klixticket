@@ -64,6 +64,26 @@ func bindCreateEventRequest(c *gin.Context) (dto.CreateEventRequest, bool, error
 			return req, false, fmt.Errorf("invalid ticket_types: %w", err)
 		}
 
+		lineup := make([]dto.LineupItemRequest, 0)
+		rawLineup := c.PostForm("lineup")
+		if rawLineup != "" {
+			if err := json.Unmarshal([]byte(rawLineup), &lineup); err != nil {
+				return req, false, fmt.Errorf("invalid lineup: %w", err)
+			}
+		}
+
+		// Handle Lineup Images
+		for i := range lineup {
+			fieldName := fmt.Sprintf("lineup_image_%d", i)
+			artistImageURL, err := utils.SaveUploadedImage(c, fieldName, "lineup")
+			if err != nil {
+				return req, false, fmt.Errorf("failed to save lineup image %d: %w", i, err)
+			}
+			if artistImageURL != nil {
+				lineup[i].ImageURL = artistImageURL
+			}
+		}
+
 		bannerURL, err := utils.SaveUploadedImage(c, "banner", "events")
 		if err != nil {
 			return req, false, err
@@ -85,6 +105,7 @@ func bindCreateEventRequest(c *gin.Context) (dto.CreateEventRequest, bool, error
 			BannerURL:     bannerURL,
 			PublishStatus: strings.TrimSpace(c.PostForm("publish_status")),
 			TicketTypes:   ticketTypes,
+			Lineup:        lineup,
 		}
 
 		if err := validateStructPayload(&req); err != nil {
@@ -125,6 +146,28 @@ func bindUpdateEventRequest(c *gin.Context) (dto.UpdateEventRequest, bool, error
 			ticketTypes = &parsed
 		}
 
+		var lineup *[]dto.UpsertLineupRequest
+		rawLineup := strings.TrimSpace(c.PostForm("lineup"))
+		if rawLineup != "" {
+			parsed := make([]dto.UpsertLineupRequest, 0)
+			if err := json.Unmarshal([]byte(rawLineup), &parsed); err != nil {
+				return req, false, fmt.Errorf("invalid lineup: %w", err)
+			}
+			lineup = &parsed
+
+			// Handle Lineup Images for Updates
+			for i := range *lineup {
+				fieldName := fmt.Sprintf("lineup_image_%d", i)
+				artistImageURL, err := utils.SaveUploadedImage(c, fieldName, "lineup")
+				if err != nil {
+					return req, false, fmt.Errorf("failed to save lineup image %d: %w", i, err)
+				}
+				if artistImageURL != nil {
+					(*lineup)[i].ImageURL = artistImageURL
+				}
+			}
+		}
+
 		bannerURL, err := utils.SaveUploadedImage(c, "banner", "events")
 		if err != nil {
 			return req, false, err
@@ -146,6 +189,7 @@ func bindUpdateEventRequest(c *gin.Context) (dto.UpdateEventRequest, bool, error
 			BannerURL:     bannerURL,
 			PublishStatus: strings.TrimSpace(c.PostForm("publish_status")),
 			TicketTypes:   ticketTypes,
+			Lineup:        lineup,
 		}
 
 		if err := validateStructPayload(&req); err != nil {

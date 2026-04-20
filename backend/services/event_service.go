@@ -356,6 +356,22 @@ func (s *eventService) CreateEvent(ctx context.Context, req dto.CreateEventReque
 		return nil, err
 	}
 
+	// Persist Lineup
+	if len(req.Lineup) > 0 {
+		lineupItems := make([]models.LineupItem, 0, len(req.Lineup))
+		for _, item := range req.Lineup {
+			lineupItems = append(lineupItems, models.LineupItem{
+				EventID:  event.ID,
+				Name:     strings.TrimSpace(item.Name),
+				ImageURL: item.ImageURL,
+			})
+		}
+		if err := tx.Create(&lineupItems).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
@@ -495,6 +511,78 @@ func (s *eventService) UpdateEvent(ctx context.Context, id uint, req dto.UpdateE
 			return nil, err
 		}
 
+		// Sync Lineup Items
+		if req.Lineup != nil {
+			// For simplicity, we'll sync by name or just delete all and recreate
+			// Better: Sync by ID if available, otherwise name
+			var existingLineup []models.LineupItem
+			if err := tx.Where("event_id = ?", event.ID).Find(&existingLineup).Error; err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+
+			// Track which images to delete if they changed
+			imagesToDelete := make([]*string, 0)
+
+			// Delete existing
+			if err := tx.Where("event_id = ?", event.ID).Delete(&models.LineupItem{}).Error; err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+
+			newLineup := make([]models.LineupItem, 0, len(*req.Lineup))
+			for _, itemReq := range *req.Lineup {
+				var imgURL *string
+				if itemReq.ImageURL != nil {
+					imgURL = itemReq.ImageURL
+				} else {
+					// Try to find if this artist already existed and reuse their image if no new one provided
+					for _, old := range existingLineup {
+						if old.ID == itemReq.ID || old.Name == itemReq.Name {
+							imgURL = old.ImageURL
+							break
+						}
+					}
+				}
+
+				newLineup = append(newLineup, models.LineupItem{
+					EventID:  event.ID,
+					Name:     strings.TrimSpace(itemReq.Name),
+					ImageURL: imgURL,
+				})
+			}
+
+			if len(newLineup) > 0 {
+				if err := tx.Create(&newLineup).Error; err != nil {
+					tx.Rollback()
+					return nil, err
+				}
+			}
+
+			// Cleanup old images that are no longer referenced
+			for _, old := range existingLineup {
+				isKept := false
+				for _, current := range newLineup {
+					if current.ImageURL != nil && old.ImageURL != nil && *current.ImageURL == *old.ImageURL {
+						isKept = true
+						break
+					}
+				}
+				if !isKept && old.ImageURL != nil {
+					imagesToDelete = append(imagesToDelete, old.ImageURL)
+				}
+			}
+
+			// Defer image deletion until after commit
+			defer func() {
+				if committed {
+					for _, img := range imagesToDelete {
+						_ = utils.DeleteManagedUpload(img)
+					}
+				}
+			}()
+		}
+
 		if err := s.repo.BulkCreateTicketsWithTx(tx, newTickets); err != nil {
 			tx.Rollback()
 			return nil, err
@@ -559,6 +647,11 @@ func (s *eventService) DeleteEvent(ctx context.Context, id uint) error {
 	}
 
 	_ = utils.DeleteManagedUpload(event.BannerURL)
+
+	// Delete Lineup Images
+	for _, item := range event.Lineup {
+		_ = utils.DeleteManagedUpload(item.ImageURL)
+	}
 
 	return nil
 }
