@@ -20,6 +20,7 @@ type Event struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 	TicketTypes   []TicketType   `gorm:"foreignKey:EventID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"ticket_types,omitempty"`
+	Lineup        []LineupItem   `gorm:"foreignKey:EventID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"lineup,omitempty"`
 }
 
 type TicketType struct {

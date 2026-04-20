@@ -67,6 +67,15 @@ func eventSelectColumns(db *gorm.DB) *gorm.DB {
 	)
 }
 
+func lineupSelectColumns(db *gorm.DB) *gorm.DB {
+	return db.Select(
+		"id",
+		"event_id",
+		"name",
+		"image_url",
+	)
+}
+
 func ticketSelectColumns(db *gorm.DB) *gorm.DB {
 	return db.Select(
 		"id",
@@ -93,6 +102,9 @@ func (r *eventRepository) FindAllPublished(ctx context.Context, now time.Time, l
 				Where("active_status = ?", true).
 				Order("sales_start_at asc")
 		}).
+		Preload("Lineup", func(db *gorm.DB) *gorm.DB {
+			return lineupSelectColumns(db)
+		}).
 		Where("publish_status = ?", "published").
 		Where("end_date >= ?", now).
 		Order("start_date asc").
@@ -110,6 +122,9 @@ func (r *eventRepository) FindNearest(ctx context.Context, now time.Time) (*mode
 			return ticketSelectColumns(db).
 				Where("active_status = ?", true).
 				Order("price asc")
+		}).
+		Preload("Lineup", func(db *gorm.DB) *gorm.DB {
+			return lineupSelectColumns(db)
 		}).
 		Where("publish_status = ?", "published").
 		Where("end_date >= ?", now).
@@ -132,6 +147,9 @@ func (r *eventRepository) FindPublishedByID(ctx context.Context, id uint, now ti
 				Where("sales_start_at <= ?", now).
 				Where("sales_end_at >= ?", now).
 				Order("sales_start_at asc")
+		}).
+		Preload("Lineup", func(db *gorm.DB) *gorm.DB {
+			return lineupSelectColumns(db)
 		}).
 		Where("publish_status = ?", "published").
 		First(&event, id).Error
@@ -173,6 +191,9 @@ func (r *eventRepository) FindByID(ctx context.Context, id uint) (*models.Event,
 		Preload("TicketTypes", func(db *gorm.DB) *gorm.DB {
 			return ticketSelectColumns(db).Order("sales_start_at asc")
 		}).
+		Preload("Lineup", func(db *gorm.DB) *gorm.DB {
+			return lineupSelectColumns(db)
+		}).
 		First(&event, id).Error
 	if err != nil {
 		return nil, err
@@ -207,6 +228,9 @@ func (r *eventRepository) FindByIDWithTx(tx *gorm.DB, id uint) (*models.Event, e
 			return ticketSelectColumns(db).
 				Clauses(clause.Locking{Strength: "UPDATE"}).
 				Order("sales_start_at asc")
+		}).
+		Preload("Lineup", func(db *gorm.DB) *gorm.DB {
+			return lineupSelectColumns(db).Clauses(clause.Locking{Strength: "UPDATE"})
 		}).
 		First(&event, id).Error
 	if err != nil {

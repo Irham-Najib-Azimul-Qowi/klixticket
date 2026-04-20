@@ -56,6 +56,7 @@ func ConnectDB() {
 		&models.RedeemableItem{},
 		&models.Tax{},
 		&models.OrderTax{},
+		&models.LineupItem{},
 	)
 	if err != nil {
 		log.Fatal("Failed to auto-migrate database schema:", err)
